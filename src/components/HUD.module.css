@@ -1,0 +1,62 @@
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0) 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.balance {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coinIcon {
+  font-size: 22px;
+  color: #ffd700;
+  text-shadow: 0 0 8px #ffd700;
+}
+
+.balanceValue {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: monospace;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+.energy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.energyBar {
+  width: 80px;
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(0,229,255,0.2);
+}
+
+.energyFill {
+  height: 100%;
+  background: linear-gradient(90deg, #00e5ff, #39ff14);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 6px #00e5ff;
+}
+
+.energyLabel {
+  font-size: 13px;
+  color: #8b949e;
+  font-family: monospace;
+}
