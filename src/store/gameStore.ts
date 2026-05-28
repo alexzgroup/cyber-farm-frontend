@@ -54,6 +54,7 @@ interface GameState {
   activeScreen: Screen
   raidLog: RaidLogEntry[]
   lastRaidResult: RaidResult | null
+  soundEnabled: boolean
 
   tap: () => void
   repairDrone: (id: string) => boolean
@@ -65,10 +66,13 @@ interface GameState {
   addBalance: (amount: number) => void
   tickPassiveIncome: () => void
   tickEnergyRegen: () => void
+  toggleSound: () => void
 }
 
 const INITIAL_DRONES: Drone[] = [
-  { id: 'drone-1', level: 1, incomePerHour: 10, isBroken: false },
+  { id: 'drone-1', level: 2, incomePerHour: 40, isBroken: false },
+  { id: 'drone-2', level: 1, incomePerHour: 10, isBroken: false },
+  { id: 'drone-3', level: 1, incomePerHour: 10, isBroken: false },
 ]
 
 // Module-level accumulator — no need to store sub-unit in Zustand state
@@ -76,14 +80,15 @@ let _energyAcc = 0
 const ENERGY_REGEN_RATE = 1 / 30  // 1 energy per 30 seconds
 
 export const useGameStore = create<GameState>((set, get) => ({
-  balance: 0,
-  energy: 3,
+  balance: 350,
+  energy: 10,
   maxEnergy: 10,
   energyProgress: 0,
   drones: INITIAL_DRONES,
   activeScreen: 'farm',
   raidLog: [],
   lastRaidResult: null,
+  soundEnabled: true,
 
   tap: () => {
     const { energy, balance, drones } = get()
@@ -164,6 +169,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   clearRaidResult: () => set({ lastRaidResult: null }),
+
+  toggleSound: () => set((s) => ({ soundEnabled: !s.soundEnabled })),
 
   setScreen: (screen) => set({ activeScreen: screen }),
 

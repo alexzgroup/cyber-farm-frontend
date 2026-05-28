@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import type { RaidResult } from '../../store/gameStore'
 import { paintDrone } from '../utils/droneGraphics'
+import { soundManager } from '../utils/soundManager'
 
 export interface RaidSceneData {
   result: RaidResult
@@ -110,6 +111,7 @@ export class RaidScene extends Phaser.Scene {
       bolt.fillCircle(state.headX, y, 2)
     }
 
+    soundManager.laser()
     redraw()
 
     this.tweens.add({
@@ -158,6 +160,7 @@ export class RaidScene extends Phaser.Scene {
   }
 
   private spawnExplosion(x: number, y: number, color: number) {
+    soundManager.explosion()
     // Expanding rings
     for (let i = 0; i < 4; i++) {
       const ring = this.add.graphics()

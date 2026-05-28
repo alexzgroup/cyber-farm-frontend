@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { useGameStore, DRONE_UPGRADES } from '../../store/gameStore'
+import { soundManager } from '../utils/soundManager'
 
 interface FloatingText {
   text: Phaser.GameObjects.Text
@@ -128,6 +129,8 @@ export class FarmScene extends Phaser.Scene {
     const bonus = DRONE_UPGRADES[maxLevel - 1].tapBonus
 
     store.tap()
+    soundManager.tap()
+    soundManager.coin()
     this.emitter.setPosition(x, y)
     this.emitter.explode(6)
 
