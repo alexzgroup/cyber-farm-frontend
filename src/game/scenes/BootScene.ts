@@ -1,67 +1,34 @@
 import Phaser from 'phaser'
 import { FarmScene } from './FarmScene'
+import { paintDrone } from '../utils/droneGraphics'
 
 export class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BootScene' })
   }
 
-  preload() {
-    // Draw assets programmatically — no external files needed for MVP
-  }
+  preload() {}
 
   create() {
-    // Generate drone texture programmatically
-    const droneGfx = this.make.graphics({ x: 0, y: 0, add: false })
+    const dg = this.make.graphics({ x: 0, y: 0, add: false })
+    paintDrone(dg, false)
+    dg.generateTexture('drone', 128, 128)
+    dg.destroy()
 
-    // Body
-    droneGfx.fillStyle(0x00e5ff, 1)
-    droneGfx.fillRoundedRect(10, 20, 44, 28, 8)
+    const bg = this.make.graphics({ x: 0, y: 0, add: false })
+    paintDrone(bg, true)
+    bg.generateTexture('drone_broken', 128, 128)
+    bg.destroy()
 
-    // Cockpit
-    droneGfx.fillStyle(0x001f3d, 0.9)
-    droneGfx.fillEllipse(32, 28, 20, 14)
-
-    // Arms
-    droneGfx.fillStyle(0x0077aa, 1)
-    droneGfx.fillRect(0, 22, 12, 5)
-    droneGfx.fillRect(52, 22, 12, 5)
-
-    // Propellers
-    droneGfx.fillStyle(0x39ff14, 1)
-    droneGfx.fillEllipse(6, 20, 18, 6)
-    droneGfx.fillEllipse(58, 20, 18, 6)
-
-    // Glow ring
-    droneGfx.lineStyle(2, 0x00e5ff, 0.4)
-    droneGfx.strokeEllipse(32, 34, 60, 20)
-
-    droneGfx.generateTexture('drone', 64, 64)
-    droneGfx.destroy()
-
-    // Broken drone (red tint)
-    const brokenGfx = this.make.graphics({ x: 0, y: 0, add: false })
-    brokenGfx.fillStyle(0xff4444, 1)
-    brokenGfx.fillRoundedRect(10, 20, 44, 28, 8)
-    brokenGfx.fillStyle(0x220000, 0.9)
-    brokenGfx.fillEllipse(32, 28, 20, 14)
-    brokenGfx.fillStyle(0x882222, 1)
-    brokenGfx.fillRect(0, 22, 12, 5)
-    brokenGfx.fillRect(52, 22, 12, 5)
-    brokenGfx.fillStyle(0xff8800, 1)
-    brokenGfx.fillEllipse(6, 20, 18, 6)
-    brokenGfx.fillEllipse(58, 20, 18, 6)
-    brokenGfx.generateTexture('drone_broken', 64, 64)
-    brokenGfx.destroy()
-
-    // Particle (coin)
-    const coinGfx = this.make.graphics({ x: 0, y: 0, add: false })
-    coinGfx.fillStyle(0xffd700, 1)
-    coinGfx.fillCircle(8, 8, 8)
-    coinGfx.fillStyle(0xffaa00, 1)
-    coinGfx.fillCircle(8, 8, 5)
-    coinGfx.generateTexture('coin_particle', 16, 16)
-    coinGfx.destroy()
+    const cg = this.make.graphics({ x: 0, y: 0, add: false })
+    cg.fillStyle(0xffd700, 1)
+    cg.fillCircle(8, 8, 8)
+    cg.fillStyle(0xffaa00, 1)
+    cg.fillCircle(8, 8, 5)
+    cg.fillStyle(0xffee88, 0.8)
+    cg.fillCircle(6, 6, 3)
+    cg.generateTexture('coin_particle', 16, 16)
+    cg.destroy()
 
     this.scene.start('FarmScene')
   }

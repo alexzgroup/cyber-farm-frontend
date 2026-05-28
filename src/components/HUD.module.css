@@ -51,8 +51,17 @@
   height: 100%;
   background: linear-gradient(90deg, #00e5ff, #39ff14);
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transition: width 0.8s linear;
   box-shadow: 0 0 6px #00e5ff;
+}
+
+@keyframes regenPulse {
+  0%, 100% { box-shadow: 0 0 4px #00e5ff; }
+  50%       { box-shadow: 0 0 12px #00e5ff, 0 0 20px #39ff1466; }
+}
+
+.regening {
+  animation: regenPulse 2s ease-in-out infinite;
 }
 
 .energyLabel {

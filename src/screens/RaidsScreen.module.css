@@ -1,0 +1,191 @@
+.screen {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: monospace;
+  color: #c9d1d9;
+  position: relative;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+}
+
+.warning {
+  background: rgba(255,100,0,0.1);
+  border: 1px solid rgba(255,100,0,0.3);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+  color: #ffaa44;
+  text-align: center;
+}
+
+.section { display: flex; flex-direction: column; gap: 10px; }
+
+.sectionTitle {
+  font-size: 13px;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Target cards */
+.targets { display: flex; flex-direction: column; gap: 10px; }
+
+.targetCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(22, 27, 34, 0.9);
+  border: 1px solid rgba(255,68,68,0.15);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.targetInfo { flex: 1; }
+
+.targetName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e6edf3;
+  margin-bottom: 4px;
+}
+
+.targetStats {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #8b949e;
+  margin-bottom: 4px;
+}
+
+.reward {
+  font-size: 12px;
+  color: #ffd700;
+}
+
+.attackBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: linear-gradient(135deg, #ff222222, #ff444444);
+  border: 1px solid #ff444466;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 20px;
+  color: #e6edf3;
+  font-family: monospace;
+  transition: transform 0.1s, background 0.15s;
+}
+
+.attackBtn span { font-size: 11px; color: #ff9999; }
+.attackBtn:active { transform: scale(0.93); }
+.attackBtn:hover { background: linear-gradient(135deg, #ff222244, #ff444466); }
+
+.attackDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Battle overlay */
+.battleOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #0d1117;
+}
+
+/* Result overlay */
+.resultOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13,17,23,0.95);
+}
+
+.resultCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  border-radius: 20px;
+  width: 80%;
+  max-width: 320px;
+  text-align: center;
+}
+
+.win {
+  background: rgba(57,255,20,0.06);
+  border: 1px solid rgba(57,255,20,0.3);
+}
+
+.lose {
+  background: rgba(255,68,68,0.06);
+  border: 1px solid rgba(255,68,68,0.3);
+}
+
+.resultIcon { font-size: 48px; }
+
+.resultTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.resultDesc {
+  font-size: 14px;
+  color: #8b949e;
+  line-height: 1.5;
+}
+
+.backBtn {
+  margin-top: 8px;
+  background: rgba(0,229,255,0.1);
+  border: 1px solid rgba(0,229,255,0.3);
+  border-radius: 10px;
+  padding: 10px 24px;
+  color: #00e5ff;
+  font-family: monospace;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.backBtn:hover { background: rgba(0,229,255,0.2); }
+
+/* Battle log */
+.log { display: flex; flex-direction: column; gap: 6px; }
+
+.logEntry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.logWin  { background: rgba(57,255,20,0.06); border: 1px solid rgba(57,255,20,0.15); }
+.logLose { background: rgba(255,68,68,0.06); border: 1px solid rgba(255,68,68,0.15); }
+
+.logIcon  { font-size: 14px; font-weight: 700; width: 16px; }
+.logWin  .logIcon { color: #39ff14; }
+.logLose .logIcon { color: #ff4444; }
+
+.logName   { flex: 1; color: #c9d1d9; }
+.logResult { color: #ffd700; font-size: 12px; }
+.logLose .logResult { color: #ff9999; }

@@ -1,19 +1,26 @@
 import { useEffect, useRef } from 'react'
 import Phaser from 'phaser'
-import { BootScene } from './scenes/BootScene'
-import { FarmScene } from './scenes/FarmScene'
+import { RaidScene } from './scenes/RaidScene'
+import type { RaidResult } from '../store/gameStore'
 import { NAV_HEIGHT } from '../layout'
 
-export function PhaserGame() {
+interface RaidGameProps {
+  result: RaidResult
+  onComplete: () => void
+}
+
+export function RaidGame({ result, onComplete }: RaidGameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const gameRef = useRef<Phaser.Game | null>(null)
+  const gameRef      = useRef<Phaser.Game | null>(null)
 
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return
 
-    // Use measured container size; fall back to window if CSS layout not yet computed
     const w = containerRef.current.clientWidth  || window.innerWidth
     const h = containerRef.current.clientHeight || window.innerHeight - NAV_HEIGHT
+
+    const scene = new RaidScene()
+    scene.setRaidData({ result, onComplete })
 
     gameRef.current = new Phaser.Game({
       type: Phaser.AUTO,
@@ -21,16 +28,11 @@ export function PhaserGame() {
       height: h,
       backgroundColor: '#0d1117',
       parent: containerRef.current,
-      scene: [BootScene, FarmScene],
+      scene: [scene],
       scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.NO_CENTER,
       },
-      render: {
-        antialias: true,
-        pixelArt: false,
-      },
-      dom: { createContainer: false },
     })
 
     return () => {
