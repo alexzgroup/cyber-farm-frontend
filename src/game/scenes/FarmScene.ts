@@ -38,6 +38,14 @@ export class FarmScene extends Phaser.Scene {
       this.syncDrones(state.drones)
     })
 
+    // Passive income floats — one per second per drone
+    this.time.addEvent({
+      delay: 1000,
+      repeat: -1,
+      callback: this.tickPassiveFloats,
+      callbackScope: this,
+    })
+
     const cleanup = () => { this.isAlive = false; this.unsubscribeStore?.() }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup)
     this.events.once(Phaser.Scenes.Events.DESTROY, cleanup)
@@ -316,6 +324,62 @@ export class FarmScene extends Phaser.Scene {
     this.droneSprites.forEach((sprite, id)  => { positions[id] = { x: Math.round(sprite.x), y: Math.round(sprite.y) } })
     this.turretSprites.forEach((sprite, id) => { positions[id] = { x: Math.round(sprite.x), y: Math.round(sprite.y) } })
     try { localStorage.setItem(POSITIONS_KEY, JSON.stringify(positions)) } catch { /* quota */ }
+  }
+
+  // ─── Passive income floats ──────────────────────────────────────────────────
+  private tickPassiveFloats() {
+    if (!this.isAlive) return
+    const { drones } = useGameStore.getState()
+    drones.forEach((drone) => {
+      if (drone.isBroken) return
+      const sprite = this.droneSprites.get(drone.id)
+      if (!sprite || !sprite.scene) return
+      const perSecond = drone.incomePerHour / 3600
+      this.spawnPassiveFloat(sprite.x, sprite.y, this.formatPassive(perSecond))
+    })
+  }
+
+  private spawnPassiveFloat(x: number, y: number, label: string) {
+    const startY = y - 52
+    const midY   = y - 88
+    const endY   = y - 112
+
+    const t = this.add.text(x, startY, label, {
+      fontSize: '13px',
+      fontFamily: 'monospace',
+      color: '#66ffbb',
+      stroke: '#000000',
+      strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(8).setAlpha(0)
+
+    // Rise + fade in
+    this.tweens.add({
+      targets: t,
+      y: midY,
+      alpha: 0.90,
+      duration: 350,
+      ease: 'Power1.Out',
+      onComplete: () => {
+        // Hold briefly, then continue rising and fade out
+        this.tweens.add({
+          targets: t,
+          y: endY,
+          alpha: 0,
+          duration: 550,
+          delay: 100,
+          ease: 'Power1.In',
+          onComplete: () => { if (t.scene) t.destroy() },
+        })
+      },
+    })
+  }
+
+  private formatPassive(v: number): string {
+    if (v >= 100) return `+${v.toFixed(0)}`
+    if (v >= 10)  return `+${v.toFixed(1)}`
+    if (v >= 1)   return `+${v.toFixed(2)}`
+    if (v >= 0.1) return `+${v.toFixed(3)}`
+    return `+${v.toFixed(4)}`
   }
 
   // ─── Update loop ─────────────────────────────────────────────────────────────
