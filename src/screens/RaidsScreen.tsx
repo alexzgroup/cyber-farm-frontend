@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useGameStore, RaidResult } from '../store/gameStore'
+import { useGameStore, RaidResult, Drone } from '../store/gameStore'
 import { MOCK_PLAYERS } from '../data/mockPlayers'
 import { RaidGame } from '../game/RaidGame'
 import styles from './RaidsScreen.module.css'
@@ -7,8 +7,10 @@ import styles from './RaidsScreen.module.css'
 type View = 'targets' | 'battle' | 'result'
 
 export function RaidsScreen() {
-  const [view, setView]         = useState<View>('targets')
-  const [raidResult, setResult] = useState<RaidResult | null>(null)
+  const [view, setView]           = useState<View>('targets')
+  const [raidResult, setResult]   = useState<RaidResult | null>(null)
+  const [attackerDrones, setAttackerDrones] = useState<Drone[]>([])
+  const [targetTurrets, setTargetTurrets]   = useState<Array<{ level: 1|2|3 }>>([])
   const containerRef = useRef<HTMLDivElement>(null)
 
   const drones      = useGameStore((s) => s.drones)
@@ -20,6 +22,9 @@ export function RaidsScreen() {
   const handleAttack = (targetId: string) => {
     const result = executeRaid(targetId)
     if (!result) return
+    const target = MOCK_PLAYERS.find((p) => p.id === targetId)
+    setAttackerDrones([...workingDrones])
+    setTargetTurrets(target?.turrets ?? [{ level: 1 }])
     setResult(result)
     setView('battle')
   }
@@ -37,6 +42,8 @@ export function RaidsScreen() {
         <div className={styles.battleOverlay}>
           <RaidGame
             result={raidResult}
+            attackerDrones={attackerDrones}
+            targetTurrets={targetTurrets}
             onComplete={handleBattleComplete}
           />
         </div>

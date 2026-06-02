@@ -1,15 +1,17 @@
 import { useEffect, useRef } from 'react'
 import Phaser from 'phaser'
 import { RaidScene } from './scenes/RaidScene'
-import type { RaidResult } from '../store/gameStore'
+import type { RaidResult, Drone } from '../store/gameStore'
 import { NAV_HEIGHT } from '../layout'
 
 interface RaidGameProps {
   result: RaidResult
+  attackerDrones: Drone[]
+  targetTurrets: Array<{ level: 1 | 2 | 3 }>
   onComplete: () => void
 }
 
-export function RaidGame({ result, onComplete }: RaidGameProps) {
+export function RaidGame({ result, attackerDrones, targetTurrets, onComplete }: RaidGameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef      = useRef<Phaser.Game | null>(null)
 
@@ -20,7 +22,7 @@ export function RaidGame({ result, onComplete }: RaidGameProps) {
     const h = containerRef.current.clientHeight || window.innerHeight - NAV_HEIGHT
 
     const scene = new RaidScene()
-    scene.setRaidData({ result, onComplete })
+    scene.setRaidData({ result, attackerDrones, targetTurrets, onComplete })
 
     gameRef.current = new Phaser.Game({
       type: Phaser.AUTO,

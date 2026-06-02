@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { FarmScene } from './FarmScene'
-import { paintDrone } from '../utils/droneGraphics'
+import { paintDrone, paintFarmTurret } from '../utils/droneGraphics'
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -10,16 +10,30 @@ export class BootScene extends Phaser.Scene {
   preload() {}
 
   create() {
-    const dg = this.make.graphics({ x: 0, y: 0, add: false })
-    paintDrone(dg, false)
-    dg.generateTexture('drone', 128, 128)
-    dg.destroy()
+    // ── Drone textures: 3 types × 2 states ──
+    const types: Array<1 | 2 | 3> = [1, 2, 3]
+    for (const t of types) {
+      const g = this.make.graphics({ x: 0, y: 0, add: false })
+      paintDrone(g, false, t)
+      g.generateTexture(`drone_${t}`, 128, 128)
+      g.destroy()
 
-    const bg = this.make.graphics({ x: 0, y: 0, add: false })
-    paintDrone(bg, true)
-    bg.generateTexture('drone_broken', 128, 128)
-    bg.destroy()
+      const gb = this.make.graphics({ x: 0, y: 0, add: false })
+      paintDrone(gb, true, t)
+      gb.generateTexture(`drone_${t}_broken`, 128, 128)
+      gb.destroy()
+    }
 
+    // ── Farm turret textures: 3 levels ──
+    const levels: Array<1 | 2 | 3> = [1, 2, 3]
+    for (const lv of levels) {
+      const g = this.make.graphics({ x: 0, y: 0, add: false })
+      paintFarmTurret(g, lv)
+      g.generateTexture(`farm_turret_${lv}`, 128, 128)
+      g.destroy()
+    }
+
+    // ── Coin particle ──
     const cg = this.make.graphics({ x: 0, y: 0, add: false })
     cg.fillStyle(0xffd700, 1)
     cg.fillCircle(8, 8, 8)

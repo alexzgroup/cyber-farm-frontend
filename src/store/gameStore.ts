@@ -2,12 +2,19 @@ import { create } from 'zustand'
 import { MOCK_PLAYERS } from '../data/mockPlayers'
 
 export type DroneLevel = 1 | 2 | 3
+export type DroneType  = 1 | 2 | 3
 
 export interface Drone {
   id: string
   level: DroneLevel
+  droneType: DroneType
   incomePerHour: number
   isBroken: boolean
+}
+
+export interface Turret {
+  id: string
+  level: 1 | 2 | 3
 }
 
 export interface DroneUpgrade {
@@ -25,7 +32,6 @@ export const DRONE_UPGRADES: DroneUpgrade[] = [
   { level: 3, name: 'Нано-дрон',     description: '+900% доход, +0.5 за клик', price: 2000, incomePerHour: 100, tapBonus: 0.5 },
 ]
 
-// Repair cost by drone level
 export const REPAIR_COSTS: Record<DroneLevel, number> = { 1: 50, 2: 150, 3: 400 }
 
 export interface RaidLogEntry {
@@ -49,8 +55,9 @@ interface GameState {
   balance: number
   energy: number
   maxEnergy: number
-  energyProgress: number   // 0–1, progress to next energy point (for HUD)
+  energyProgress: number
   drones: Drone[]
+  turrets: Turret[]
   activeScreen: Screen
   raidLog: RaidLogEntry[]
   lastRaidResult: RaidResult | null
@@ -70,14 +77,18 @@ interface GameState {
 }
 
 const INITIAL_DRONES: Drone[] = [
-  { id: 'drone-1', level: 2, incomePerHour: 40, isBroken: false },
-  { id: 'drone-2', level: 1, incomePerHour: 10, isBroken: false },
-  { id: 'drone-3', level: 1, incomePerHour: 10, isBroken: false },
+  { id: 'drone-1', level: 2, droneType: 1, incomePerHour: 40, isBroken: false },
+  { id: 'drone-2', level: 1, droneType: 2, incomePerHour: 10, isBroken: false },
+  { id: 'drone-3', level: 1, droneType: 3, incomePerHour: 10, isBroken: false },
 ]
 
-// Module-level accumulator — no need to store sub-unit in Zustand state
+const INITIAL_TURRETS: Turret[] = [
+  { id: 'turret-1', level: 2 },
+  { id: 'turret-2', level: 1 },
+]
+
 let _energyAcc = 0
-const ENERGY_REGEN_RATE = 1 / 30  // 1 energy per 30 seconds
+const ENERGY_REGEN_RATE = 1 / 30
 
 export const useGameStore = create<GameState>((set, get) => ({
   balance: 350,
@@ -85,6 +96,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   maxEnergy: 10,
   energyProgress: 0,
   drones: INITIAL_DRONES,
+  turrets: INITIAL_TURRETS,
   activeScreen: 'farm',
   raidLog: [],
   lastRaidResult: null,
@@ -133,9 +145,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { balance, drones } = get()
     const price = 300 + drones.length * 200
     if (balance < price) return false
+    const droneType = ([1, 2, 3][drones.length % 3]) as DroneType
     set((s) => ({
       balance: s.balance - price,
-      drones: [...s.drones, { id: `drone-${Date.now()}`, level: 1, incomePerHour: 10, isBroken: false }],
+      drones: [...s.drones, { id: `drone-${Date.now()}`, level: 1, droneType, incomePerHour: 10, isBroken: false }],
     }))
     return true
   },
@@ -169,12 +182,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   clearRaidResult: () => set({ lastRaidResult: null }),
-
-  toggleSound: () => set((s) => ({ soundEnabled: !s.soundEnabled })),
-
-  setScreen: (screen) => set({ activeScreen: screen }),
-
-  addBalance: (amount) => set((s) => ({ balance: s.balance + amount })),
+  toggleSound:     () => set((s) => ({ soundEnabled: !s.soundEnabled })),
+  setScreen:       (screen) => set({ activeScreen: screen }),
+  addBalance:      (amount) => set((s) => ({ balance: s.balance + amount })),
 
   tickPassiveIncome: () => {
     const { drones } = get()
