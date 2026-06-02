@@ -231,9 +231,17 @@ export class RaidScene extends Phaser.Scene {
             warnGlows.forEach((g) => g.destroy())
 
             if (!isLast) {
-              // More waves
               this.time.delayedCall(200, () => {
-                this.runWave(waveIdx + 1, droneWaves, turretRows, totalWaves, totalTurretRows, result, W, H)
+                const nextRow = turretRows[waveIdx + 1]
+                const hasMoreTurrets = nextRow && nextRow.length > 0
+                if (hasMoreTurrets) {
+                  this.runWave(waveIdx + 1, droneWaves, turretRows, totalWaves, totalTurretRows, result, W, H)
+                } else {
+                  // Base fully destroyed — no more turrets, end immediately
+                  this.spawnMegaExplosion(W / 2, H * 0.26, W, H)
+                  this.cameras.main.shake(900, 0.032)
+                  this.time.delayedCall(1500, () => this.showResult(result, W, H))
+                }
               })
             } else {
               // All waves done → MEGA explosion + result

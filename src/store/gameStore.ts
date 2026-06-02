@@ -49,7 +49,10 @@ export interface RaidResult {
   attackerLevel: number
 }
 
-export type Screen = 'farm' | 'shop' | 'raids' | 'profile'
+export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'equipment' | 'unit-detail'
+
+// unit upgrade levels: { 'drone-1': { 'cargo': 2, 'stealth': 0 } }
+export type UnitUpgrades = Record<string, Record<string, number>>
 
 interface GameState {
   balance: number
@@ -62,6 +65,8 @@ interface GameState {
   raidLog: RaidLogEntry[]
   lastRaidResult: RaidResult | null
   soundEnabled: boolean
+  unitUpgrades: UnitUpgrades
+  selectedUnitId: string | null
 
   tap: () => void
   repairDrone: (id: string) => boolean
@@ -74,12 +79,19 @@ interface GameState {
   tickPassiveIncome: () => void
   tickEnergyRegen: () => void
   toggleSound: () => void
+  purchaseUnitUpgrade: (unitId: string, upgradeId: string, cost: number) => boolean
+  selectUnit: (unitId: string | null) => void
 }
 
 const INITIAL_DRONES: Drone[] = [
   { id: 'drone-1', level: 2, droneType: 1, incomePerHour: 40, isBroken: false },
   { id: 'drone-2', level: 1, droneType: 2, incomePerHour: 10, isBroken: false },
   { id: 'drone-3', level: 1, droneType: 3, incomePerHour: 10, isBroken: false },
+  { id: 'drone-4', level: 2, droneType: 2, incomePerHour: 40, isBroken: false },
+  { id: 'drone-5', level: 1, droneType: 1, incomePerHour: 10, isBroken: false },
+  { id: 'drone-6', level: 3, droneType: 3, incomePerHour: 100, isBroken: false },
+  { id: 'drone-7', level: 1, droneType: 2, incomePerHour: 10, isBroken: false },
+  { id: 'drone-8', level: 2, droneType: 1, incomePerHour: 40, isBroken: false },
 ]
 
 const INITIAL_TURRETS: Turret[] = [
@@ -101,6 +113,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   raidLog: [],
   lastRaidResult: null,
   soundEnabled: true,
+  unitUpgrades: {},
+  selectedUnitId: null,
 
   tap: () => {
     const { energy, balance, drones } = get()
@@ -185,6 +199,23 @@ export const useGameStore = create<GameState>((set, get) => ({
   toggleSound:     () => set((s) => ({ soundEnabled: !s.soundEnabled })),
   setScreen:       (screen) => set({ activeScreen: screen }),
   addBalance:      (amount) => set((s) => ({ balance: s.balance + amount })),
+
+  purchaseUnitUpgrade: (unitId, upgradeId, cost) => {
+    const { balance, unitUpgrades } = get()
+    if (balance < cost) return false
+    const current = unitUpgrades[unitId]?.[upgradeId] ?? 0
+    if (current >= 3) return false
+    set((s) => ({
+      balance: s.balance - cost,
+      unitUpgrades: {
+        ...s.unitUpgrades,
+        [unitId]: { ...(s.unitUpgrades[unitId] ?? {}), [upgradeId]: current + 1 },
+      },
+    }))
+    return true
+  },
+
+  selectUnit: (unitId) => set({ selectedUnitId: unitId }),
 
   tickPassiveIncome: () => {
     const { drones } = get()

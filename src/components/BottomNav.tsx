@@ -8,16 +8,24 @@ const TABS: { id: Screen; icon: string; label: string }[] = [
   { id: 'profile', icon: '👤', label: 'Профиль' },
 ]
 
+// sub-screens that belong to a parent tab
+const SCREEN_PARENT: Partial<Record<string, string>> = {
+  equipment: 'farm',
+  'unit-detail': 'farm',
+}
+
 export function BottomNav() {
   const activeScreen = useGameStore((s) => s.activeScreen)
   const setScreen = useGameStore((s) => s.setScreen)
+
+  const activeTab = SCREEN_PARENT[activeScreen] ?? activeScreen
 
   return (
     <nav className={styles.nav}>
       {TABS.map((tab) => (
         <button
           key={tab.id}
-          className={`${styles.tab} ${activeScreen === tab.id ? styles.active : ''}`}
+          className={`${styles.tab} ${activeTab === tab.id ? styles.active : ''}`}
           onClick={() => setScreen(tab.id)}
         >
           <span className={styles.icon}>{tab.icon}</span>

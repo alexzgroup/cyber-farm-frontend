@@ -7,6 +7,7 @@ export function ShopScreen() {
   const upgradeDrone = useGameStore((s) => s.upgradeDrone)
   const repairDrone  = useGameStore((s) => s.repairDrone)
   const buyDrone     = useGameStore((s) => s.buyDrone)
+  const setScreen    = useGameStore((s) => s.setScreen)
 
   const brokenDrones   = drones.filter((d) => d.isBroken)
   const newDronePrice  = 300 + drones.length * 200
@@ -84,6 +85,22 @@ export function ShopScreen() {
               </div>
             )
           })}
+        </div>
+      </section>
+
+      {/* Equipment upgrades link */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Улучшение оборудования</h3>
+        <div className={styles.card} style={{ cursor: 'pointer' }} onClick={() => setScreen('equipment')}>
+          <div className={styles.droneIcon}>⚙️</div>
+          <div className={styles.cardInfo}>
+            <p className={styles.droneName}>Прокачка башен и дронов</p>
+            <p className={styles.droneStats}>5 улучшений для каждого юнита · 3 уровня</p>
+          </div>
+          <button className={`${styles.btn} ${styles.btnActive}`} onClick={() => setScreen('equipment')}>
+            <span className={styles.btnLevel}>Открыть</span>
+            <span className={styles.btnPrice}>→</span>
+          </button>
         </div>
       </section>
 

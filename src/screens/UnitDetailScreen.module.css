@@ -1,0 +1,208 @@
+.screen {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: #0d1117;
+  color: #e0e0e0;
+  font-family: monospace;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.backBtn {
+  background: none;
+  border: 1px solid;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.backBtn:active { opacity: 0.7; }
+
+.unitName {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.unitLevel {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.balance {
+  margin-left: auto;
+  font-size: 14px;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+/* Preview */
+.previewWrap {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  flex-shrink: 0;
+  background: #080c12;
+}
+
+/* Stat summary bar */
+.statBar {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding: 10px 14px;
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  flex-shrink: 0;
+  background: #090d15;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.statIcon { font-size: 16px; }
+
+.statLevel {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+/* Upgrades list */
+.upgradesList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px 16px;
+}
+
+.upgradesHeader {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 0 8px;
+}
+
+.upgradeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #1a2030;
+}
+
+.upgradeIcon {
+  font-size: 22px;
+  flex-shrink: 0;
+  width: 32px;
+  text-align: center;
+}
+
+.upgradeInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.upgradeName {
+  font-size: 13px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.upgradeDesc {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.upgradeBonus {
+  font-size: 10px;
+  margin-top: 3px;
+  font-weight: bold;
+}
+
+.upgradeRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Level pips */
+.pips {
+  display: flex;
+  gap: 4px;
+}
+
+.pip {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #1e2530;
+  border: 1px solid #2a3545;
+}
+
+.pipFilled {
+  background: currentColor;
+  border-color: currentColor;
+}
+
+/* Buy button */
+.buyBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-family: monospace;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  min-width: 60px;
+}
+
+.buyBtn:active { opacity: 0.7; transform: scale(0.97); }
+
+.buyActive { }
+
+.buyDisabled {
+  border-color: #2a3545 !important;
+  color: #3a4555 !important;
+  cursor: not-allowed;
+}
+
+.buyLevel {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.buyPrice {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.maxed {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #0d1a0d;
+}
