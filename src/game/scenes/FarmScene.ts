@@ -8,12 +8,15 @@ interface FloatingText {
   life: number
 }
 
+const GRID_COLS = 3
+const CELL_H = 140
+
 export class FarmScene extends Phaser.Scene {
   private droneSprites: Map<string, Phaser.GameObjects.Image> = new Map()
   private brokenLabels: Map<string, Phaser.GameObjects.Text> = new Map()
+  private levelLabels: Map<string, Phaser.GameObjects.Text> = new Map()
   private floatingTexts: FloatingText[] = []
   private emitter!: Phaser.GameObjects.Particles.ParticleEmitter
-  private groundY = 0
   private unsubscribeStore?: () => void
   private isAlive = false
 
@@ -23,16 +26,13 @@ export class FarmScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale
-    this.groundY = height * 0.52
 
     this.drawBackground(width, height)
-    this.createGrid(width, height)
+    this.createGridLines(width, height)
     this.createParticles()
     this.spawnInitialDrones()
 
     this.isAlive = true
-
-    // Full sync on any store change (handles add/upgrade/break)
     this.unsubscribeStore = useGameStore.subscribe((state) => this.syncDrones(state.drones))
 
     const cleanup = () => { this.isAlive = false; this.unsubscribeStore?.() }
@@ -45,12 +45,12 @@ export class FarmScene extends Phaser.Scene {
     bg.fillGradientStyle(0x0d1117, 0x0d1117, 0x0a2a1a, 0x0a2a1a, 1)
     bg.fillRect(0, 0, w, h)
     bg.fillStyle(0x143020, 0.8)
-    bg.fillRect(0, h * 0.55, w, h * 0.45)
+    bg.fillRect(0, h * 0.62, w, h * 0.38)
     bg.lineStyle(2, 0x00e5ff, 0.3)
-    bg.lineBetween(0, h * 0.55, w, h * 0.55)
+    bg.lineBetween(0, h * 0.62, w, h * 0.62)
   }
 
-  private createGrid(w: number, h: number) {
+  private createGridLines(w: number, h: number) {
     const grid = this.add.graphics()
     grid.lineStyle(1, 0x00e5ff, 0.06)
     const step = 40
@@ -77,32 +77,29 @@ export class FarmScene extends Phaser.Scene {
 
   private addDroneSprite(id: string, level: number, isBroken: boolean) {
     const texture = isBroken ? 'drone_broken' : 'drone'
-    const sprite = this.add.image(0, this.groundY, texture)
+    const sprite = this.add.image(0, 0, texture)
       .setScale(0.78)
       .setInteractive({ useHandCursor: true })
 
     sprite.setData('droneId', id)
     this.droneSprites.set(id, sprite)
 
-    const idx = this.droneSprites.size - 1
-    this.tweens.add({
-      targets: sprite,
-      y: this.groundY - 16,
-      duration: 1400 + idx * 200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    })
-
     sprite.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
       this.onDroneTap(sprite, id, ptr.x, ptr.y)
     })
+
+    // Level badge
+    const label = this.add.text(0, 0, `LVL ${level}`, {
+      fontSize: '10px', fontFamily: 'monospace', color: '#00e5ff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5)
+    this.levelLabels.set(id, label)
 
     if (isBroken) this.addBrokenLabel(id, sprite)
   }
 
   private addBrokenLabel(id: string, sprite: Phaser.GameObjects.Image) {
-    const label = this.add.text(sprite.x, sprite.y - 50, '⚠ Сломан', {
+    const label = this.add.text(sprite.x, sprite.y - 52, '⚠ Сломан', {
       fontSize: '12px', fontFamily: 'monospace', color: '#ff6666',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5)
@@ -110,11 +107,43 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private repositionDrones() {
-    const { width } = this.scale
-    const sprites = [...this.droneSprites.values()]
-    sprites.forEach((sprite, i) => {
-      const x = width / 2 + (i - (sprites.length - 1) / 2) * 130
+    const { width, height } = this.scale
+    const entries = [...this.droneSprites.entries()]
+    const n = entries.length
+    if (n === 0) return
+
+    const cols = Math.min(n, GRID_COLS)
+    const rows = Math.ceil(n / cols)
+    const cellW = width / (cols + 1)
+    const groundY = height * 0.62
+    const availableH = groundY - 80
+    const gridH = rows * CELL_H
+    const startY = (availableH - gridH) / 2 + 80 + CELL_H / 2
+
+    entries.forEach(([id, sprite], i) => {
+      const col = i % cols
+      const row = Math.floor(i / cols)
+      const x = (col + 1) * cellW
+      const y = startY + row * CELL_H
+
       sprite.x = x
+      sprite.y = y
+
+      this.tweens.killTweensOf(sprite)
+      this.tweens.add({
+        targets: sprite,
+        y: y - 14,
+        duration: 1400 + i * 200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      })
+
+      const lvlLabel = this.levelLabels.get(id)
+      if (lvlLabel) { lvlLabel.x = x; lvlLabel.y = y + 48 }
+
+      const brokenLabel = this.brokenLabels.get(id)
+      if (brokenLabel) { brokenLabel.x = x; brokenLabel.y = y - 52 }
     })
   }
 
@@ -160,7 +189,7 @@ export class FarmScene extends Phaser.Scene {
 
   private syncDrones(drones: ReturnType<typeof useGameStore.getState>['drones']) {
     if (!this.isAlive) return
-    // Add new drones
+
     drones.forEach((drone) => {
       if (!this.droneSprites.has(drone.id)) {
         this.addDroneSprite(drone.id, drone.level, drone.isBroken)
@@ -168,10 +197,9 @@ export class FarmScene extends Phaser.Scene {
       }
     })
 
-    // Sync texture + broken label
     drones.forEach((drone) => {
       const sprite = this.droneSprites.get(drone.id)
-      if (!sprite || !sprite.scene) return  // destroyed sprite guard
+      if (!sprite || !sprite.scene) return
 
       const texture = drone.isBroken ? 'drone_broken' : 'drone'
       if (sprite.texture.key !== texture) sprite.setTexture(texture)
@@ -183,17 +211,22 @@ export class FarmScene extends Phaser.Scene {
         this.brokenLabels.get(drone.id)?.destroy()
         this.brokenLabels.delete(drone.id)
       }
+
+      const lvlLabel = this.levelLabels.get(drone.id)
+      if (lvlLabel) lvlLabel.setText(`LVL ${drone.level}`)
     })
 
-    // Keep labels positioned over drones
-    this.brokenLabels.forEach((label, id) => {
-      const sprite = this.droneSprites.get(id)
-      if (sprite) { label.x = sprite.x; label.y = sprite.y - 50 }
+    // Keep overlay labels positioned under hover tweens
+    this.droneSprites.forEach((sprite, id) => {
+      const lvl = this.levelLabels.get(id)
+      if (lvl) lvl.y = sprite.y + 48
+      const broken = this.brokenLabels.get(id)
+      if (broken) { broken.x = sprite.x; broken.y = sprite.y - 52 }
     })
   }
 
   update() {
-    this.floatingTexts = this.floatingTexts.filter((ft, idx) => {
+    this.floatingTexts = this.floatingTexts.filter((ft) => {
       ft.text.y += ft.vy
       ft.text.alpha -= 1 / 60
       ft.life--

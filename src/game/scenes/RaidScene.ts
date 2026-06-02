@@ -8,6 +8,8 @@ export interface RaidSceneData {
   onComplete: () => void
 }
 
+const SQUAD_SIZE = 3
+
 export class RaidScene extends Phaser.Scene {
   private raidData: RaidSceneData | null = null
 
@@ -27,199 +29,254 @@ export class RaidScene extends Phaser.Scene {
     this.generateTextures()
     this.drawBackground(width, height)
 
-    const droneY  = height * 0.44
-    const turretX = width * 0.76
-    const turretY = droneY + 10
+    // Column X positions
+    const leftX  = width * 0.18
+    const rightX = width * 0.82
 
-    // Ground platform under turret
-    const platform = this.add.graphics()
-    platform.fillStyle(0x330a0a, 1)
-    platform.fillRoundedRect(turretX - 56, height * 0.54, 112, 14, 3)
-    platform.lineStyle(2, 0xff3300, 0.45)
-    platform.lineBetween(turretX - 56, height * 0.54, turretX + 56, height * 0.54)
-    platform.lineStyle(1, 0xff3300, 0.15)
-    platform.lineBetween(turretX - 56, height * 0.54 + 5, turretX + 56, height * 0.54 + 5)
+    // Row Y positions — 3 units per side, evenly spread
+    const rowYs: number[] = []
+    const rowSpacing = height * 0.20
+    const firstRow = height * 0.28
+    for (let i = 0; i < SQUAD_SIZE; i++) rowYs.push(firstRow + i * rowSpacing)
 
-    const drone  = this.add.image(width * 0.12, droneY, 'raid_drone').setScale(0.78)
-    const turret = this.add.image(turretX, turretY, 'raid_turret').setScale(0.78)
-
-    // Warning glow behind turret
-    const warnGlow = this.add.graphics()
-    warnGlow.fillStyle(0xff2200, 0.08)
-    warnGlow.fillEllipse(turretX, turretY, 140, 80)
-
-    this.add.text(turretX, droneY - 68, result.targetName, {
-      fontSize: '13px', fontFamily: 'monospace', color: '#ff5555',
-      stroke: '#000', strokeThickness: 2,
-    }).setOrigin(0.5)
-
-    this.add.text(width * 0.12, droneY - 68, 'Ты', {
+    // Side labels
+    this.add.text(leftX, rowYs[0] - 52, '▶ ТЫ', {
       fontSize: '13px', fontFamily: 'monospace', color: '#00e5ff',
       stroke: '#000', strokeThickness: 2,
     }).setOrigin(0.5)
 
-    // Drone flies toward turret
-    this.tweens.add({
-      targets: drone,
-      x: result.won ? turretX - 28 : width * 0.5,
-      duration: 1700,
-      ease: 'Sine.easeInOut',
-      onComplete: () => {
-        this.time.delayedCall(80, () =>
-          this.playCollision(drone, turretX, droneY, result, width, height)
-        )
-      },
-    })
+    this.add.text(rightX, rowYs[0] - 52, result.targetName + ' ◀', {
+      fontSize: '13px', fontFamily: 'monospace', color: '#ff5555',
+      stroke: '#000', strokeThickness: 2,
+    }).setOrigin(0.5)
 
-    // Turret fires laser after 650ms
-    this.time.delayedCall(650, () => {
-      this.fireLaser(turretX - 52, droneY + 4, result.won, width)
-    })
+    // Center divider
+    const divider = this.add.graphics()
+    divider.lineStyle(1, 0x444444, 0.4)
+    divider.lineBetween(width / 2, 20, width / 2, height * 0.72)
+    divider.fillStyle(0x00e5ff, 0.04)
+    divider.fillRect(width / 2 - 1, 20, 2, height * 0.72 - 20)
 
-    // Turret warning light pulses
+    // VS label in center
+    this.add.text(width / 2, rowYs[1], 'VS', {
+      fontSize: '16px', fontFamily: 'monospace', color: '#555555',
+      stroke: '#000', strokeThickness: 2,
+    }).setOrigin(0.5).setAlpha(0.6)
+
+    // ── Build drone squadron (left side) ──
+    const drones: Phaser.GameObjects.Image[] = []
+    for (let i = 0; i < SQUAD_SIZE; i++) {
+      const drone = this.add.image(leftX, rowYs[i], 'raid_drone')
+        .setScale(0.62)
+        .setAlpha(0)
+      drones.push(drone)
+
+      // Staggered fade-in
+      this.tweens.add({ targets: drone, alpha: 1, duration: 220, delay: i * 110 })
+
+      // Hover
+      this.tweens.add({
+        targets: drone,
+        y: rowYs[i] - 10,
+        duration: 1200 + i * 140,
+        yoyo: true, repeat: -1,
+        ease: 'Sine.easeInOut',
+        delay: i * 180,
+      })
+
+      // Small platform under drone
+      const dp = this.add.graphics()
+      dp.fillStyle(0x003322, 0.7)
+      dp.fillRoundedRect(leftX - 36, rowYs[i] + 40, 72, 8, 2)
+      dp.lineStyle(1, 0x00e5ff, 0.25)
+      dp.lineBetween(leftX - 36, rowYs[i] + 40, leftX + 36, rowYs[i] + 40)
+    }
+
+    // ── Build turret squadron (right side) ──
+    const turrets: Phaser.GameObjects.Image[] = []
+    const warnGlows: Phaser.GameObjects.Graphics[] = []
+
+    for (let i = 0; i < SQUAD_SIZE; i++) {
+      // Platform under turret
+      const tp = this.add.graphics()
+      tp.fillStyle(0x330808, 0.8)
+      tp.fillRoundedRect(rightX - 44, rowYs[i] + 40, 88, 10, 2)
+      tp.lineStyle(1, 0xff3300, 0.35)
+      tp.lineBetween(rightX - 44, rowYs[i] + 40, rightX + 44, rowYs[i] + 40)
+
+      // Warning glow
+      const wg = this.add.graphics()
+      wg.fillStyle(0xff2200, 0.06)
+      wg.fillEllipse(rightX, rowYs[i], 90, 55)
+      warnGlows.push(wg)
+
+      const turret = this.add.image(rightX, rowYs[i], 'raid_turret')
+        .setScale(0.62)
+        .setAlpha(0)
+      turrets.push(turret)
+
+      this.tweens.add({ targets: turret, alpha: 1, duration: 220, delay: 280 + i * 110 })
+    }
+
+    // Warn light pulse
     this.time.addEvent({
-      delay: 280,
-      repeat: 5,
+      delay: 240, repeat: 9,
       callback: () => {
-        warnGlow.clear()
-        warnGlow.fillStyle(0xff2200, Math.random() * 0.12 + 0.04)
-        warnGlow.fillEllipse(turretX, turretY, 140, 80)
+        warnGlows.forEach((wg, i) => {
+          wg.clear()
+          wg.fillStyle(0xff2200, Math.random() * 0.12 + 0.03)
+          wg.fillEllipse(rightX, rowYs[i], 90, 55)
+        })
       },
+    })
+
+    // ── Battle sequence ──
+    // Phase 1: Turrets fire red lasers (right → left)
+    rowYs.forEach((y, i) => {
+      this.time.delayedCall(700 + i * 220, () => {
+        this.fireTurretLaser(rightX - 48, y, leftX + 28)
+      })
+    })
+
+    // Phase 2: Drones fire blue bolts (left → right)
+    rowYs.forEach((y, i) => {
+      this.time.delayedCall(920 + i * 200, () => {
+        this.fireDroneBolt(leftX + 38, y, rightX - 48)
+      })
+    })
+
+    // Phase 3: Result explosions
+    this.time.delayedCall(2400, () => {
+      if (result.won) {
+        // Turrets destroyed one by one
+        turrets.forEach((t, i) => {
+          this.time.delayedCall(i * 220, () => {
+            this.spawnExplosion(t.x, t.y, 0xff8800)
+            t.setVisible(false)
+            warnGlows[i]?.setVisible(false)
+          })
+        })
+      } else {
+        // Drones shot down
+        drones.forEach((d, i) => {
+          this.time.delayedCall(i * 200, () => {
+            this.spawnExplosion(d.x, d.y, 0x00e5ff)
+            this.tweens.add({
+              targets: d,
+              alpha: 0, angle: 80, y: d.y + 55,
+              duration: 420,
+            })
+          })
+        })
+      }
+
+      this.time.delayedCall(1000, () => this.showResult(result, width, height))
     })
   }
 
-  private fireLaser(fromX: number, y: number, playerWins: boolean, sceneW: number) {
-    const toX = playerWins ? fromX - 160 : sceneW * 0.44
-
-    // Animated bolt: tween a plain object and redraw each frame
+  // Turret laser: travels RIGHT → LEFT
+  private fireTurretLaser(fromX: number, y: number, toX: number) {
     const bolt = this.add.graphics()
     const state = { headX: fromX }
 
     const redraw = () => {
       bolt.clear()
-      const tailX = Math.min(state.headX + 50, fromX)
-      // Outer glow
-      bolt.lineStyle(7, 0xff2200, 0.22)
+      const tailX = Math.min(state.headX + 55, fromX)
+      bolt.lineStyle(7, 0xff2200, 0.18)
       bolt.lineBetween(tailX, y, state.headX, y)
-      // Core beam
       bolt.lineStyle(2.5, 0xff6600, 1)
       bolt.lineBetween(tailX, y, state.headX, y)
-      // Bright tip
       bolt.fillStyle(0xffee44, 1)
       bolt.fillCircle(state.headX, y, 4)
-      bolt.fillStyle(0xffffff, 0.8)
-      bolt.fillCircle(state.headX, y, 2)
+      bolt.fillStyle(0xffffff, 0.75)
+      bolt.fillCircle(state.headX, y, 1.8)
     }
 
     soundManager.laser()
     redraw()
 
     this.tweens.add({
-      targets: state,
-      headX: toX,
-      duration: 750,
-      ease: 'Linear',
+      targets: state, headX: toX,
+      duration: 540, ease: 'Linear',
       onUpdate: redraw,
       onComplete: () => bolt.destroy(),
     })
   }
 
-  private playCollision(
-    drone: Phaser.GameObjects.Image,
-    turretX: number,
-    droneY: number,
-    result: RaidResult,
-    w: number,
-    h: number,
-  ) {
-    const cx = result.won ? turretX : drone.x
-    this.spawnExplosion(cx, droneY, result.won ? 0xff8800 : 0x00e5ff)
+  // Drone bolt: travels LEFT → RIGHT
+  private fireDroneBolt(fromX: number, y: number, toX: number) {
+    const bolt = this.add.graphics()
+    const state = { headX: fromX }
 
-    if (result.won) {
-      // Turret takes the hit — shake and fade
-      this.tweens.add({
-        targets: drone,
-        alpha: 0,
-        duration: 200,
-        yoyo: true,
-        repeat: 2,
-        onComplete: () => drone.setAlpha(1),
-      })
-    } else {
-      // Drone shot down
-      this.tweens.add({
-        targets: drone,
-        alpha: 0,
-        angle: 90,
-        y: droneY + 70,
-        duration: 500,
-      })
+    const redraw = () => {
+      bolt.clear()
+      const tailX = Math.max(state.headX - 42, fromX)
+      bolt.lineStyle(6, 0x00e5ff, 0.22)
+      bolt.lineBetween(tailX, y, state.headX, y)
+      bolt.lineStyle(2, 0x44ccff, 1)
+      bolt.lineBetween(tailX, y, state.headX, y)
+      bolt.fillStyle(0xffffff, 0.9)
+      bolt.fillCircle(state.headX, y, 3.5)
     }
 
-    this.time.delayedCall(700, () => this.showResult(result, w, h))
+    redraw()
+
+    this.tweens.add({
+      targets: state, headX: toX,
+      duration: 500, ease: 'Linear',
+      onUpdate: redraw,
+      onComplete: () => bolt.destroy(),
+    })
   }
 
   private spawnExplosion(x: number, y: number, color: number) {
     soundManager.explosion()
-    // Expanding rings
     for (let i = 0; i < 4; i++) {
       const ring = this.add.graphics()
       ring.lineStyle(3 - i * 0.5, color, 1)
       ring.strokeCircle(0, 0, 8)
-      ring.x = x
-      ring.y = y
+      ring.x = x; ring.y = y
       this.tweens.add({
         targets: ring,
-        scaleX: 5 + i * 1.5,
-        scaleY: 5 + i * 1.5,
-        alpha: 0,
-        duration: 600 + i * 100,
-        delay: i * 70,
+        scaleX: 4.5 + i, scaleY: 4.5 + i, alpha: 0,
+        duration: 520 + i * 90, delay: i * 65,
         ease: 'Cubic.Out',
         onComplete: () => ring.destroy(),
       })
     }
-    // Sparks
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2
-      const dist  = 45 + Math.random() * 35
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2
+      const dist  = 32 + Math.random() * 28
       const spark = this.add.graphics()
       spark.fillStyle(color, 1)
-      spark.fillCircle(0, 0, 2.5 + Math.random() * 2)
-      spark.x = x
-      spark.y = y
+      spark.fillCircle(0, 0, 2 + Math.random() * 2)
+      spark.x = x; spark.y = y
       this.tweens.add({
         targets: spark,
         x: x + Math.cos(angle) * dist,
         y: y + Math.sin(angle) * dist,
         alpha: 0,
-        duration: 450 + Math.random() * 200,
+        duration: 380 + Math.random() * 200,
         ease: 'Cubic.Out',
         onComplete: () => spark.destroy(),
       })
     }
-    // Flash
     const flash = this.add.graphics()
-    flash.fillStyle(0xffffff, 0.6)
-    flash.fillCircle(x, y, 30)
+    flash.fillStyle(0xffffff, 0.5)
+    flash.fillCircle(x, y, 22)
     this.tweens.add({
-      targets: flash,
-      alpha: 0,
-      scaleX: 2.5,
-      scaleY: 2.5,
-      duration: 200,
+      targets: flash, alpha: 0, scaleX: 2, scaleY: 2,
+      duration: 170,
       onComplete: () => flash.destroy(),
     })
   }
 
   private showResult(result: RaidResult, w: number, h: number) {
-    // Dark overlay
     const overlay = this.add.graphics()
     overlay.fillStyle(0x000000, 0)
     overlay.fillRect(0, 0, w, h)
     this.tweens.add({ targets: overlay, alpha: 0.55, duration: 380 })
 
-    // Result card background
     const cardY = h * 0.36
     const card  = this.add.graphics().setAlpha(0)
     card.lineStyle(1.5, result.won ? 0x39ff14 : 0xff4444, 0.7)
@@ -228,7 +285,6 @@ export class RaidScene extends Phaser.Scene {
     card.strokeRoundedRect(w / 2 - 110, cardY - 20, 220, 140, 10)
     this.tweens.add({ targets: card, alpha: 1, duration: 320 })
 
-    // Win/lose text
     const resultText = this.add.text(
       w / 2, cardY + 18,
       result.won ? '✓  ПОБЕДА' : '✗  ПОРАЖЕНИЕ',
@@ -240,13 +296,10 @@ export class RaidScene extends Phaser.Scene {
     ).setOrigin(0.5).setAlpha(0).setScale(0.4)
 
     this.tweens.add({
-      targets: resultText,
-      alpha: 1, scaleX: 1, scaleY: 1,
-      duration: 380,
-      ease: 'Back.Out',
+      targets: resultText, alpha: 1, scaleX: 1, scaleY: 1,
+      duration: 380, ease: 'Back.Out',
     })
 
-    // Sub-text
     const subText = this.add.text(
       w / 2, cardY + 56,
       result.won ? `+${result.amount} монет украдено` : 'Дрон повреждён',
@@ -259,7 +312,6 @@ export class RaidScene extends Phaser.Scene {
     this.time.delayedCall(280, () => {
       this.tweens.add({ targets: subText, alpha: 1, duration: 300 })
 
-      // Continue button
       this.time.delayedCall(500, () => {
         const btn = this.add.text(w / 2, cardY + 96, 'Продолжить  →', {
           fontSize: '14px', fontFamily: 'monospace', color: '#00e5ff',
@@ -282,17 +334,17 @@ export class RaidScene extends Phaser.Scene {
 
     // Ground
     bg.fillStyle(0x1a0404, 1)
-    bg.fillRect(0, h * 0.57, w, h * 0.43)
+    bg.fillRect(0, h * 0.72, w, h * 0.28)
     bg.lineStyle(2, 0xff3300, 0.3)
-    bg.lineBetween(0, h * 0.57, w, h * 0.57)
+    bg.lineBetween(0, h * 0.72, w, h * 0.72)
 
-    // Hex grid (sparse)
+    // Grid
     const grid = this.add.graphics()
     grid.lineStyle(1, 0xff3300, 0.05)
     for (let x = 0; x < w; x += 38) grid.lineBetween(x, 0, x, h)
     for (let y = 0; y < h; y += 38) grid.lineBetween(0, y, w, y)
 
-    // Distant city silhouette (simple boxes)
+    // City silhouette at ground level
     const city = this.add.graphics()
     city.fillStyle(0x220505, 1)
     const buildings = [
@@ -301,11 +353,10 @@ export class RaidScene extends Phaser.Scene {
       { x: 200, w: 36, h: 80 }, { x: 242, w: 22, h: 48 }, { x: 270, w: 30, h: 55 },
       { x: 306, w: 20, h: 38 }, { x: 332, w: 40, h: 65 }, { x: 378, w: 18, h: 44 },
     ]
-    const groundLine = h * 0.57
+    const groundLine = h * 0.72
     buildings.forEach((b) => {
       city.fillRect(b.x, groundLine - b.h, b.w, b.h)
     })
-    // Tiny window lights
     city.fillStyle(0xff4400, 0.4)
     buildings.forEach((b) => {
       city.fillRect(b.x + 4, groundLine - b.h + 8, 4, 4)
@@ -314,9 +365,8 @@ export class RaidScene extends Phaser.Scene {
   }
 
   private generateTextures() {
-    if (this.textures.exists('raid_drone')) return  // already generated in this session
+    if (this.textures.exists('raid_drone')) return
 
-    // Drone (reuse same painting logic)
     const dg = this.make.graphics({ x: 0, y: 0, add: false })
     paintDrone(dg, false)
     dg.generateTexture('raid_drone', 128, 128)
@@ -325,13 +375,11 @@ export class RaidScene extends Phaser.Scene {
     // Fortress turret (128×128, gun barrels face LEFT)
     const tg = this.make.graphics({ x: 0, y: 0, add: false })
 
-    // Base platform
     tg.fillStyle(0x220505, 1)
     tg.fillRect(6, 96, 116, 26)
     tg.lineStyle(2, 0xff2200, 0.4)
     tg.lineBetween(6, 96, 122, 96)
 
-    // Platform armored slabs
     tg.fillStyle(0x330808, 1)
     tg.fillRect(8, 98, 34, 20)
     tg.fillRect(46, 98, 34, 20)
@@ -340,15 +388,10 @@ export class RaidScene extends Phaser.Scene {
     tg.lineBetween(42, 98, 42, 118)
     tg.lineBetween(80, 98, 80, 118)
 
-    // Tower body depth
     tg.fillStyle(0x3a0808, 1)
     tg.fillRect(20, 42, 88, 58)
-
-    // Tower body face
     tg.fillStyle(0x5a0e0e, 1)
     tg.fillRect(20, 36, 88, 60)
-
-    // Side armour panels
     tg.fillStyle(0x480c0c, 1)
     tg.fillRect(20, 36, 14, 60)
     tg.fillRect(94, 36, 14, 60)
@@ -356,52 +399,43 @@ export class RaidScene extends Phaser.Scene {
     tg.lineBetween(21, 40, 21, 94)
     tg.lineBetween(34, 40, 34, 94)
 
-    // Fortress cap (battlements)
     tg.fillStyle(0x6e1212, 1)
     tg.fillRoundedRect(16, 20, 96, 22, 4)
     tg.fillStyle(0x881818, 1)
     tg.fillRoundedRect(16, 14, 96, 18, 4)
 
-    // Warning stripes on cap
     tg.fillStyle(0xff3300, 0.55)
     tg.fillRect(20, 15, 16, 8)
     tg.fillRect(54, 15, 16, 8)
     tg.fillRect(88, 15, 16, 8)
 
-    // Battlements (notches on cap top)
     tg.fillStyle(0x3a0808, 1)
     tg.fillRect(22, 10, 12, 8)
     tg.fillRect(58, 10, 12, 8)
     tg.fillRect(94, 10, 12, 8)
 
-    // Gun barrels (pointing LEFT)
     tg.fillStyle(0x1a1a1a, 1)
     tg.fillRoundedRect(0, 42, 36, 12, 3)
     tg.fillStyle(0x333333, 1)
     tg.fillRoundedRect(0, 43, 34, 6, 2)
-
     tg.fillStyle(0x181818, 1)
     tg.fillRoundedRect(0, 60, 30, 10, 3)
     tg.fillStyle(0x2e2e2e, 1)
     tg.fillRoundedRect(0, 61, 28, 5, 2)
 
-    // Muzzle rings
     tg.lineStyle(2, 0xff3300, 0.55)
     tg.strokeCircle(4, 48, 6)
     tg.strokeCircle(4, 65, 5)
 
-    // Warning lights on cap
     tg.fillStyle(0xff0000, 1)
     tg.fillCircle(28, 20, 5)
     tg.fillStyle(0xff0000, 0.3)
     tg.fillCircle(28, 20, 9)
-
     tg.fillStyle(0xff8800, 1)
     tg.fillCircle(100, 20, 4)
     tg.fillStyle(0xff8800, 0.25)
     tg.fillCircle(100, 20, 7)
 
-    // Radar dish (right side)
     tg.fillStyle(0x282828, 1)
     tg.fillEllipse(104, 58, 22, 30)
     tg.fillStyle(0x383838, 1)
@@ -410,7 +444,6 @@ export class RaidScene extends Phaser.Scene {
     tg.lineBetween(104, 48, 104, 66)
     tg.lineBetween(95, 57, 113, 57)
 
-    // Energy core (glowing center)
     tg.fillStyle(0x880000, 0.9)
     tg.fillCircle(64, 62, 10)
     tg.fillStyle(0xff2200, 0.6)
