@@ -219,8 +219,9 @@ export class FarmScene extends Phaser.Scene {
       obj.setDepth(5)
 
       if (kind === 'drone') {
-        // Kill old tween and restart hover from new position
-        this.tweens.killTweensOf(obj)
+        // Stop only the hover tween — never kill all tweens,
+        // otherwise an in-progress tap animation gets cancelled mid-squish
+        this.hoverTweens.get(id)?.stop()
         const tween = this.tweens.add({
           targets: obj, y: obj.y - 14,
           duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
@@ -260,9 +261,19 @@ export class FarmScene extends Phaser.Scene {
     soundManager.coin()
     this.emitter.setPosition(x, y)
     this.emitter.explode(6)
+    // Squish down, then explicitly restore to original scale.
+    // Avoid yoyo — it relies on captured start values which can be
+    // wrong if another tween modified scale before this fires.
     this.tweens.add({
-      targets: sprite, scaleX: 0.92, scaleY: 0.62,
-      duration: 80, yoyo: true, ease: 'Bounce.Out',
+      targets: sprite, scaleX: 0.86, scaleY: 0.58,
+      duration: 65, ease: 'Power2.Out',
+      onComplete: () => {
+        if (!sprite.scene) return
+        this.tweens.add({
+          targets: sprite, scaleX: 0.78, scaleY: 0.78,
+          duration: 130, ease: 'Back.Out',
+        })
+      },
     })
     this.spawnFloatingText(x, y - 20, `+${bonus.toFixed(1)}`, '#ffd700')
   }
