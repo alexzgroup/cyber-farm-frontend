@@ -1,5 +1,6 @@
 import { useGameStore } from '../store/gameStore'
 import { DRONE_UPGRADE_TEMPLATES, TURRET_UPGRADE_TEMPLATES } from '../data/unitUpgrades'
+import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
 import styles from './EquipmentScreen.module.css'
 
 const DRONE_TYPE_COLORS: Record<number, string> = {
@@ -75,9 +76,11 @@ export function EquipmentScreen() {
                 onClick={() => handleSelectDrone(drone.id)}
               >
                 <div className={styles.cardGlow} />
-                <div className={styles.cardIcon}>
-                  {drone.isBroken ? '⚠' : drone.droneType === 1 ? '🔵' : drone.droneType === 2 ? '🔴' : '🟣'}
-                </div>
+                <UnitCircle color={color} size={46}>
+                  {drone.isBroken
+                    ? <span style={{ fontSize: 20 }}>⚠</span>
+                    : <DroneIcon color={color} size={26} />}
+                </UnitCircle>
                 <div className={styles.cardName}>
                   {DRONE_TYPE_NAMES[drone.droneType] ?? 'Дрон'} #{idx + 1}
                 </div>
@@ -116,9 +119,9 @@ export function EquipmentScreen() {
                 onClick={() => handleSelectTurret(turret.id)}
               >
                 <div className={styles.cardGlow} />
-                <div className={styles.cardIcon}>
-                  {turret.level === 1 ? '🟢' : turret.level === 2 ? '🟡' : '🔴'}
-                </div>
+                <UnitCircle color={color} size={46}>
+                  <TurretIcon color={color} level={turret.level} size={26} />
+                </UnitCircle>
                 <div className={styles.cardName}>
                   {TURRET_LEVEL_NAMES[turret.level] ?? 'Башня'} #{idx + 1}
                 </div>

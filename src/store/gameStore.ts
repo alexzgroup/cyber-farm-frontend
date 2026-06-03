@@ -49,7 +49,7 @@ export interface RaidResult {
   attackerLevel: number
 }
 
-export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'equipment' | 'unit-detail'
+export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'equipment' | 'unit-detail'
 
 // unit upgrade levels: { 'drone-1': { 'cargo': 2, 'stealth': 0 } }
 export type UnitUpgrades = Record<string, Record<string, number>>

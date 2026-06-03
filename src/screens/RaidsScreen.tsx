@@ -6,11 +6,30 @@ import styles from './RaidsScreen.module.css'
 
 type View = 'targets' | 'battle' | 'result'
 
+const TARGETS_PER_PAGE = 8
+const LOG_PER_PAGE     = 20
+
+function Pagination({ page, total, pageSize, onChange }: {
+  page: number; total: number; pageSize: number; onChange: (p: number) => void
+}) {
+  const totalPages = Math.ceil(total / pageSize)
+  if (totalPages <= 1) return null
+  return (
+    <div className={styles.pagination}>
+      <button className={styles.pageBtn} disabled={page === 0} onClick={() => onChange(page - 1)}>←</button>
+      <span className={styles.pageInfo}>{page + 1} / {totalPages}</span>
+      <button className={styles.pageBtn} disabled={page >= totalPages - 1} onClick={() => onChange(page + 1)}>→</button>
+    </div>
+  )
+}
+
 export function RaidsScreen() {
   const [view, setView]           = useState<View>('targets')
   const [raidResult, setResult]   = useState<RaidResult | null>(null)
   const [attackerDrones, setAttackerDrones] = useState<Drone[]>([])
   const [targetTurrets, setTargetTurrets]   = useState<Array<{ level: 1|2|3 }>>([])
+  const [targetsPage, setTargetsPage] = useState(0)
+  const [logPage,     setLogPage]     = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const drones      = useGameStore((s) => s.drones)
@@ -18,6 +37,10 @@ export function RaidsScreen() {
   const executeRaid = useGameStore((s) => s.executeRaid)
 
   const workingDrones = drones.filter((d) => !d.isBroken)
+
+  const attackerLevel = workingDrones.length > 0
+    ? Math.max(...workingDrones.map((d) => d.level))
+    : 0
 
   const handleAttack = (targetId: string) => {
     const result = executeRaid(targetId)
@@ -35,6 +58,16 @@ export function RaidsScreen() {
     setView('targets')
     setResult(null)
   }
+
+  const pagedTargets = MOCK_PLAYERS.slice(
+    targetsPage * TARGETS_PER_PAGE,
+    (targetsPage + 1) * TARGETS_PER_PAGE
+  )
+
+  const pagedLog = raidLog.slice(
+    logPage * LOG_PER_PAGE,
+    (logPage + 1) * LOG_PER_PAGE
+  )
 
   return (
     <div ref={containerRef} className={styles.screen}>
@@ -78,13 +111,15 @@ export function RaidsScreen() {
             </div>
           )}
 
+          {/* Targets section */}
           <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>Выбери цель</h3>
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>Выбери цель</h3>
+              <span className={styles.sectionCount}>{MOCK_PLAYERS.length} игроков</span>
+            </div>
+
             <div className={styles.targets}>
-              {MOCK_PLAYERS.map((player) => {
-                const attackerLevel = workingDrones.length > 0
-                  ? Math.max(...workingDrones.map((d) => d.level))
-                  : 0
+              {pagedTargets.map((player) => {
                 const winChance = Math.min(85, Math.max(20,
                   Math.round((0.5 + (attackerLevel - player.defenseLevel) * 0.2) * 100)
                 ))
@@ -100,7 +135,10 @@ export function RaidsScreen() {
                         <span>🤖 {player.droneCount}</span>
                       </div>
                       <p className={styles.reward}>
-                        ~{reward} монет · {winChance}% победы
+                        ~{reward} монет ·{' '}
+                        <span style={{ color: winChance >= 60 ? '#39ff14' : winChance >= 40 ? '#ffaa00' : '#ff4444' }}>
+                          {winChance}% победы
+                        </span>
                       </p>
                     </div>
                     <button
@@ -115,22 +153,41 @@ export function RaidsScreen() {
                 )
               })}
             </div>
+
+            <Pagination
+              page={targetsPage}
+              total={MOCK_PLAYERS.length}
+              pageSize={TARGETS_PER_PAGE}
+              onChange={(p) => { setTargetsPage(p); }}
+            />
           </section>
 
+          {/* Log section */}
           {raidLog.length > 0 && (
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>Лог сражений</h3>
+              <div className={styles.sectionHeader}>
+                <h3 className={styles.sectionTitle}>Лог сражений</h3>
+                <span className={styles.sectionCount}>{raidLog.length} рейдов</span>
+              </div>
+
               <div className={styles.log}>
-                {raidLog.map((entry) => (
+                {pagedLog.map((entry) => (
                   <div key={entry.id} className={`${styles.logEntry} ${entry.won ? styles.logWin : styles.logLose}`}>
                     <span className={styles.logIcon}>{entry.won ? '✓' : '✗'}</span>
                     <span className={styles.logName}>{entry.targetName}</span>
                     <span className={styles.logResult}>
-                      {entry.won ? `+${entry.amount}` : 'дрон сломан'}
+                      {entry.won ? `+${entry.amount} ⬡` : 'дрон сломан'}
                     </span>
                   </div>
                 ))}
               </div>
+
+              <Pagination
+                page={logPage}
+                total={raidLog.length}
+                pageSize={LOG_PER_PAGE}
+                onChange={setLogPage}
+              />
             </section>
           )}
         </>

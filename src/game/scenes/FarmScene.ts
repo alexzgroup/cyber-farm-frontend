@@ -6,90 +6,200 @@ import { soundManager } from '../utils/soundManager'
 interface FloatingText { text: Phaser.GameObjects.Text; vy: number; life: number }
 
 const GRID_COLS   = 3
-const DRONE_CELL  = 140   // vertical spacing for drones
-const TURRET_CELL = 120   // vertical spacing for turrets
+const DRONE_CELL  = 150
+const TURRET_CELL = 130
 const POSITIONS_KEY = 'cyber-farm-positions'
+const DRONE_START_Y = 120   // world Y where drones begin
 
 export class FarmScene extends Phaser.Scene {
-  private droneSprites:  Map<string, Phaser.GameObjects.Image> = new Map()
-  private turretSprites: Map<string, Phaser.GameObjects.Image> = new Map()
-  private brokenLabels:  Map<string, Phaser.GameObjects.Text>  = new Map()
-  private levelLabels:   Map<string, Phaser.GameObjects.Text>  = new Map()
-  private turretLabels:  Map<string, Phaser.GameObjects.Text>  = new Map()
-  private hoverTweens:   Map<string, Phaser.Tweens.Tween>      = new Map()
-  private floatingTexts: FloatingText[] = []
-  private emitter!: Phaser.GameObjects.Particles.ParticleEmitter
+  private droneSprites:   Map<string, Phaser.GameObjects.Image> = new Map()
+  private turretSprites:  Map<string, Phaser.GameObjects.Image> = new Map()
+  private brokenLabels:   Map<string, Phaser.GameObjects.Text>  = new Map()
+  private levelLabels:    Map<string, Phaser.GameObjects.Text>  = new Map()
+  private turretLabels:   Map<string, Phaser.GameObjects.Text>  = new Map()
+  private hoverTweens:    Map<string, Phaser.Tweens.Tween>      = new Map()
+  private floatingTexts:  FloatingText[] = []
+  private emitter!:       Phaser.GameObjects.Particles.ParticleEmitter
   private unsubscribeStore?: () => void
-  private isAlive = false
+  private isAlive         = false
+  private isDraggingUnit  = false
+  private worldH          = 2000
 
   constructor() { super({ key: 'FarmScene' }) }
 
   create() {
     const { width: W, height: H } = this.scale
-    this.drawBackground(W, H)
-    this.createGridLines(W, H)
+    const { drones, turrets } = useGameStore.getState()
+
+    this.worldH = this.calcWorldH(H, drones.length, turrets.length)
+
+    this.drawBackground(W, this.worldH, drones.length)
+    this.createGridLines(W, this.worldH)
     this.createParticles()
     this.spawnInitialDrones()
     this.spawnInitialTurrets()
     this.setupDrag()
+    this.setupCameraControls(W, this.worldH)
 
     this.isAlive = true
     this.unsubscribeStore = useGameStore.subscribe((state) => {
       this.syncDrones(state.drones)
     })
 
-    // Passive income floats — one per second per drone
+    // Passive income floats — every second
     this.time.addEvent({
-      delay: 1000,
-      repeat: -1,
+      delay: 1000, repeat: -1,
       callback: this.tickPassiveFloats,
       callbackScope: this,
     })
 
-    const cleanup = () => { this.isAlive = false; this.unsubscribeStore?.() }
+    const cleanup = () => {
+      this.isAlive = false
+      this.unsubscribeStore?.()
+    }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup)
     this.events.once(Phaser.Scenes.Events.DESTROY, cleanup)
   }
 
-  // ─── Background ─────────────────────────────────────────────────────────────
-  private drawBackground(W: number, H: number) {
-    const bg = this.add.graphics()
-    bg.fillGradientStyle(0x0d1117, 0x0d1117, 0x0a2a1a, 0x0a2a1a, 1)
-    bg.fillRect(0, 0, W, H)
-    bg.fillStyle(0x143020, 0.8)
-    bg.fillRect(0, H * 0.62, W, H * 0.38)
-    bg.lineStyle(2, 0x00e5ff, 0.3)
-    bg.lineBetween(0, H * 0.62, W, H * 0.62)
+  // ─── World height calculation ────────────────────────────────────────────────
+  private calcWorldH(H: number, droneCount: number, turretCount: number): number {
+    const dc = Math.max(droneCount, 1)
+    const tc = Math.max(turretCount, 0)
+    const droneRows  = Math.ceil(dc / GRID_COLS)
+    const turretRows = Math.ceil(tc / GRID_COLS)
+    const droneZoneH  = DRONE_START_Y + droneRows * DRONE_CELL
+    const separatorH  = 80
+    const turretZoneH = tc > 0 ? separatorH + turretRows * TURRET_CELL + 120 : 80
+    return Math.max(H * 2.2, droneZoneH + turretZoneH)
+  }
 
-    // Drone zone hint
+  private separatorY(droneCount: number): number {
+    const rows = Math.ceil(Math.max(droneCount, 1) / GRID_COLS)
+    return DRONE_START_Y + rows * DRONE_CELL + 60
+  }
+
+  // ─── Background (extends 2000px beyond world to avoid black edges) ──────────
+  private drawBackground(W: number, worldH: number, droneCount: number) {
+    const sepY = this.separatorY(droneCount)
+    const PAD  = 2000
+
+    const bg = this.add.graphics()
+    // Base dark fill
+    bg.fillStyle(0x0d1117, 1)
+    bg.fillRect(-PAD, -PAD, W + PAD * 2, worldH + PAD * 2)
+
+    // Drone zone overlay
+    bg.fillStyle(0x0d1420, 1)
+    bg.fillRect(-PAD, -PAD, W + PAD * 2, sepY + PAD)
+
+    // Defense zone overlay
+    bg.fillStyle(0x0a1e10, 1)
+    bg.fillRect(-PAD, sepY, W + PAD * 2, worldH - sepY + PAD)
+
+    // Separator line
+    bg.lineStyle(2, 0x00e5ff, 0.28)
+    bg.lineBetween(-PAD, sepY, W + PAD, sepY)
+
+    // Zone labels
     this.add.text(10, 68, 'DRONE ZONE', {
       fontSize: '9px', fontFamily: 'monospace', color: '#00e5ff',
     }).setAlpha(0.28).setDepth(0)
 
-    // Turret zone hint
-    this.add.text(10, H * 0.62 + 8, 'DEFENSE ZONE', {
+    this.add.text(10, sepY + 8, 'DEFENSE ZONE', {
       fontSize: '9px', fontFamily: 'monospace', color: '#00cc44',
     }).setAlpha(0.28).setDepth(0)
   }
 
-  private createGridLines(W: number, H: number) {
-    const grid = this.add.graphics()
-    grid.lineStyle(1, 0x00e5ff, 0.06)
+  private createGridLines(W: number, worldH: number) {
+    // Extend grid 2000px beyond world so zooming out never shows raw black
+    const PAD  = 2000
     const step = 40
-    for (let x = 0; x < W; x += step) grid.lineBetween(x, 0, x, H)
-    for (let y = 0; y < H; y += step) grid.lineBetween(0, y, W, y)
+    const grid = this.add.graphics()
+    grid.lineStyle(1, 0x00e5ff, 0.055)
+    for (let x = -PAD; x < W + PAD; x += step) grid.lineBetween(x, -PAD, x, worldH + PAD)
+    for (let y = -PAD; y < worldH + PAD; y += step) grid.lineBetween(-PAD, y, W + PAD, y)
   }
 
   private createParticles() {
     this.emitter = this.add.particles(0, 0, 'coin_particle', {
-      speed: { min: 60, max: 120 },
-      scale: { start: 0.6, end: 0 },
-      alpha: { start: 1, end: 0 },
-      lifespan: 600, quantity: 6, emitting: false,
+      speed: { min: 60, max: 120 }, scale: { start: 0.6, end: 0 },
+      alpha: { start: 1, end: 0 }, lifespan: 600, quantity: 6, emitting: false,
     })
   }
 
-  // ─── Spawn drones ────────────────────────────────────────────────────────────
+  // ─── Camera pan/zoom controls ────────────────────────────────────────────
+  private setupCameraControls(W: number, worldH: number) {
+    const cam = this.cameras.main
+    cam.setBounds(0, 0, W, worldH)
+
+    let lastPinchDist = 0
+
+    this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      // Pinch zoom (2 touch points)
+      const ptrs = (this.input.manager.pointers as Phaser.Input.Pointer[]).filter(p => p.isDown)
+      if (ptrs.length >= 2) {
+        const dist = Phaser.Math.Distance.Between(ptrs[0].x, ptrs[0].y, ptrs[1].x, ptrs[1].y)
+        if (lastPinchDist > 0) {
+          const scale = dist / lastPinchDist
+          cam.zoom = Phaser.Math.Clamp(cam.zoom * scale, 0.2, 3.0)
+          document.dispatchEvent(new CustomEvent('farm-zoom-changed', { detail: { zoom: cam.zoom } }))
+        }
+        lastPinchDist = dist
+        return
+      }
+      lastPinchDist = 0
+
+      // Single-pointer pan (skip if dragging a unit)
+      if (!ptr.isDown || this.isDraggingUnit) return
+      cam.scrollX -= ptr.velocity.x / cam.zoom
+      cam.scrollY -= ptr.velocity.y / cam.zoom
+    })
+
+    this.input.on('pointerup', () => { lastPinchDist = 0 })
+
+    // Central zoom setter — applies clamp and broadcasts zoom level to React
+    const setZoom = (z: number) => {
+      cam.zoom = Phaser.Math.Clamp(z, 0.2, 3.0)
+      document.dispatchEvent(new CustomEvent('farm-zoom-changed', { detail: { zoom: cam.zoom } }))
+    }
+
+    // Desktop wheel: scroll = pan, Ctrl+scroll = zoom
+    const canvas = this.sys.canvas
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault()
+        const factor = e.deltaY > 0 ? 0.91 : 1.10
+        setZoom(cam.zoom * factor)
+      } else {
+        cam.scrollY += e.deltaY / cam.zoom
+        if (e.deltaX) cam.scrollX += e.deltaX / cam.zoom
+      }
+    }
+    canvas.addEventListener('wheel', onWheel, { passive: false })
+
+    // React zoom buttons bridge
+    const onZoom = (e: Event) => {
+      const { delta } = (e as CustomEvent<{ delta: number }>).detail
+      setZoom(cam.zoom + delta)
+    }
+    canvas.addEventListener('farm-zoom', onZoom)
+
+    // React reset-view button bridge
+    const onReset = () => {
+      setZoom(1.0)
+      cam.scrollX = 0
+      cam.scrollY = 0
+    }
+    canvas.addEventListener('farm-reset-view', onReset)
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      canvas.removeEventListener('wheel', onWheel)
+      canvas.removeEventListener('farm-zoom', onZoom)
+      canvas.removeEventListener('farm-reset-view', onReset)
+    })
+  }
+
+  // ─── Spawn drones ─────────────────────────────────────────────────────────
   private spawnInitialDrones() {
     const { drones } = useGameStore.getState()
     const saved = this.loadPositions()
@@ -100,36 +210,27 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private defaultDronePos(idx: number, total: number): { x: number, y: number } {
-    const W = this.scale.width, H = this.scale.height
+    const W = this.scale.width
     const cols = Math.min(total, GRID_COLS)
-    const rows = Math.ceil(total / cols)
     const cellW = W / (cols + 1)
-    const groundY = H * 0.62
-    const availH = groundY - 80
-    const gridH = rows * DRONE_CELL
-    const startY = (availH - gridH) / 2 + 80 + DRONE_CELL / 2
     return {
       x: (idx % cols + 1) * cellW,
-      y: startY + Math.floor(idx / cols) * DRONE_CELL,
+      y: DRONE_START_Y + Math.floor(idx / cols) * DRONE_CELL + DRONE_CELL / 2,
     }
   }
 
   private addDroneSprite(drone: Drone, x: number, y: number) {
     const tex = getDroneTextureName(drone.droneType, drone.isBroken)
-    const sprite = this.add.image(x, y, tex)
-      .setScale(0.78)
-      .setDepth(5)
+    const sprite = this.add.image(x, y, tex).setScale(0.78).setDepth(5)
     sprite.setInteractive({ useHandCursor: true, draggable: true })
-
     sprite.setData('objectId', drone.id)
     sprite.setData('kind', 'drone')
     this.droneSprites.set(drone.id, sprite)
 
     sprite.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
-      this.onDroneTap(sprite, drone.id, ptr.x, ptr.y)
+      this.onDroneTap(sprite, drone.id, ptr.worldX, ptr.worldY)
     })
 
-    // Hover tween
     const tween = this.tweens.add({
       targets: sprite, y: y - 14,
       duration: 1400 + this.droneSprites.size * 200,
@@ -137,7 +238,6 @@ export class FarmScene extends Phaser.Scene {
     })
     this.hoverTweens.set(drone.id, tween)
 
-    // Level label
     const lvlLabel = this.add.text(x, y + 48, `LVL ${drone.level}`, {
       fontSize: '10px', fontFamily: 'monospace', color: '#00e5ff',
       stroke: '#000000', strokeThickness: 2,
@@ -155,35 +255,31 @@ export class FarmScene extends Phaser.Scene {
     this.brokenLabels.set(id, label)
   }
 
-  // ─── Spawn turrets ───────────────────────────────────────────────────────────
+  // ─── Spawn turrets ─────────────────────────────────────────────────────────
   private spawnInitialTurrets() {
-    const { turrets } = useGameStore.getState()
+    const { turrets, drones } = useGameStore.getState()
     const saved = this.loadPositions()
     turrets.forEach((turret, i) => {
-      const pos = saved[turret.id] ?? this.defaultTurretPos(i, turrets.length)
+      const pos = saved[turret.id] ?? this.defaultTurretPos(i, turrets.length, drones.length)
       this.addTurretSprite(turret, pos.x, pos.y)
     })
   }
 
-  private defaultTurretPos(idx: number, total: number): { x: number, y: number } {
-    const W = this.scale.width, H = this.scale.height
-    const cols = Math.min(total, GRID_COLS)
+  private defaultTurretPos(idx: number, total: number, droneCount: number): { x: number, y: number } {
+    const W = this.scale.width
+    const sepY = this.separatorY(droneCount)
+    const cols = Math.min(Math.max(total, 1), GRID_COLS)
     const cellW = W / (cols + 1)
-    const groundY = H * 0.62
-    const startY = groundY + 80
     return {
       x: (idx % cols + 1) * cellW,
-      y: startY + Math.floor(idx / cols) * TURRET_CELL,
+      y: sepY + 60 + Math.floor(idx / cols) * TURRET_CELL + TURRET_CELL / 2,
     }
   }
 
   private addTurretSprite(turret: Turret, x: number, y: number) {
     const tex = getFarmTurretTextureName(turret.level)
-    const sprite = this.add.image(x, y, tex)
-      .setScale(0.65)
-      .setInteractive({ useHandCursor: true, draggable: true })
-      .setDepth(5)
-
+    const sprite = this.add.image(x, y, tex).setScale(0.65).setDepth(5)
+    sprite.setInteractive({ useHandCursor: true, draggable: true })
     sprite.setData('objectId', turret.id)
     sprite.setData('kind', 'turret')
     this.turretSprites.set(turret.id, sprite)
@@ -195,32 +291,30 @@ export class FarmScene extends Phaser.Scene {
     this.turretLabels.set(turret.id, lbl)
   }
 
-  // ─── Drag setup ─────────────────────────────────────────────────────────────
+  // ─── Drag setup ───────────────────────────────────────────────────────────
   private setupDrag() {
     const W = () => this.scale.width
-    const H = () => this.scale.height
 
     this.input.on('dragstart', (_ptr: Phaser.Input.Pointer, obj: Phaser.GameObjects.Image) => {
+      this.isDraggingUnit = true
       const id = obj.getData('objectId') as string
-      // Pause hover tween for drones
       this.hoverTweens.get(id)?.pause()
       obj.setDepth(20)
     })
 
     this.input.on('drag', (_ptr: Phaser.Input.Pointer, obj: Phaser.GameObjects.Image, dx: number, dy: number) => {
       obj.x = Phaser.Math.Clamp(dx, 36, W() - 36)
-      obj.y = Phaser.Math.Clamp(dy, 36, H() - 36)
+      obj.y = Phaser.Math.Clamp(dy, 36, this.worldH - 36)
       this.syncLabelsToSprites()
     })
 
     this.input.on('dragend', (_ptr: Phaser.Input.Pointer, obj: Phaser.GameObjects.Image) => {
+      this.isDraggingUnit = false
       const id   = obj.getData('objectId') as string
       const kind = obj.getData('kind') as string
       obj.setDepth(5)
 
       if (kind === 'drone') {
-        // Stop only the hover tween — never kill all tweens,
-        // otherwise an in-progress tap animation gets cancelled mid-squish
         this.hoverTweens.get(id)?.stop()
         const tween = this.tweens.add({
           targets: obj, y: obj.y - 14,
@@ -233,7 +327,7 @@ export class FarmScene extends Phaser.Scene {
     })
   }
 
-  // ─── Label sync ─────────────────────────────────────────────────────────────
+  // ─── Label sync ───────────────────────────────────────────────────────────
   private syncLabelsToSprites() {
     this.droneSprites.forEach((sprite, id) => {
       const lvl = this.levelLabels.get(id)
@@ -247,11 +341,11 @@ export class FarmScene extends Phaser.Scene {
     })
   }
 
-  // ─── Tap ────────────────────────────────────────────────────────────────────
-  private onDroneTap(sprite: Phaser.GameObjects.Image, _id: string, x: number, y: number) {
+  // ─── Tap ─────────────────────────────────────────────────────────────────
+  private onDroneTap(sprite: Phaser.GameObjects.Image, _id: string, wx: number, wy: number) {
     const store = useGameStore.getState()
     if (store.energy <= 0) {
-      this.spawnFloatingText(x, y, 'Нет энергии!', '#ff6666')
+      this.spawnFloatingText(wx, wy, 'Нет энергии!', '#ff6666')
       return
     }
     const maxLevel = Math.max(...store.drones.map((d) => d.level))
@@ -259,23 +353,19 @@ export class FarmScene extends Phaser.Scene {
     store.tap()
     soundManager.tap()
     soundManager.coin()
-    this.emitter.setPosition(x, y)
+    this.emitter.setPosition(wx, wy)
     this.emitter.explode(6)
-    // Squish down, then explicitly restore to original scale.
-    // Avoid yoyo — it relies on captured start values which can be
-    // wrong if another tween modified scale before this fires.
+
     this.tweens.add({
       targets: sprite, scaleX: 0.86, scaleY: 0.58,
       duration: 65, ease: 'Power2.Out',
       onComplete: () => {
         if (!sprite.scene) return
-        this.tweens.add({
-          targets: sprite, scaleX: 0.78, scaleY: 0.78,
-          duration: 130, ease: 'Back.Out',
-        })
+        this.tweens.add({ targets: sprite, scaleX: 0.78, scaleY: 0.78, duration: 130, ease: 'Back.Out' })
       },
     })
-    this.spawnFloatingText(x, y - 20, `+${bonus.toFixed(1)}`, '#ffd700')
+
+    this.spawnFloatingText(wx, wy - 20, `+${bonus.toFixed(1)}`, '#ffd700')
   }
 
   private spawnFloatingText(x: number, y: number, msg: string, color: string) {
@@ -286,10 +376,9 @@ export class FarmScene extends Phaser.Scene {
     this.floatingTexts.push({ text: t, vy: -1.5, life: 60 })
   }
 
-  // ─── Store sync ─────────────────────────────────────────────────────────────
+  // ─── Store sync ───────────────────────────────────────────────────────────
   private syncDrones(drones: Drone[]) {
     if (!this.isAlive) return
-
     drones.forEach((drone) => {
       if (!this.droneSprites.has(drone.id)) {
         const saved = this.loadPositions()
@@ -302,7 +391,6 @@ export class FarmScene extends Phaser.Scene {
     drones.forEach((drone) => {
       const sprite = this.droneSprites.get(drone.id)
       if (!sprite || !sprite.scene) return
-
       const expectedTex = getDroneTextureName(drone.droneType, drone.isBroken)
       if (sprite.texture.key !== expectedTex) sprite.setTexture(expectedTex)
 
@@ -321,23 +409,7 @@ export class FarmScene extends Phaser.Scene {
     this.syncLabelsToSprites()
   }
 
-  // ─── localStorage ────────────────────────────────────────────────────────────
-  private loadPositions(): Record<string, { x: number, y: number }> {
-    try {
-      return JSON.parse(localStorage.getItem(POSITIONS_KEY) || '{}')
-    } catch {
-      return {}
-    }
-  }
-
-  private savePositions() {
-    const positions: Record<string, { x: number, y: number }> = {}
-    this.droneSprites.forEach((sprite, id)  => { positions[id] = { x: Math.round(sprite.x), y: Math.round(sprite.y) } })
-    this.turretSprites.forEach((sprite, id) => { positions[id] = { x: Math.round(sprite.x), y: Math.round(sprite.y) } })
-    try { localStorage.setItem(POSITIONS_KEY, JSON.stringify(positions)) } catch { /* quota */ }
-  }
-
-  // ─── Passive income floats ──────────────────────────────────────────────────
+  // ─── Passive income floats ─────────────────────────────────────────────────
   private tickPassiveFloats() {
     if (!this.isAlive) return
     const { drones } = useGameStore.getState()
@@ -351,34 +423,17 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private spawnPassiveFloat(x: number, y: number, label: string) {
-    const startY = y - 52
-    const midY   = y - 88
-    const endY   = y - 112
-
+    const startY = y - 52, midY = y - 88, endY = y - 112
     const t = this.add.text(x, startY, label, {
-      fontSize: '13px',
-      fontFamily: 'monospace',
-      color: '#66ffbb',
-      stroke: '#000000',
-      strokeThickness: 2,
+      fontSize: '13px', fontFamily: 'monospace', color: '#66ffbb',
+      stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(8).setAlpha(0)
 
-    // Rise + fade in
     this.tweens.add({
-      targets: t,
-      y: midY,
-      alpha: 0.90,
-      duration: 350,
-      ease: 'Power1.Out',
+      targets: t, y: midY, alpha: 0.90, duration: 350, ease: 'Power1.Out',
       onComplete: () => {
-        // Hold briefly, then continue rising and fade out
         this.tweens.add({
-          targets: t,
-          y: endY,
-          alpha: 0,
-          duration: 550,
-          delay: 100,
-          ease: 'Power1.In',
+          targets: t, y: endY, alpha: 0, duration: 550, delay: 100, ease: 'Power1.In',
           onComplete: () => { if (t.scene) t.destroy() },
         })
       },
@@ -393,7 +448,20 @@ export class FarmScene extends Phaser.Scene {
     return `+${v.toFixed(4)}`
   }
 
-  // ─── Update loop ─────────────────────────────────────────────────────────────
+  // ─── localStorage ──────────────────────────────────────────────────────────
+  private loadPositions(): Record<string, { x: number, y: number }> {
+    try { return JSON.parse(localStorage.getItem(POSITIONS_KEY) || '{}') }
+    catch { return {} }
+  }
+
+  private savePositions() {
+    const pos: Record<string, { x: number, y: number }> = {}
+    this.droneSprites.forEach((s, id)  => { pos[id] = { x: Math.round(s.x), y: Math.round(s.y) } })
+    this.turretSprites.forEach((s, id) => { pos[id] = { x: Math.round(s.x), y: Math.round(s.y) } })
+    try { localStorage.setItem(POSITIONS_KEY, JSON.stringify(pos)) } catch { /* quota */ }
+  }
+
+  // ─── Update ───────────────────────────────────────────────────────────────
   update() {
     this.floatingTexts = this.floatingTexts.filter((ft) => {
       ft.text.y += ft.vy

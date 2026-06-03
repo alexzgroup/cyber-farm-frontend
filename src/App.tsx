@@ -6,6 +6,7 @@ import { ShopScreen } from './screens/ShopScreen'
 import { RaidsScreen } from './screens/RaidsScreen'
 import { EquipmentScreen } from './screens/EquipmentScreen'
 import { UnitDetailScreen } from './screens/UnitDetailScreen'
+import { MarketScreen } from './screens/MarketScreen'
 import { PlaceholderScreen } from './screens/PlaceholderScreen'
 import { NAV_HEIGHT } from './layout'
 
@@ -27,6 +28,7 @@ export function App() {
         {screen === 'farm'       && <FarmScreen />}
         {screen === 'shop'       && <ShopScreen />}
         {screen === 'raids'      && <RaidsScreen />}
+        {screen === 'market'     && <MarketScreen />}
         {screen === 'equipment'  && <EquipmentScreen />}
         {screen === 'unit-detail' && <UnitDetailScreen />}
         {screen === 'profile'    && <PlaceholderScreen title="Профиль" description="Статистика и TON-кошелёк — скоро" icon="👤" />}

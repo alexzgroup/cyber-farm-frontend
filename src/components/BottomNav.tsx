@@ -5,6 +5,7 @@ const TABS: { id: Screen; icon: string; label: string }[] = [
   { id: 'farm',    icon: '⚡', label: 'Ферма'   },
   { id: 'shop',    icon: '🛒', label: 'Магазин' },
   { id: 'raids',   icon: '⚔️',  label: 'Рейды'   },
+  { id: 'market',  icon: '💱', label: 'Рынок'   },
   { id: 'profile', icon: '👤', label: 'Профиль' },
 ]
 
@@ -12,6 +13,7 @@ const TABS: { id: Screen; icon: string; label: string }[] = [
 const SCREEN_PARENT: Partial<Record<string, string>> = {
   equipment: 'farm',
   'unit-detail': 'farm',
+  market: 'market',
 }
 
 export function BottomNav() {

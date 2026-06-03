@@ -189,3 +189,49 @@
 .logName   { flex: 1; color: #c9d1d9; }
 .logResult { color: #ffd700; font-size: 12px; }
 .logLose .logResult { color: #ff9999; }
+
+/* Section header with count */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sectionCount {
+  font-size: 11px;
+  color: #444;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 0 2px;
+}
+
+.pageBtn {
+  background: #161b22;
+  border: 1px solid #2a3545;
+  color: #00e5ff;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageBtn:hover:not(:disabled) { background: #1e2a38; }
+.pageBtn:disabled { color: #2a3545; cursor: not-allowed; }
+
+.pageInfo {
+  font-size: 12px;
+  color: #556;
+  min-width: 56px;
+  text-align: center;
+}

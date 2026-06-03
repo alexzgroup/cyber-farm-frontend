@@ -201,7 +201,7 @@ export class RaidScene extends Phaser.Scene {
     this.time.delayedCall(2100, () => {
       const waveWon = result.won || !isLast  // all non-last waves "win" on success
 
-      if (waveWon && result.won) {
+      if (waveWon) {
         // Destroy this turret row
         turretImages.forEach((t, i) => {
           this.time.delayedCall(i * 210, () => {
