@@ -8,6 +8,7 @@ import { EquipmentScreen } from './screens/EquipmentScreen'
 import { UnitDetailScreen } from './screens/UnitDetailScreen'
 import { MarketScreen } from './screens/MarketScreen'
 import { PlaceholderScreen } from './screens/PlaceholderScreen'
+import { ProfileScreen } from './screens/ProfileScreen'
 import { NAV_HEIGHT } from './layout'
 
 export function App() {
@@ -31,7 +32,7 @@ export function App() {
         {screen === 'market'     && <MarketScreen />}
         {screen === 'equipment'  && <EquipmentScreen />}
         {screen === 'unit-detail' && <UnitDetailScreen />}
-        {screen === 'profile'    && <PlaceholderScreen title="Профиль" description="Статистика и TON-кошелёк — скоро" icon="👤" />}
+        {screen === 'profile'    && <ProfileScreen />}
       </div>
       <BottomNav />
     </div>
