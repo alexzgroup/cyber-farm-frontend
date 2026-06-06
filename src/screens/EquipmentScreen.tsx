@@ -10,10 +10,10 @@ const DRONE_TYPE_COLORS: Record<number, string> = {
   3: '#9900ff',
 }
 
-const DRONE_TYPE_NAMES: Record<number, string> = {
-  1: 'Разведчик',
-  2: 'Боевой',
-  3: 'Стелс',
+const DRONE_TYPE_KEYS: Record<number, string> = {
+  1: 'drone.scout',
+  2: 'drone.combat',
+  3: 'drone.stealth',
 }
 
 const TURRET_LEVEL_COLORS: Record<number, string> = {
@@ -22,10 +22,10 @@ const TURRET_LEVEL_COLORS: Record<number, string> = {
   3: '#ff4400',
 }
 
-const TURRET_LEVEL_NAMES: Record<number, string> = {
-  1: 'Лёгкая',
-  2: 'Средняя',
-  3: 'Тяжёлая',
+const TURRET_LEVEL_KEYS: Record<number, string> = {
+  1: 'turret.light',
+  2: 'turret.medium',
+  3: 'turret.heavy',
 }
 
 export function EquipmentScreen() {
@@ -55,14 +55,14 @@ export function EquipmentScreen() {
       {/* Header */}
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => setScreen('farm')}>
-          ← Назад
+          {t('common.back')}
         </button>
         <h2 className={styles.title}>{t('equipment.title')}</h2>
       </div>
 
       {/* Drones section */}
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>⚡ Мои дроны</h3>
+        <h3 className={styles.sectionTitle}>{t('equipment.myDrones')}</h3>
         <div className={styles.grid}>
           {drones.map((drone, idx) => {
             const color = DRONE_TYPE_COLORS[drone.droneType] ?? '#00e5ff'
@@ -83,7 +83,7 @@ export function EquipmentScreen() {
                     : <DroneIcon color={color} size={26} />}
                 </UnitCircle>
                 <div className={styles.cardName}>
-                  {DRONE_TYPE_NAMES[drone.droneType] ?? 'Дрон'} #{idx + 1}
+                  {t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #{idx + 1}
                 </div>
                 <div className={styles.cardLevel} style={{ color }}>
                   LVL {drone.level}{drone.isBroken ? ' ⚠' : ''}
@@ -95,7 +95,7 @@ export function EquipmentScreen() {
                   />
                 </div>
                 <div className={styles.upgradeCount} style={{ color }}>
-                  {totalUpgrades}/{maxUpgrades} улучшений
+                  {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
                 </div>
               </button>
             )
@@ -105,7 +105,7 @@ export function EquipmentScreen() {
 
       {/* Turrets section */}
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>🛡 Башни защиты</h3>
+        <h3 className={styles.sectionTitle}>{t('equipment.myTurrets')}</h3>
         <div className={styles.grid}>
           {turrets.map((turret, idx) => {
             const color = TURRET_LEVEL_COLORS[turret.level] ?? '#00cc44'
@@ -124,7 +124,7 @@ export function EquipmentScreen() {
                   <TurretIcon color={color} level={turret.level} size={26} />
                 </UnitCircle>
                 <div className={styles.cardName}>
-                  {TURRET_LEVEL_NAMES[turret.level] ?? 'Башня'} #{idx + 1}
+                  {t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #{idx + 1}
                 </div>
                 <div className={styles.cardLevel} style={{ color }}>
                   DEF LV{turret.level}
@@ -136,7 +136,7 @@ export function EquipmentScreen() {
                   />
                 </div>
                 <div className={styles.upgradeCount} style={{ color }}>
-                  {totalUpgrades}/{maxUpgrades} улучшений
+                  {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
                 </div>
               </button>
             )

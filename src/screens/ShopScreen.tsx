@@ -68,9 +68,9 @@ export function ShopScreen() {
                 <div className={styles.cardInfo}>
                   <p className={styles.droneName}>{current.name}</p>
                   <p className={styles.droneStats}>
-                    {"-"} / час · +{current.tapBonus} за клик
+                    {t('shop.stats', {hr: '-', tap: current.tapBonus})}
                   </p>
-                  {drone.isBroken && <p className={styles.broken}>Сломан</p>}
+                  {drone.isBroken && <p className={styles.broken}>{t('shop.brokenLabel')}</p>}
                 </div>
                 {!drone.isBroken && next ? (
                   <button
@@ -113,7 +113,7 @@ export function ShopScreen() {
           <div className={styles.droneIcon}>🤖</div>
           <div className={styles.cardInfo}>
             <p className={styles.droneName}>{t('drone.basic')}</p>
-            <p className={styles.droneStats}>10 / час · +0.1 за клик</p>
+            <p className={styles.droneStats}>{t('shop.stats', {hr: 10, tap: 0.1})}</p>
           </div>
           <button
             className={`${styles.btn} ${balance >= newDronePrice ? styles.btnActive : styles.btnDisabled}`}

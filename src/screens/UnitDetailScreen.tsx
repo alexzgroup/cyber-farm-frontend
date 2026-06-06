@@ -4,8 +4,8 @@ import { DRONE_UPGRADE_TEMPLATES, TURRET_UPGRADE_TEMPLATES, type UpgradeTemplate
 import { UnitPreviewGame } from '../game/UnitPreviewGame'
 import styles from './UnitDetailScreen.module.css'
 
-const DRONE_TYPE_NAMES: Record<number, string> = { 1: 'Разведчик', 2: 'Боевой', 3: 'Стелс' }
-const TURRET_LEVEL_NAMES: Record<number, string> = { 1: 'Лёгкая', 2: 'Средняя', 3: 'Тяжёлая' }
+const DRONE_TYPE_KEYS: Record<number, string> = { 1: 'drone.scout', 2: 'drone.combat', 3: 'drone.stealth' }
+const TURRET_LEVEL_KEYS: Record<number, string> = { 1: 'turret.light', 2: 'turret.medium', 3: 'turret.heavy' }
 
 const DRONE_TYPE_COLORS: Record<number, string> = {
   1: '#00ccee', 2: '#ff4400', 3: '#9900ff',
@@ -44,7 +44,7 @@ function UpgradeRow({
         <div className={styles.upgradeName}>{template.name}</div>
         <div className={styles.upgradeDesc}>{template.description}</div>
         <div className={styles.upgradeBonus} style={{ color: accentColor }}>
-          {template.bonusPerLevel} × уровень
+          {t('equipment.bonusLvl', {val: template.bonusPerLevel})}
         </div>
       </div>
       <div className={styles.upgradeRight}>
@@ -103,11 +103,11 @@ export function UnitDetailScreen() {
     : TURRET_LEVEL_COLORS[(unit as Turret).level] ?? '#00cc44'
 
   const unitName = isDrone
-    ? `${DRONE_TYPE_NAMES[(unit as Drone).droneType] ?? 'Дрон'} #${unitIdx + 1}`
-    : `${TURRET_LEVEL_NAMES[(unit as Turret).level] ?? 'Башня'} #${unitIdx + 1}`
+    ? `${t(DRONE_TYPE_KEYS[(unit as Drone).droneType] ?? 'drone.scout')} #${unitIdx + 1}`
+    : `${t(TURRET_LEVEL_KEYS[(unit as Turret).level] ?? 'turret.light')} #${unitIdx + 1}`
 
   const levelLabel = isDrone
-    ? `LVL ${(unit as Drone).level}${(unit as Drone).isBroken ? '  ⚠ Сломан' : ''}`
+    ? `LVL ${(unit as Drone).level}${(unit as Drone).isBroken ? ('  ' + t('common.broken')) : ''}`
     : `DEF LV${(unit as Turret).level}`
 
   const previewUnit = isDrone
@@ -128,7 +128,7 @@ export function UnitDetailScreen() {
       <div className={styles.header} style={{ borderBottomColor: accentColor + '33' }}>
         <button className={styles.backBtn} style={{ borderColor: accentColor + '66', color: accentColor }}
           onClick={() => setScreen('equipment')}>
-          ← Назад
+          {t('common.back')}
         </button>
         <div>
           <div className={styles.unitName}>{unitName}</div>
@@ -159,7 +159,7 @@ export function UnitDetailScreen() {
 
       {/* Upgrades list */}
       <div className={styles.upgradesList}>
-        <div className={styles.upgradesHeader}>Улучшения</div>
+        <div className={styles.upgradesHeader}>{t('unitDetail.upgrades')}</div>
         {templates.map((template) => {
           const currentLevel = upgrades[template.id] ?? 0
           const cost = currentLevel < template.maxLevel ? template.costs[currentLevel] : 0

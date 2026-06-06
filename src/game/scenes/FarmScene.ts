@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import i18n from '../../i18n'
 import { useGameStore, DRONE_UPGRADES, type Drone, type Turret } from '../../store/gameStore'
 import { getDroneTextureName, getFarmTurretTextureName } from '../utils/droneGraphics'
 import { soundManager } from '../utils/soundManager'
@@ -253,7 +254,7 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private addBrokenLabel(id: string, sprite: Phaser.GameObjects.Image) {
-    const label = this.add.text(sprite.x, sprite.y - 52, '⚠ Сломан', {
+    const label = this.add.text(sprite.x, sprite.y - 52, i18n.t('common.broken'), {
       fontSize: '12px', fontFamily: 'monospace', color: '#ff6666',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(6)
@@ -353,7 +354,7 @@ export class FarmScene extends Phaser.Scene {
   private onDroneTap(sprite: Phaser.GameObjects.Image, _id: string, wx: number, wy: number) {
     const store = useGameStore.getState()
     if (store.energy <= 0) {
-      this.spawnFloatingText(wx, wy, 'Нет энергии!', '#ff6666')
+      this.spawnFloatingText(wx, wy, i18n.t('farm.noEnergy'), '#ff6666')
       return
     }
     const maxLevel = Math.max(...store.drones.map((d) => d.level))

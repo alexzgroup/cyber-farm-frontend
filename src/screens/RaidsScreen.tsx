@@ -93,8 +93,8 @@ export function RaidsScreen() {
             <h2 className={styles.resultTitle}>{raidResult.won ? t('raids.victory') : t('raids.defeat')}</h2>
             <p className={styles.resultDesc}>
               {raidResult.won
-                ? `Украдено ${raidResult.amount} монет у ${raidResult.targetName}`
-                : `${raidResult.targetName} отбил атаку — дрон повреждён`}
+                ? t('raids.stolenCoins', {amount: raidResult.amount, name: raidResult.targetName})
+                : t('raids.droneHurt', {name: raidResult.targetName})}
             </p>
             <button className={styles.backBtn} onClick={() => { setView('targets'); setResult(null) }}>
               {t('raids.back')}
@@ -115,7 +115,7 @@ export function RaidsScreen() {
 
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h3 className={styles.sectionTitle}>Выбери цель</h3>
+              <h3 className={styles.sectionTitle}>{t('raids.chooseTarget')}</h3>
               <span className={styles.sectionCount}>{t('raids.playerCount', { count: targets.length })}</span>
             </div>
 
@@ -142,9 +142,9 @@ export function RaidsScreen() {
                             <span>⬡ {Math.round(Number(player.balance))}</span>
                           </div>
                           <p className={styles.reward}>
-                            ~{reward} монет ·{' '}
+                            {t('raids.approxCoins', {amount: reward})} ·{' '}
                             <span style={{ color: winChance >= 60 ? '#39ff14' : winChance >= 40 ? '#ffaa00' : '#ff4444' }}>
-                              {winChance}% победы
+                              {t('raids.winChance', {chance: winChance})}
                             </span>
                           </p>
                         </div>
@@ -179,7 +179,7 @@ export function RaidsScreen() {
                     <span className={styles.logIcon}>{entry.won ? '✓' : '✗'}</span>
                     <span className={styles.logName}>{entry.targetName}</span>
                     <span className={styles.logResult}>
-                      {entry.won ? `+${entry.amount} ⬡` : 'дрон сломан'}
+                      {entry.won ? `+${entry.amount} ⬡` : t('raids.droneBroken')}
                     </span>
                   </div>
                 ))}

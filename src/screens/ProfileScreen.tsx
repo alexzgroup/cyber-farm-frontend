@@ -80,7 +80,7 @@ export function ProfileScreen() {
     <div className={styles.screen}>
       {/* Top bar */}
       <div className={styles.topbar}>
-        <span className={styles.topbarTitle}>Профиль</span>
+        <span className={styles.topbarTitle}>{t('profile.title')}</span>
         <button className={styles.iconBtn} aria-label="Настройки">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"/>
@@ -115,13 +115,13 @@ export function ProfileScreen() {
                   <svg className={styles.lvlChipIcon} width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>
                   </svg>
-                  Уровень {MOCK.level}
+                  {t('profile.levelN', {n: MOCK.level})}
                 </div>
               </div>
             </div>
             <div className={styles.xp}>
               <div className={styles.xpTop}>
-                <span>Опыт до {MOCK.level + 1} уровня</span>
+                <span>{t('profile.expTo', {n: MOCK.level + 1})}</span>
                 <span><b>{MOCK.xp.toLocaleString('ru')}</b> / {MOCK.xpNext.toLocaleString('ru')} XP</span>
               </div>
               <div className={styles.xpTrack}>
@@ -131,7 +131,7 @@ export function ProfileScreen() {
           </section>
 
           {/* ── Balances ── */}
-          <div className={styles.secLabel}><span className={styles.secDot} />Баланс</div>
+          <div className={styles.secLabel}><span className={styles.secDot} />{t('profile.section_bal')}</div>
           <div className={styles.balRow}>
             <div className={`${styles.card} ${styles.bal} ${styles.balGold}`}>
               <div className={styles.balIc}>
@@ -142,7 +142,7 @@ export function ProfileScreen() {
                 </svg>
               </div>
               <div className={styles.balAmt}>{Math.floor(balance).toLocaleString('ru')}</div>
-              <div className={styles.balSub}>Золото</div>
+              <div className={styles.balSub}>{t('profile.gold')}</div>
             </div>
             <div className={`${styles.card} ${styles.bal} ${styles.balTon}`}>
               <div className={styles.balIc}>
@@ -168,32 +168,32 @@ export function ProfileScreen() {
             </div>
             <div className={styles.walletTxt}>
               <div className={styles.walletT1}>
-                <span className={styles.walletT1Name}>TON-кошелёк</span>
-                <span className={styles.walletStat}>Не подключён</span>
+                <span className={styles.walletT1Name}>{t('profile.tonWallet')}</span>
+                <span className={styles.walletStat}>{t('profile.notConnected')}</span>
               </div>
-              <div className={styles.walletT2}>Подключите, чтобы выводить и пополнять TON</div>
+              <div className={styles.walletT2}>{t('profile.connectDesc')}</div>
             </div>
-            <button className={styles.walletBtn}>Подключить</button>
+            <button className={styles.walletBtn}>{t('profile.connectWallet')}</button>
           </section>
 
           {/* ── Battle stats ── */}
-          <div className={styles.secLabel}><span className={styles.secDot} />Боевая статистика</div>
+          <div className={styles.secLabel}><span className={styles.secDot} />{t('profile.section_stats')}</div>
           <section className={`${styles.card} ${styles.battle}`}>
             <div className={styles.battleHead}>
-              <span className={styles.battleTitle}>Рейды</span>
-              <span className={styles.season}>СЕЗОН {MOCK.season}</span>
+              <span className={styles.battleTitle}>{t('profile.raids')}</span>
+              <span className={styles.season}>{t('profile.season', {n: MOCK.season})}</span>
             </div>
             <div className={styles.battleTop}>
               <WinRateRing wins={wins} losses={losses} />
               <div className={styles.wl}>
                 <div className={`${styles.wlRow} ${styles.wlWin}`}>
                   <span className={`${styles.wlPill} ${styles.wlPillWin}`} />
-                  <span className={styles.wlKey}>Победы</span>
+                  <span className={styles.wlKey}>{t('profile.wins')}</span>
                   <span className={styles.wlVal}>{wins}</span>
                 </div>
                 <div className={`${styles.wlRow} ${styles.wlLoss}`}>
                   <span className={`${styles.wlPill} ${styles.wlPillLoss}`} />
-                  <span className={styles.wlKey}>Поражения</span>
+                  <span className={styles.wlKey}>{t('profile.losses')}</span>
                   <span className={styles.wlVal}>{losses}</span>
                 </div>
               </div>
@@ -204,18 +204,18 @@ export function ProfileScreen() {
             </div>
             <div className={styles.battleFoot}>
               <div className={styles.mini}>
-                <div className={styles.miniKey}>Всего рейдов</div>
+                <div className={styles.miniKey}>{t('profile.totalRaids')}</div>
                 <div className={styles.miniVal}>{total}</div>
               </div>
               <div className={styles.mini}>
-                <div className={styles.miniKey}>Серия побед</div>
-                <div className={styles.miniVal}>{MOCK.streak} <small>подряд</small></div>
+                <div className={styles.miniKey}>{t('profile.streak')}</div>
+                <div className={styles.miniVal}>{MOCK.streak} <small>{t('common.in_a_row')}</small></div>
               </div>
             </div>
           </section>
 
           {/* ── Referral ── */}
-          <div className={styles.secLabel}><span className={styles.secDot} />Друзья</div>
+          <div className={styles.secLabel}><span className={styles.secDot} />{t('profile.section_friends')}</div>
           <section className={`${styles.card} ${styles.ref}`}>
             <div className={styles.refIc}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -226,14 +226,14 @@ export function ProfileScreen() {
               </svg>
             </div>
             <div className={styles.refTxt}>
-              <div className={styles.refT1}>Приглашай друзей</div>
-              <div className={styles.refT2}>+50 золота за друга · приглашено <b>{MOCK.referrals}</b></div>
+              <div className={styles.refT1}>{t('profile.friends')}</div>
+              <div className={styles.refT2}>{t('profile.inviteDesc', {n: MOCK.referrals})}</div>
             </div>
-            <button className={styles.refBtn}>Пригласить</button>
+            <button className={styles.refBtn}>{t('profile.invite')}</button>
           </section>
 
           {/* ── Settings ── */}
-          <div className={styles.secLabel}><span className={styles.secDot} />Настройки</div>
+          <div className={styles.secLabel}><span className={styles.secDot} />{t('profile.section_settings')}</div>
           <section className={`${styles.card} ${styles.settings}`}>
             {/* Notifications */}
             <div className={styles.setRow} onClick={() => setNotifs((v) => !v)}>
@@ -243,7 +243,7 @@ export function ProfileScreen() {
                   <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
                 </svg>
               </span>
-              <span className={styles.setKey}>Уведомления</span>
+              <span className={styles.setKey}>{t('profile.notifs')}</span>
               <div className={`${styles.toggle} ${notifs ? styles.toggleOn : styles.toggleOff}`}>
                 <div className={styles.toggleKnob} />
               </div>
@@ -257,7 +257,7 @@ export function ProfileScreen() {
                   <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
                 </svg>
               </span>
-              <span className={styles.setKey}>Звук</span>
+              <span className={styles.setKey}>{t('profile.sound')}</span>
               <div className={`${styles.toggle} ${soundEnabled ? styles.toggleOn : styles.toggleOff}`}>
                 <div className={styles.toggleKnob} />
               </div>
@@ -300,7 +300,7 @@ export function ProfileScreen() {
                   <line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
               </span>
-              <span className={styles.setKey}>Поддержка</span>
+              <span className={styles.setKey}>{t('profile.support')}</span>
               <span className={styles.setChev}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 6l6 6-6 6"/>

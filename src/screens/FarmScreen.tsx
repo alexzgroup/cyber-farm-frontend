@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { PhaserGame } from '../game/PhaserGame'
 import { HUD } from '../components/HUD'
@@ -17,6 +18,7 @@ function fireReset() {
 }
 
 export function FarmScreen() {
+  const { t } = useTranslation()
   const setScreen = useGameStore((s) => s.setScreen)
   const [zoomPct, setZoomPct] = useState(100)
 
@@ -33,21 +35,21 @@ export function FarmScreen() {
     <div className={styles.wrap}>
       <HUD />
       <button className={styles.equipBtn} onClick={() => setScreen('equipment')}>
-        ⚙ Оборудование
+        {t('farm.equipment')}
       </button>
 
       {/* Zoom controls */}
       <div className={styles.zoomControls}>
-        <button className={styles.zoomBtn} onClick={() => fireZoom(+ZOOM_STEP)} title="Приблизить">+</button>
+        <button className={styles.zoomBtn} onClick={() => fireZoom(+ZOOM_STEP)} {...{title: t('farm.zoomIn')}}>+</button>
         <button
           className={`${styles.zoomBtn} ${styles.zoomReset}`}
           onClick={fireReset}
-          title="Сбросить вид"
+          {...{title: t('farm.resetView')}}
         >
           <span className={styles.zoomPct}>{zoomPct}%</span>
           <span className={styles.zoomIcon}>⊙</span>
         </button>
-        <button className={styles.zoomBtn} onClick={() => fireZoom(-ZOOM_STEP)} title="Отдалить">−</button>
+        <button className={styles.zoomBtn} onClick={() => fireZoom(-ZOOM_STEP)} {...{title: t('farm.zoomOut')}}>−</button>
       </div>
 
       <PhaserGame />
