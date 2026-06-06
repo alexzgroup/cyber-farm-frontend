@@ -1,0 +1,98 @@
+{
+  "nav": {
+    "farm":    "Farm",
+    "shop":    "Shop",
+    "raids":   "Raids",
+    "market":  "Market",
+    "profile": "Profile"
+  },
+  "app": {
+    "loading": "Loading…",
+    "error":   "Failed to load game data",
+    "retry":   "Retry"
+  },
+  "farm": {
+    "droneZone":   "DRONE ZONE",
+    "defenseZone": "DEFENCE ZONE",
+    "equipment":   "⚙ Equipment",
+    "lvl":         "LVL {{n}}",
+    "defLvl":      "DEF LV{{n}}"
+  },
+  "shop": {
+    "title":           "Shop",
+    "myDrones":        "MY DRONES",
+    "upgradeEquip":    "UPGRADE EQUIPMENT",
+    "upgradeEquipSub": "5 upgrades per unit • 3 levels",
+    "open":            "Open →",
+    "newDrone":        "NEW DRONE",
+    "buy":             "Buy",
+    "upgrade":         "Lv. {{n}}",
+    "upgradeCost":     "{{cost}}",
+    "repair":          "Repair",
+    "broken":          "broken",
+    "perHour":         "/ hr",
+    "perClick":        "+{{val}} per tap",
+    "repairCost":      "Repair for {{cost}}"
+  },
+  "raids": {
+    "title":        "PvP Raids",
+    "chooseTarget": "CHOOSE TARGET",
+    "playerCount":  "{{count}} players",
+    "loading":      "Loading targets…",
+    "noTargets":    "No targets available",
+    "allBroken":    "⚠️ All drones are broken — repair them in the shop first",
+    "attack":       "Attack",
+    "winChance":    "{{chance}}% win",
+    "approxCoins":  "~{{amount}} coins",
+    "log":          "BATTLE LOG",
+    "raidCount":    "{{count}} raids",
+    "victory":      "Victory!",
+    "defeat":       "Defeat",
+    "stolenCoins":  "Stole {{amount}} coins from {{name}}",
+    "droneHurt":    "{{name}} repelled the attack — drone damaged",
+    "back":         "Back to Raids"
+  },
+  "market": {
+    "title":        "P2P Market",
+    "filterAll":    "All",
+    "filterDrones": "Drones",
+    "filterTurrets":"Turrets",
+    "sortNewest":   "Newest",
+    "sortPriceAsc": "Price ↑",
+    "sortPriceDesc":"Price ↓",
+    "buy":          "Buy",
+    "noListings":   "No listings",
+    "loading":      "Loading…"
+  },
+  "equipment": {
+    "title":    "Equipment",
+    "drones":   "Drones",
+    "turrets":  "Turrets",
+    "upgrades": "upgrades"
+  },
+  "profile": {
+    "title":      "Profile",
+    "balance":    "Balance",
+    "language":   "Language",
+    "langRu":     "Русский 🇷🇺",
+    "langEn":     "English 🇬🇧",
+    "notifs":     "Notifications",
+    "sound":      "Sound",
+    "support":    "Support",
+    "friends":    "Friends",
+    "invite":     "Invite",
+    "inviteDesc": "+50 gold per friend · invited {{n}}",
+    "settings":   "Settings",
+    "winRate":    "Win rate",
+    "wins":       "Wins",
+    "losses":     "Losses",
+    "totalRaids": "Total raids",
+    "streak":     "Win streak",
+    "streak_n":   "{{n}} in a row"
+  },
+  "common": {
+    "coins":  "coins",
+    "level":  "Lv. {{n}}",
+    "energy": "energy"
+  }
+}

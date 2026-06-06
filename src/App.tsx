@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from './store/gameStore'
 import { BottomNav } from './components/BottomNav'
 import { FarmScreen } from './screens/FarmScreen'
@@ -7,26 +8,28 @@ import { RaidsScreen } from './screens/RaidsScreen'
 import { EquipmentScreen } from './screens/EquipmentScreen'
 import { UnitDetailScreen } from './screens/UnitDetailScreen'
 import { MarketScreen } from './screens/MarketScreen'
-import { PlaceholderScreen } from './screens/PlaceholderScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { NAV_HEIGHT } from './layout'
 
 export function App() {
-  const screen      = useGameStore((s) => s.activeScreen)
-  const isLoaded    = useGameStore((s) => s.isLoaded)
-  const loadError   = useGameStore((s) => s.loadError)
+  const { t, i18n } = useTranslation()
+  const screen        = useGameStore((s) => s.activeScreen)
+  const isLoaded      = useGameStore((s) => s.isLoaded)
+  const loadError     = useGameStore((s) => s.loadError)
   const loadGameState = useGameStore((s) => s.loadGameState)
+  const language      = useGameStore((s) => s.language)
 
-  // Load game state from API on mount
-  useEffect(() => {
-    loadGameState()
-  }, [loadGameState])
+  useEffect(() => { loadGameState() }, [loadGameState])
 
-  // Energy regen tick — runs every second regardless of load state
+  // Sync i18next language with the value loaded from the API
   useEffect(() => {
-    const id = setInterval(() => {
-      useGameStore.getState().tickEnergyRegen()
-    }, 1000)
+    if (language && i18n.language !== language) {
+      i18n.changeLanguage(language)
+    }
+  }, [language, i18n])
+
+  useEffect(() => {
+    const id = setInterval(() => useGameStore.getState().tickEnergyRegen(), 1000)
     return () => clearInterval(id)
   }, [])
 
@@ -37,7 +40,7 @@ export function App() {
         alignItems: 'center', justifyContent: 'center',
         background: '#0d1117', color: '#06b6d4', fontSize: 18,
       }}>
-        Loading…
+        {t('app.loading')}
       </div>
     )
   }
@@ -49,13 +52,13 @@ export function App() {
         alignItems: 'center', justifyContent: 'center',
         background: '#0d1117', color: '#f87171', gap: 12, padding: 24,
       }}>
-        <span>Failed to load game data</span>
+        <span>{t('app.error')}</span>
         <span style={{ fontSize: 13, opacity: 0.6 }}>{loadError}</span>
         <button
           style={{ marginTop: 8, padding: '8px 20px', background: '#06b6d4', border: 'none', borderRadius: 8, cursor: 'pointer' }}
           onClick={loadGameState}
         >
-          Retry
+          {t('app.retry')}
         </button>
       </div>
     )

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import styles from './ProfileScreen.module.css'
 
@@ -61,7 +62,10 @@ export function ProfileScreen() {
   const balance      = useGameStore((s) => s.balance)
   const raidLog      = useGameStore((s) => s.raidLog)
   const soundEnabled = useGameStore((s) => s.soundEnabled)
-  const toggleSound  = useGameStore((s) => s.toggleSound)
+  const toggleSound      = useGameStore((s) => s.toggleSound)
+  const language         = useGameStore((s) => s.language)
+  const updateLanguage   = useGameStore((s) => s.updateLanguage)
+  const { t, i18n }     = useTranslation()
   const [notifs, setNotifs] = useState(true)
 
   const wins   = raidLog.length > 0 ? raidLog.filter((r) => r.won).length   : MOCK.wins
@@ -259,7 +263,7 @@ export function ProfileScreen() {
               </div>
             </div>
 
-            {/* Language */}
+            {/* Language switcher */}
             <div className={styles.setRow}>
               <span className={styles.setIc}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -268,13 +272,23 @@ export function ProfileScreen() {
                   <path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/>
                 </svg>
               </span>
-              <span className={styles.setKey}>Язык</span>
-              <span className={styles.setVal}>Русский</span>
-              <span className={styles.setChev}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 6l6 6-6 6"/>
-                </svg>
-              </span>
+              <span className={styles.setKey}>{t('profile.language')}</span>
+              <div style={{display:'flex',gap:6,marginLeft:'auto'}}>
+                {(['ru','en'] as const).map((lng) => (
+                  <button
+                    key={lng}
+                    onClick={() => { updateLanguage(lng); i18n.changeLanguage(lng) }}
+                    style={{
+                      padding:'3px 10px',borderRadius:6,border:'1px solid',fontSize:12,cursor:'pointer',
+                      background: language===lng ? '#06b6d4' : 'transparent',
+                      color:      language===lng ? '#000' : '#06b6d4',
+                      borderColor:'#06b6d4',fontWeight: language===lng ? 700 : 400,
+                    }}
+                  >
+                    {lng === 'ru' ? 'RU' : 'EN'}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Support */}

@@ -1,37 +1,37 @@
+import { useTranslation } from 'react-i18next'
 import { useGameStore, Screen } from '../store/gameStore'
 import styles from './BottomNav.module.css'
 
-const TABS: { id: Screen; icon: string; label: string }[] = [
-  { id: 'farm',    icon: '⚡', label: 'Ферма'   },
-  { id: 'shop',    icon: '🛒', label: 'Магазин' },
-  { id: 'raids',   icon: '⚔️',  label: 'Рейды'   },
-  { id: 'market',  icon: '💱', label: 'Рынок'   },
-  { id: 'profile', icon: '👤', label: 'Профиль' },
+const TABS: { id: Screen; icon: string; key: string }[] = [
+  { id: 'farm',    icon: '⚡', key: 'nav.farm'    },
+  { id: 'shop',    icon: '🛒', key: 'nav.shop'    },
+  { id: 'raids',   icon: '⚔️',  key: 'nav.raids'   },
+  { id: 'market',  icon: '💱', key: 'nav.market'  },
+  { id: 'profile', icon: '👤', key: 'nav.profile' },
 ]
 
-// sub-screens that belong to a parent tab
 const SCREEN_PARENT: Partial<Record<string, string>> = {
-  equipment: 'farm',
+  equipment:     'farm',
   'unit-detail': 'farm',
-  market: 'market',
+  market:        'market',
 }
 
 export function BottomNav() {
+  const { t } = useTranslation()
   const activeScreen = useGameStore((s) => s.activeScreen)
-  const setScreen = useGameStore((s) => s.setScreen)
-
-  const activeTab = SCREEN_PARENT[activeScreen] ?? activeScreen
+  const setScreen    = useGameStore((s) => s.setScreen)
+  const activeTab    = SCREEN_PARENT[activeScreen] ?? activeScreen
 
   return (
     <nav className={styles.nav}>
       {TABS.map((tab) => (
         <button
           key={tab.id}
-          className={`${styles.tab} ${activeTab === tab.id ? styles.active : ''}`}
+          className={styles.tab + (activeTab === tab.id ? ' ' + styles.active : '')}
           onClick={() => setScreen(tab.id)}
         >
           <span className={styles.icon}>{tab.icon}</span>
-          <span className={styles.label}>{tab.label}</span>
+          <span className={styles.label}>{t(tab.key)}</span>
         </button>
       ))}
     </nav>

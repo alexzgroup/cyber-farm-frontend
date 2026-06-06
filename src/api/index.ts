@@ -20,6 +20,13 @@ export function getMe(): Promise<ApiUser> {
   return apiFetch('/api/user/me')
 }
 
+export function updateUserLanguage(language: 'ru' | 'en'): Promise<{ language: string }> {
+  return apiFetch('/api/user/language', {
+    method: 'PATCH',
+    body:   JSON.stringify({ language }),
+  })
+}
+
 export function syncPositions(
   drones:  UnitPosition[],
   turrets: UnitPosition[],

@@ -100,6 +100,7 @@ interface GameState {
   raidLog:        RaidLogEntry[]
   lastRaidResult: RaidResult | null
   unitUpgrades:   UnitUpgrades
+  language:       string   // current UI language (ru/en), synced from API
 
   // UI
   activeScreen:   Screen
@@ -110,6 +111,7 @@ interface GameState {
 
   // Actions — data
   loadGameState:      () => Promise<void>
+  updateLanguage:     (lang: 'ru' | 'en') => Promise<void>
   tap:                () => void           // FarmScene tap mechanic
   buyDrone:           (droneType?: import('../api/types').DroneType) => Promise<boolean>
   upgradeDrone:       (droneId: string) => Promise<boolean>
@@ -144,6 +146,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   raidLog:        [],
   lastRaidResult: null,
   unitUpgrades:   {},
+  language:       'ru',
   activeScreen:   'farm',
   selectedUnitId: null,
   soundEnabled:   true,
@@ -174,12 +177,19 @@ export const useGameStore = create<GameState>((set, get) => ({
         maxEnergy: user.max_energy,
         drones:    drones.map(mapDrone),
         turrets:   turrets.map(mapTurret),
+        language:  user.language ?? 'ru',
         isLoaded:  true,
         loadError: null,
       })
     } catch (err) {
       set({ loadError: (err as Error).message, isLoaded: true })
     }
+  },
+
+  // ── Language ──────────────────────────────────────────────────
+  updateLanguage: async (lang) => {
+    set({ language: lang })
+    try { await api.updateUserLanguage(lang) } catch { /* silent */ }
   },
 
   // ── Drones ─────────────────────────────────────────────────────────────

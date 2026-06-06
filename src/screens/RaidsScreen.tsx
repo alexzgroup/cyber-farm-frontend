@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore, type RaidResult, type Drone } from '../store/gameStore'
 import { getRaidTargets } from '../api'
 import type { ApiUserPublic } from '../api/types'
@@ -33,6 +34,7 @@ export function RaidsScreen() {
   const [logPage,     setLogPage]     = useState(0)
   const [targets, setTargets]         = useState<ApiUserPublic[]>([])
   const [targetsLoading, setTargetsLoading] = useState(true)
+  const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
   const drones      = useGameStore((s) => s.drones)
@@ -88,7 +90,7 @@ export function RaidsScreen() {
         <div className={styles.resultOverlay}>
           <div className={`${styles.resultCard} ${raidResult.won ? styles.win : styles.lose}`}>
             <span className={styles.resultIcon}>{raidResult.won ? '🏆' : '💥'}</span>
-            <h2 className={styles.resultTitle}>{raidResult.won ? 'Победа!' : 'Поражение'}</h2>
+            <h2 className={styles.resultTitle}>{raidResult.won ? t('raids.victory') : t('raids.defeat')}</h2>
             <p className={styles.resultDesc}>
               {raidResult.won
                 ? `Украдено ${raidResult.amount} монет у ${raidResult.targetName}`
@@ -103,7 +105,7 @@ export function RaidsScreen() {
 
       {view === 'targets' && (
         <>
-          <h2 className={styles.title}>PvP-рейды</h2>
+          <h2 className={styles.title}>{t('raids.title')}</h2>
 
           {workingDrones.length === 0 && (
             <div className={styles.warning}>
@@ -118,9 +120,9 @@ export function RaidsScreen() {
             </div>
 
             {targetsLoading ? (
-              <div className={styles.warning}>Загрузка целей…</div>
+              <div className={styles.warning}>{t('raids.loading')}</div>
             ) : targets.length === 0 ? (
-              <div className={styles.warning}>Нет доступных целей</div>
+              <div className={styles.warning}>{t('raids.noTargets')}</div>
             ) : (
               <>
                 <div className={styles.targets}>
@@ -151,7 +153,7 @@ export function RaidsScreen() {
                           onClick={() => handleAttack(player.id)}
                           disabled={workingDrones.length === 0}
                         >
-                          ⚔️<span>Атака</span>
+                          ⚔️<span>{t('raids.attack')}</span>
                         </button>
                       </div>
                     )

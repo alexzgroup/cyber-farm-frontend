@@ -6,16 +6,18 @@ export type RaidResultType    = 'victory' | 'defeat'
 export type ListingStatus     = 'active' | 'sold' | 'cancelled'
 
 export interface ApiUser {
-  id:          number
-  telegram_id: number
-  username:    string
-  first_name:  string
-  last_name:   string
-  balance:     number
-  energy:      number
-  max_energy:  number
-  vip_until:   string | null
-  created_at:  string
+  id:           number
+  telegram_id:  number
+  username:     string
+  first_name:   string
+  last_name:    string
+  balance:      number
+  energy:       number
+  max_energy:   number
+  vip_until:    string | null
+  reg_language: string   // set at registration from Telegram, immutable
+  language:     string   // user-selected language (ru/en)
+  created_at:   string
 }
 
 export interface ApiUserPublic {
