@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useGameStore, type Drone, type Turret } from '../store/gameStore'
 import { DRONE_UPGRADE_TEMPLATES, TURRET_UPGRADE_TEMPLATES, type UpgradeTemplate } from '../data/unitUpgrades'
 import { UnitPreviewGame } from '../game/UnitPreviewGame'

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useGameStore, DRONE_UPGRADES, REPAIR_COSTS } from '../store/gameStore'
 import styles from './ShopScreen.module.css'
 
@@ -8,19 +9,20 @@ export function ShopScreen() {
   const repairDrone  = useGameStore((s) => s.repairDrone)
   const buyDrone     = useGameStore((s) => s.buyDrone)
   const setScreen    = useGameStore((s) => s.setScreen)
+  const { t } = useTranslation()
 
   const brokenDrones   = drones.filter((d) => d.isBroken)
   const newDronePrice  = 300 + drones.length * 200
 
   return (
     <div className={styles.screen}>
-      <h2 className={styles.title}>Магазин</h2>
+      <h2 className={styles.title}>{t('shop.title')}</h2>
       <p className={styles.balance}>⬡ {balance.toFixed(1)}</p>
 
       {/* Repair section — shown only when drones are broken */}
       {brokenDrones.length > 0 && (
         <section className={styles.section}>
-          <h3 className={`${styles.sectionTitle} ${styles.sectionDanger}`}>⚠ Починка</h3>
+          <h3 className={`${styles.sectionTitle} ${styles.sectionDanger}`}>{t('shop.repairSection')}</h3>
           <div className={styles.cards}>
             {brokenDrones.map((drone) => {
               const cost       = REPAIR_COSTS[drone.level]
@@ -30,16 +32,16 @@ export function ShopScreen() {
                 <div key={drone.id} className={`${styles.card} ${styles.cardBroken}`}>
                   <div className={styles.droneIcon}>💀</div>
                   <div className={styles.cardInfo}>
-                    <p className={styles.droneName}>{info.name}</p>
-                    <p className={styles.droneStats}>{Math.round(info.tapBonus * 36000) / 100} / час · не работает</p>
-                    <p className={styles.broken}>Сломан после рейда</p>
+                    <p className={styles.droneName}>{t('drone.level' + drone.level) || info.name}</p>
+                    <p className={styles.droneStats}>{Math.round(info.tapBonus * 36000) / 100} / час · {t('shop.brokenLabel')}</p>
+                    <p className={styles.broken}>{t('shop.brokenAfterRaid')}</p>
                   </div>
                   <button
                     className={`${styles.btn} ${canAfford ? styles.btnRepair : styles.btnDisabled}`}
                     onClick={() => repairDrone(drone.id)}
                     disabled={!canAfford}
                   >
-                    <span className={styles.btnLevel}>Починить</span>
+                    <span className={styles.btnLevel}>{t('shop.repair')}</span>
                     <span className={styles.btnPrice}>⬡ {cost}</span>
                   </button>
                 </div>
@@ -51,7 +53,7 @@ export function ShopScreen() {
 
       {/* Upgrade existing drones */}
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Мои дроны</h3>
+        <h3 className={styles.sectionTitle}>{t('shop.myDrones')}</h3>
         <div className={styles.cards}>
           {drones.map((drone) => {
             const current   = DRONE_UPGRADES[drone.level - 1]
@@ -76,11 +78,11 @@ export function ShopScreen() {
                     onClick={() => upgradeDrone(drone.id)}
                     disabled={!canAfford}
                   >
-                    <span className={styles.btnLevel}>Ур. {next.level}</span>
+                    <span className={styles.btnLevel}>{t('shop.upgrade', { n: next.level })}</span>
                     <span className={styles.btnPrice}>⬡ {next.price}</span>
                   </button>
                 ) : !drone.isBroken ? (
-                  <span className={styles.maxLevel}>MAX</span>
+                  <span className={styles.maxLevel}>{t('shop.maxLevel')}</span>
                 ) : null}
               </div>
             )
@@ -90,15 +92,15 @@ export function ShopScreen() {
 
       {/* Equipment upgrades link */}
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Улучшение оборудования</h3>
+        <h3 className={styles.sectionTitle}>{t('shop.upgradeEquip')}</h3>
         <div className={styles.card} style={{ cursor: 'pointer' }} onClick={() => setScreen('equipment')}>
           <div className={styles.droneIcon}>⚙️</div>
           <div className={styles.cardInfo}>
-            <p className={styles.droneName}>Прокачка башен и дронов</p>
-            <p className={styles.droneStats}>5 улучшений для каждого юнита · 3 уровня</p>
+            <p className={styles.droneName}>{t('shop.boostDrones')}</p>
+            <p className={styles.droneStats}>{t('shop.upgradeEquipSub')}</p>
           </div>
           <button className={`${styles.btn} ${styles.btnActive}`} onClick={() => setScreen('equipment')}>
-            <span className={styles.btnLevel}>Открыть</span>
+            <span className={styles.btnLevel}>{t('shop.open')}</span>
             <span className={styles.btnPrice}>→</span>
           </button>
         </div>
@@ -106,11 +108,11 @@ export function ShopScreen() {
 
       {/* Buy new drone */}
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Новый дрон</h3>
+        <h3 className={styles.sectionTitle}>{t('shop.newDrone')}</h3>
         <div className={styles.card}>
           <div className={styles.droneIcon}>🤖</div>
           <div className={styles.cardInfo}>
-            <p className={styles.droneName}>Базовый дрон</p>
+            <p className={styles.droneName}>{t('drone.basic')}</p>
             <p className={styles.droneStats}>10 / час · +0.1 за клик</p>
           </div>
           <button
@@ -118,7 +120,7 @@ export function ShopScreen() {
             onClick={() => buyDrone()}
             disabled={balance < newDronePrice}
           >
-            <span className={styles.btnLevel}>Купить</span>
+            <span className={styles.btnLevel}>{t('shop.buy')}</span>
             <span className={styles.btnPrice}>⬡ {newDronePrice}</span>
           </button>
         </div>

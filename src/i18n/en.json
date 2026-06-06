@@ -18,21 +18,36 @@
     "lvl":         "LVL {{n}}",
     "defLvl":      "DEF LV{{n}}"
   },
+  "drone": {
+    "scout":   "Scout",
+    "combat":  "Combat",
+    "stealth": "Stealth",
+    "basic":   "Basic Drone",
+    "turbo":   "Turbo Drone",
+    "nano":    "Nano Drone"
+  },
+  "turret": {
+    "light":   "Light",
+    "medium":  "Medium",
+    "heavy":   "Heavy"
+  },
   "shop": {
     "title":           "Shop",
+    "repairSection":   "⚠ Repair",
     "myDrones":        "MY DRONES",
     "upgradeEquip":    "UPGRADE EQUIPMENT",
-    "upgradeEquipSub": "5 upgrades per unit • 3 levels",
+    "upgradeEquipSub": "5 upgrades per unit · 3 levels",
     "open":            "Open →",
     "newDrone":        "NEW DRONE",
     "buy":             "Buy",
     "upgrade":         "Lv. {{n}}",
-    "upgradeCost":     "{{cost}}",
     "repair":          "Repair",
-    "broken":          "broken",
+    "brokenAfterRaid": "Broken after raid",
+    "brokenLabel":     "Broken",
+    "maxLevel":        "MAX",
     "perHour":         "/ hr",
     "perClick":        "+{{val}} per tap",
-    "repairCost":      "Repair for {{cost}}"
+    "boostDrones":     "Boost turrets & drones"
   },
   "raids": {
     "title":        "PvP Raids",
@@ -60,15 +75,36 @@
     "sortNewest":   "Newest",
     "sortPriceAsc": "Price ↑",
     "sortPriceDesc":"Price ↓",
+    "sortLevelDesc":"Level ↓",
     "buy":          "Buy",
     "noListings":   "No listings",
-    "loading":      "Loading…"
+    "loading":      "Loading…",
+    "typeDrone":    "DRONE",
+    "typeTurret":   "TURRET",
+    "upgrades_one": "{{count}} upgr.",
+    "upgrades_few": "{{count}} upgr.",
+    "upgrades_many":"{{count}} upgr.",
+    "seller":       "by {{name}}"
   },
   "equipment": {
-    "title":    "Equipment",
-    "drones":   "Drones",
-    "turrets":  "Turrets",
-    "upgrades": "upgrades"
+    "title":       "Equipment",
+    "drones":      "Drones",
+    "turrets":     "Turrets",
+    "upgradesOf":  "{{done}}/{{total}} upgrades",
+    "nextUpgrade": "Next upgrade",
+    "maxed":       "Maxed",
+    "upgrade":     "Upgrade"
+  },
+  "unitDetail": {
+    "level":       "Level",
+    "type":        "Type",
+    "income":      "Income",
+    "perSec":      "/ sec",
+    "defense":     "Defense",
+    "upgrades":    "Upgrades",
+    "upgrade":     "Upgrade",
+    "notAvail":    "Not available",
+    "maxed":       "Maxed"
   },
   "profile": {
     "title":      "Profile",

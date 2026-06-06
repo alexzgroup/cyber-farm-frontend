@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { DRONE_UPGRADE_TEMPLATES, TURRET_UPGRADE_TEMPLATES } from '../data/unitUpgrades'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
@@ -56,7 +57,7 @@ export function EquipmentScreen() {
         <button className={styles.backBtn} onClick={() => setScreen('farm')}>
           ← Назад
         </button>
-        <h2 className={styles.title}>Оборудование</h2>
+        <h2 className={styles.title}>{t('equipment.title')}</h2>
       </div>
 
       {/* Drones section */}

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { MOCK_MARKET, timeAgo, type MarketListing } from '../data/mockMarket'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
@@ -9,16 +10,16 @@ type SortKey    = 'price-asc' | 'price-desc' | 'newest' | 'level-desc'
 
 const PAGE_SIZE = 20
 
-const DRONE_TYPE_LABELS: Record<number, { name: string; color: string; emoji: string }> = {
-  1: { name: 'Разведчик', color: '#00ccee', emoji: '🔵' },
-  2: { name: 'Боевой',    color: '#ff4400', emoji: '🔴' },
-  3: { name: 'Стелс',     color: '#9900ff', emoji: '🟣' },
+const DRONE_COLORS: Record<number, { color: string; emoji: string; key: string }> = {
+  1: { color: '#00ccee', emoji: '🔵', key: 'drone.scout'   },
+  2: { color: '#ff4400', emoji: '🔴', key: 'drone.combat'  },
+  3: { color: '#9900ff', emoji: '🟣', key: 'drone.stealth' },
 }
 
-const TURRET_LEVEL_LABELS: Record<number, { name: string; color: string; emoji: string }> = {
-  1: { name: 'Лёгкая',   color: '#00cc44', emoji: '🟢' },
-  2: { name: 'Средняя',  color: '#ffaa00', emoji: '🟡' },
-  3: { name: 'Тяжёлая',  color: '#ff4400', emoji: '🔴' },
+const TURRET_COLORS: Record<number, { color: string; emoji: string; key: string }> = {
+  1: { color: '#00cc44', emoji: '🟢', key: 'turret.light'  },
+  2: { color: '#ffaa00', emoji: '🟡', key: 'turret.medium' },
+  3: { color: '#ff4400', emoji: '🔴', key: 'turret.heavy'  },
 }
 
 function Pagination({ page, total, pageSize, onChange }: {
@@ -35,12 +36,12 @@ function Pagination({ page, total, pageSize, onChange }: {
   )
 }
 
-function MarketCard({ item, onBuy, canAfford }: {
-  item: MarketListing; onBuy: () => void; canAfford: boolean
+function MarketCard({ item, onBuy, canAfford, t }: {
+  item: MarketListing; onBuy: () => void; canAfford: boolean; t: (k: string, o?: Record<string,unknown>) => string
 }) {
   const meta = item.type === 'drone'
-    ? DRONE_TYPE_LABELS[item.droneType ?? 1]
-    : TURRET_LEVEL_LABELS[item.turretLevel ?? 1]
+    ? DRONE_COLORS[item.droneType ?? 1]
+    : TURRET_COLORS[item.turretLevel ?? 1]
 
   const levelLabel = item.type === 'drone'
     ? `LVL ${item.droneLevel}`
@@ -56,22 +57,22 @@ function MarketCard({ item, onBuy, canAfford }: {
             : <TurretIcon color={meta.color} level={item.turretLevel ?? 1} size={26} />}
         </UnitCircle>
         <div className={styles.cardTitles}>
-          <div className={styles.cardName}>{meta.name}</div>
+          <div className={styles.cardName}>{t(meta.key)}</div>
           <div className={styles.cardLevel} style={{ color: meta.color }}>{levelLabel}</div>
         </div>
         <div className={styles.cardBadge} style={{ background: meta.color + '22', color: meta.color }}>
-          {item.type === 'drone' ? 'ДРОН' : 'БАШНЯ'}
+          {item.type === 'drone' ? t('market.typeDrone') : t('market.typeTurret')}
         </div>
       </div>
 
       <div className={styles.cardMeta}>
         {item.upgradesCount > 0 && (
-          <span className={styles.upgBadge}>⬆ {item.upgradesCount} улучш.</span>
+          <span className={styles.upgBadge}>{t('market.upgrades_one', { count: item.upgradesCount })}</span>
         )}
         <span className={styles.timeLabel}>{timeAgo(item.listedAt)}</span>
       </div>
 
-      <div className={styles.cardSeller}>от {item.sellerName}</div>
+      <div className={styles.cardSeller}>{t('market.seller', { name: item.sellerName })}</div>
 
       <div className={styles.cardFooter}>
         <span className={styles.price}>⬡ {item.price.toLocaleString()}</span>
@@ -165,10 +166,10 @@ export function MarketScreen() {
           value={sortBy}
           onChange={(e) => onSort(e.target.value as SortKey)}
         >
-          <option value="newest">Новые</option>
-          <option value="price-asc">Цена ↑</option>
-          <option value="price-desc">Цена ↓</option>
-          <option value="level-desc">Уровень ↓</option>
+          <option value="newest">{t('market.sortNewest')}</option>
+          <option value="price-asc">{t('market.sortPriceAsc')}</option>
+          <option value="price-desc">{t('market.sortPriceDesc')}</option>
+          <option value="level-desc">{t('market.sortLevelDesc')}</option>
         </select>
       </div>
 

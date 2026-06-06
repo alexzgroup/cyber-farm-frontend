@@ -97,7 +97,7 @@ export function RaidsScreen() {
                 : `${raidResult.targetName} отбил атаку — дрон повреждён`}
             </p>
             <button className={styles.backBtn} onClick={() => { setView('targets'); setResult(null) }}>
-              Назад к рейдам
+              {t('raids.back')}
             </button>
           </div>
         </div>
@@ -109,14 +109,14 @@ export function RaidsScreen() {
 
           {workingDrones.length === 0 && (
             <div className={styles.warning}>
-              ⚠️ Все дроны сломаны — сначала почини их в магазине
+              {t('raids.allBroken')}
             </div>
           )}
 
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <h3 className={styles.sectionTitle}>Выбери цель</h3>
-              <span className={styles.sectionCount}>{targets.length} игроков</span>
+              <span className={styles.sectionCount}>{t('raids.playerCount', { count: targets.length })}</span>
             </div>
 
             {targetsLoading ? (
@@ -170,8 +170,8 @@ export function RaidsScreen() {
           {raidLog.length > 0 && (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Лог сражений</h3>
-                <span className={styles.sectionCount}>{raidLog.length} рейдов</span>
+                <h3 className={styles.sectionTitle}>{t('raids.log')}</h3>
+                <span className={styles.sectionCount}>{t('raids.raidCount', { count: raidLog.length })}</span>
               </div>
               <div className={styles.log}>
                 {pagedLog.map((entry) => (

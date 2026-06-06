@@ -18,21 +18,36 @@
     "lvl":         "LVL {{n}}",
     "defLvl":      "DEF LV{{n}}"
   },
+  "drone": {
+    "scout":   "Разведчик",
+    "combat":  "Боевой",
+    "stealth": "Стелс",
+    "basic":   "Базовый дрон",
+    "turbo":   "Турбо-дрон",
+    "nano":    "Нано-дрон"
+  },
+  "turret": {
+    "light":   "Лёгкая",
+    "medium":  "Средняя",
+    "heavy":   "Тяжёлая"
+  },
   "shop": {
     "title":           "Магазин",
+    "repairSection":   "⚠ Починка",
     "myDrones":        "МОИ ДРОНЫ",
     "upgradeEquip":    "УЛУЧШЕНИЕ ОБОРУДОВАНИЯ",
-    "upgradeEquipSub": "5 улучшений для каждого юнита • 3 уровня",
+    "upgradeEquipSub": "5 улучшений для каждого юнита · 3 уровня",
     "open":            "Открыть →",
     "newDrone":        "НОВЫЙ ДРОН",
     "buy":             "Купить",
     "upgrade":         "Ур. {{n}}",
-    "upgradeCost":     "{{cost}}",
     "repair":          "Починить",
-    "broken":          "не работает",
+    "brokenAfterRaid": "Сломан после рейда",
+    "brokenLabel":     "Сломан",
+    "maxLevel":        "MAX",
     "perHour":         "/ час",
     "perClick":        "+{{val}} за клик",
-    "repairCost":      "Починить за {{cost}}"
+    "boostDrones":     "Прокачка башен и дронов"
   },
   "raids": {
     "title":        "PvP-рейды",
@@ -53,22 +68,43 @@
     "back":         "Назад к рейдам"
   },
   "market": {
-    "title":       "P2P Рынок",
-    "filterAll":   "Все",
-    "filterDrones":"Дроны",
+    "title":        "P2P Рынок",
+    "filterAll":    "Все",
+    "filterDrones": "Дроны",
     "filterTurrets":"Башни",
-    "sortNewest":  "Новые",
-    "sortPriceAsc":"Цена ↑",
+    "sortNewest":   "Новые",
+    "sortPriceAsc": "Цена ↑",
     "sortPriceDesc":"Цена ↓",
-    "buy":         "Купить",
-    "noListings":  "Нет объявлений",
-    "loading":     "Загрузка…"
+    "sortLevelDesc":"Уровень ↓",
+    "buy":          "Купить",
+    "noListings":   "Нет объявлений",
+    "loading":      "Загрузка…",
+    "typeDrone":    "ДРОН",
+    "typeTurret":   "БАШНЯ",
+    "upgrades_one": "{{count}} улучш.",
+    "upgrades_few": "{{count}} улучш.",
+    "upgrades_many":"{{count}} улучш.",
+    "seller":       "от {{name}}"
   },
   "equipment": {
-    "title":    "Оборудование",
-    "drones":   "Дроны",
-    "turrets":  "Башни",
-    "upgrades": "улучшений"
+    "title":       "Оборудование",
+    "drones":      "Дроны",
+    "turrets":     "Башни",
+    "upgradesOf":  "{{done}}/{{total}} улучшений",
+    "nextUpgrade": "Следующий апгрейд",
+    "maxed":       "Максимум",
+    "upgrade":     "Улучшить"
+  },
+  "unitDetail": {
+    "level":       "Уровень",
+    "type":        "Тип",
+    "income":      "Доход",
+    "perSec":      "/ сек",
+    "defense":     "Защита",
+    "upgrades":    "Улучшения",
+    "upgrade":     "Улучшить",
+    "notAvail":    "Недоступно",
+    "maxed":       "Максимум"
   },
   "profile": {
     "title":      "Профиль",
