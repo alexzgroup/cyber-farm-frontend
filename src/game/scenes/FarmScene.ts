@@ -7,10 +7,10 @@ import { syncPositions as apiSyncPositions } from '../../api'
 interface FloatingText { text: Phaser.GameObjects.Text; vy: number; life: number }
 
 const GRID_COLS   = 3
-const DRONE_CELL  = 150
-const TURRET_CELL = 130
+const DRONE_CELL  = 200
+const TURRET_CELL = 200
 const POSITIONS_KEY = 'cyber-farm-positions'
-const DRONE_START_Y = 120   // world Y where drones begin
+const DRONE_START_Y = 80   // world Y where drones begin
 
 export class FarmScene extends Phaser.Scene {
   private droneSprites:   Map<string, Phaser.GameObjects.Image> = new Map()
@@ -69,14 +69,14 @@ export class FarmScene extends Phaser.Scene {
     const droneRows  = Math.ceil(dc / GRID_COLS)
     const turretRows = Math.ceil(tc / GRID_COLS)
     const droneZoneH  = DRONE_START_Y + droneRows * DRONE_CELL
-    const separatorH  = 80
-    const turretZoneH = tc > 0 ? separatorH + turretRows * TURRET_CELL + 120 : 80
+    const separatorH  = 60
+    const turretZoneH = tc > 0 ? separatorH + turretRows * TURRET_CELL + 60 : 80
     return Math.max(H * 2.2, droneZoneH + turretZoneH)
   }
 
   private separatorY(droneCount: number): number {
     const rows = Math.ceil(Math.max(droneCount, 1) / GRID_COLS)
-    return DRONE_START_Y + rows * DRONE_CELL + 60
+    return DRONE_START_Y + rows * DRONE_CELL + 140
   }
 
   // ─── Background (extends 2000px beyond world to avoid black edges) ──────────
