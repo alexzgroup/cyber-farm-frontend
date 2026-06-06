@@ -31,7 +31,7 @@ export function ShopScreen() {
                   <div className={styles.droneIcon}>💀</div>
                   <div className={styles.cardInfo}>
                     <p className={styles.droneName}>{info.name}</p>
-                    <p className={styles.droneStats}>{info.incomePerHour} / час · не работает</p>
+                    <p className={styles.droneStats}>{Math.round(info.tapBonus * 36000) / 100} / час · не работает</p>
                     <p className={styles.broken}>Сломан после рейда</p>
                   </div>
                   <button
@@ -66,7 +66,7 @@ export function ShopScreen() {
                 <div className={styles.cardInfo}>
                   <p className={styles.droneName}>{current.name}</p>
                   <p className={styles.droneStats}>
-                    {current.incomePerHour} / час · +{current.tapBonus} за клик
+                    {"-"} / час · +{current.tapBonus} за клик
                   </p>
                   {drone.isBroken && <p className={styles.broken}>Сломан</p>}
                 </div>

@@ -1,26 +1,24 @@
 import type { AuthResponse } from './types'
 
-const API_BASE    = import.meta.env.VITE_API_URL      ?? 'http://localhost:8080'
-const DEV_API_KEY = import.meta.env.VITE_DEV_API_KEY  ?? ''
+const API_BASE      = import.meta.env.VITE_API_URL       ?? 'http://localhost:8080'
 const DEV_BOT_TOKEN = import.meta.env.VITE_DEV_BOT_TOKEN ?? ''
-const JWT_KEY     = 'cyberfarm_jwt'
+const JWT_KEY       = 'cyberfarm_jwt'
+const JWT_EXP_KEY   = 'cyberfarm_jwt_exp'
 
-// ── devMode detection ──────────────────────────────────────────────────────
-// true when app is opened in browser outside Telegram (initData is empty)
+// ── Dev-mode detection ─────────────────────────────────────────────────────
+// true when running in browser outside Telegram (initData is empty / missing)
 const _tgInitData = typeof window !== 'undefined'
   ? (window as any).Telegram?.WebApp?.initData as string | undefined
   : undefined
 
 export const devMode = !_tgInitData
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── HMAC helpers ───────────────────────────────────────────────────────────
 const enc = new TextEncoder()
 
 async function hmacBytes(key: ArrayBuffer | Uint8Array, data: string): Promise<ArrayBuffer> {
   const cryptoKey = await crypto.subtle.importKey(
-    'raw', key,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false, ['sign'],
+    'raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
   )
   return crypto.subtle.sign('HMAC', cryptoKey, enc.encode(data))
 }
@@ -31,15 +29,12 @@ function toHex(buf: ArrayBuffer): string {
     .join('')
 }
 
-// ── Signed Telegram initData ───────────────────────────────────────────────
-// Generates a properly HMAC-SHA256 signed initData string identical to what
-// the real Telegram client sends, so the backend's ValidateInitData passes.
-//
-// Algorithm (per Telegram docs):
-//   secret = HMAC-SHA256(key="WebAppData", data=bot_token)
-//   hash   = HMAC-SHA256(key=secret, data=sorted_fields joined by \n)
+// ── Signed mock initData (dev only) ───────────────────────────────────────
+// Generates a valid HMAC-SHA256 signed initData string exactly as Telegram
+// would, so the backend's ValidateInitData passes in dev/test mode.
+// Requires VITE_DEV_BOT_TOKEN to be set in .env.local
 async function buildSignedInitData(): Promise<string> {
-  const user = {
+  const tgUser = {
     id:            123456789,
     first_name:    'Test',
     last_name:     'User',
@@ -51,7 +46,7 @@ async function buildSignedInitData(): Promise<string> {
   const fields: Record<string, string> = {
     auth_date: String(Math.floor(Date.now() / 1000)),
     query_id:  'AAHdF6IQAAAAAN0XohDhrOrc',
-    user:      JSON.stringify(user),
+    user:      JSON.stringify(tgUser),
   }
 
   const dataCheckString = Object.keys(fields)
@@ -66,44 +61,36 @@ async function buildSignedInitData(): Promise<string> {
   return new URLSearchParams({ ...fields, hash }).toString()
 }
 
-// ── x-api-key ──────────────────────────────────────────────────────────────
-// Format: `{base64url(payload)}.{HMAC-SHA256(payload, DEV_API_KEY)}`
-// Payload: JSON { user: {...}, ts: unix_seconds }
-// Backend decodes the payload, verifies HMAC, then initializes the user from it.
-async function buildXApiKey(): Promise<string> {
-  const tgUser = devMode
-    ? null
-    : (window as any).Telegram?.WebApp?.initDataUnsafe?.user
+// ── JWT storage ────────────────────────────────────────────────────────────
+let _jwt: string | null = null
+let _jwtExp: number     = 0
 
-  const user = tgUser ?? {
-    id:            123456789,
-    first_name:    'Test',
-    last_name:     'User',
-    username:      'testuser',
-    language_code: 'ru',
-    is_premium:    false,
-  }
-
-  const payload = JSON.stringify({ user, ts: Math.floor(Date.now() / 1000) })
-  const b64     = btoa(payload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-  const sig     = toHex(await hmacBytes(enc.encode(DEV_API_KEY), b64))
-  return `${b64}.${sig}`
+function loadJwtFromStorage() {
+  if (typeof window === 'undefined') return
+  _jwt    = localStorage.getItem(JWT_KEY)
+  _jwtExp = Number(localStorage.getItem(JWT_EXP_KEY) ?? 0)
 }
 
-// ── JWT management ─────────────────────────────────────────────────────────
-let _jwt: string | null = typeof window !== 'undefined'
-  ? localStorage.getItem(JWT_KEY)
-  : null
-
-function setJwt(token: string) {
-  _jwt = token
-  localStorage.setItem(JWT_KEY, token)
+function saveJwt(token: string, expiresIn: number) {
+  _jwt    = token
+  _jwtExp = Date.now() + expiresIn * 1000
+  localStorage.setItem(JWT_KEY,     token)
+  localStorage.setItem(JWT_EXP_KEY, String(_jwtExp))
 }
 
 function clearJwt() {
-  _jwt = null
+  _jwt    = null
+  _jwtExp = 0
   localStorage.removeItem(JWT_KEY)
+  localStorage.removeItem(JWT_EXP_KEY)
 }
+
+function isJwtFresh(): boolean {
+  // valid if not expired and not expiring within the next 60 seconds
+  return !!_jwt && Date.now() < _jwtExp - 60_000
+}
+
+loadJwtFromStorage()
 
 // ── Authentication ─────────────────────────────────────────────────────────
 let _authPromise: Promise<void> | null = null
@@ -113,28 +100,20 @@ async function authenticate(): Promise<void> {
     ? await buildSignedInitData()
     : (_tgInitData ?? '')
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-
-  if (DEV_API_KEY) {
-    headers['x-api-key'] = await buildXApiKey()
-  }
-
   const res = await fetch(`${API_BASE}/api/auth/telegram`, {
     method:  'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({ init_data: initData }),
   })
 
-  if (!res.ok) {
-    throw new Error(`[CyberFarm] Auth failed: ${res.status}`)
-  }
+  if (!res.ok) throw new Error(`[CyberFarm] Auth failed: ${res.status}`)
 
   const data: AuthResponse = await res.json()
-  setJwt(data.token)
+  saveJwt(data.token, data.expires_in)
 }
 
 async function ensureAuth(): Promise<void> {
-  if (_jwt) return
+  if (isJwtFresh()) return
   if (!_authPromise) {
     _authPromise = authenticate().finally(() => { _authPromise = null })
   }
@@ -145,19 +124,16 @@ async function ensureAuth(): Promise<void> {
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   await ensureAuth()
 
-  const headers: Record<string, string> = {
-    'Content-Type':  'application/json',
-    'Authorization': `Bearer ${_jwt!}`,
-    ...(init.headers as Record<string, string> | undefined),
-  }
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${_jwt!}`,
+      ...(init.headers as Record<string, string> | undefined),
+    },
+  })
 
-  if (DEV_API_KEY) {
-    headers['x-api-key'] = await buildXApiKey()
-  }
-
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers })
-
-  // Token expired — re-auth once and retry
+  // Token rejected server-side — re-auth once and retry
   if (res.status === 401) {
     clearJwt()
     await authenticate()

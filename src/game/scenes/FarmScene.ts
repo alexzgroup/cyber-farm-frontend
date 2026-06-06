@@ -417,7 +417,7 @@ export class FarmScene extends Phaser.Scene {
       if (drone.isBroken) return
       const sprite = this.droneSprites.get(drone.id)
       if (!sprite || !sprite.scene) return
-      const perSecond = drone.incomePerHour / 3600
+      const perSecond = drone.incomePerSec
       this.spawnPassiveFloat(sprite.x, sprite.y, this.formatPassive(perSecond))
     })
   }

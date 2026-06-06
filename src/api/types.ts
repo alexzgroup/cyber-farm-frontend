@@ -55,7 +55,8 @@ export interface ApiTurretUpgrade {
 export interface ApiTurret {
   id:            number
   user_id:       number
-  turret_level:  number
+  level:         number   // mapped from turret_level in Go
+  turret_level:  number   // raw from API (alias)
   position_x:    number
   position_y:    number
   defense_power: number
@@ -104,6 +105,7 @@ export interface UnitPosition {
 }
 
 export interface AuthResponse {
-  token: string
-  user:  ApiUser
+  token:      string
+  expires_in: number   // seconds until token expiry (1 hour = 3600)
+  user:       ApiUser
 }
