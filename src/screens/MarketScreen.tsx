@@ -10,6 +10,7 @@ type SortKey    = 'price-asc' | 'price-desc' | 'newest' | 'level-desc'
 
 const PAGE_SIZE = 20
 
+// Static color/emoji data — names resolved via t() inside components
 const DRONE_COLORS: Record<number, { color: string; emoji: string; key: string }> = {
   1: { color: '#00ccee', emoji: '🔵', key: 'drone.scout'   },
   2: { color: '#ff4400', emoji: '🔴', key: 'drone.combat'  },
@@ -36,9 +37,11 @@ function Pagination({ page, total, pageSize, onChange }: {
   )
 }
 
-function MarketCard({ item, onBuy, canAfford, t }: {
-  item: MarketListing; onBuy: () => void; canAfford: boolean; t: (k: string, o?: Record<string,unknown>) => string
+function MarketCard({ item, onBuy, canAfford }: {
+  item: MarketListing; onBuy: () => void; canAfford: boolean
 }) {
+  const { t } = useTranslation()
+
   const meta = item.type === 'drone'
     ? DRONE_COLORS[item.droneType ?? 1]
     : TURRET_COLORS[item.turretLevel ?? 1]
@@ -67,7 +70,7 @@ function MarketCard({ item, onBuy, canAfford, t }: {
 
       <div className={styles.cardMeta}>
         {item.upgradesCount > 0 && (
-          <span className={styles.upgBadge}>{t('market.upgrades_one', { count: item.upgradesCount })}</span>
+          <span className={styles.upgBadge}>⬆ {item.upgradesCount} {t('equipment.upgrades')}</span>
         )}
         <span className={styles.timeLabel}>{timeAgo(item.listedAt)}</span>
       </div>
@@ -82,7 +85,7 @@ function MarketCard({ item, onBuy, canAfford, t }: {
           disabled={!canAfford}
           onClick={onBuy}
         >
-          Купить
+          {t('market.buy')}
         </button>
       </div>
     </div>
@@ -90,6 +93,7 @@ function MarketCard({ item, onBuy, canAfford, t }: {
 }
 
 export function MarketScreen() {
+  const { t } = useTranslation()
   const balance    = useGameStore((s) => s.balance)
   const addBalance = useGameStore((s) => s.addBalance)
 
@@ -108,16 +112,15 @@ export function MarketScreen() {
     if (balance < item.price) return
     addBalance(-item.price)
     setBought((s) => new Set(s).add(item.id))
-    showToast(`Куплено: ${item.type === 'drone'
-      ? DRONE_TYPE_LABELS[item.droneType ?? 1].name
-      : TURRET_LEVEL_LABELS[item.turretLevel ?? 1].name} за ⬡ ${item.price}`)
+    const meta = item.type === 'drone'
+      ? DRONE_COLORS[item.droneType ?? 1]
+      : TURRET_COLORS[item.turretLevel ?? 1]
+    showToast(`${t(meta.key)} ⬡ ${item.price}`)
   }
 
   const filtered = useMemo(() => {
     let list = MOCK_MARKET.filter((i) => !bought.has(i.id))
-
     if (filterType !== 'all') list = list.filter((i) => i.type === filterType)
-
     switch (sortBy) {
       case 'price-asc':  list = [...list].sort((a, b) => a.price - b.price); break
       case 'price-desc': list = [...list].sort((a, b) => b.price - a.price); break
@@ -133,22 +136,25 @@ export function MarketScreen() {
     return list
   }, [filterType, sortBy, bought])
 
-  const paged   = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const FILTER_LABELS: Record<FilterType, string> = {
+    all:    t('market.filterAll'),
+    drone:  `🔵 ${t('market.filterDrones')}`,
+    turret: `🛡 ${t('market.filterTurrets')}`,
+  }
+
+  const paged    = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
   const onFilter = (f: FilterType) => { setFilterType(f); setPage(0) }
   const onSort   = (s: SortKey)    => { setSortBy(s);     setPage(0) }
 
   return (
     <div className={styles.screen}>
-      {/* Header */}
       <div className={styles.header}>
-        <h2 className={styles.title}>P2P-рынок</h2>
+        <h2 className={styles.title}>{t('market.title')}</h2>
         <span className={styles.balance}>⬡ {balance.toFixed(0)}</span>
       </div>
 
-      {/* Toast */}
       {toast && <div className={styles.toast}>{toast}</div>}
 
-      {/* Filters */}
       <div className={styles.filterBar}>
         <div className={styles.typeFilters}>
           {(['all', 'drone', 'turret'] as FilterType[]).map((f) => (
@@ -157,7 +163,7 @@ export function MarketScreen() {
               className={`${styles.chip} ${filterType === f ? styles.chipActive : ''}`}
               onClick={() => onFilter(f)}
             >
-              {f === 'all' ? 'Все' : f === 'drone' ? '🔵 Дроны' : '🛡 Башни'}
+              {FILTER_LABELS[f]}
             </button>
           ))}
         </div>
@@ -173,15 +179,13 @@ export function MarketScreen() {
         </select>
       </div>
 
-      {/* Stats bar */}
       <div className={styles.statsBar}>
-        <span>{filtered.length} предложений</span>
-        <span>{bought.size} куплено</span>
+        <span>{filtered.length} {t('market.filterAll').toLowerCase()}</span>
+        <span>{bought.size} {t('market.buy').toLowerCase()}</span>
       </div>
 
-      {/* Grid */}
       {paged.length === 0 ? (
-        <div className={styles.empty}>Нет предложений по фильтру</div>
+        <div className={styles.empty}>{t('market.noListings')}</div>
       ) : (
         <div className={styles.grid}>
           {paged.map((item) => (
@@ -195,7 +199,6 @@ export function MarketScreen() {
         </div>
       )}
 
-      {/* Pagination */}
       <Pagination
         page={page}
         total={filtered.length}
