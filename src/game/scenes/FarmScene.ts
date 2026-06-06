@@ -76,7 +76,7 @@ export class FarmScene extends Phaser.Scene {
 
   private separatorY(droneCount: number): number {
     const rows = Math.ceil(Math.max(droneCount, 1) / GRID_COLS)
-    return DRONE_START_Y + rows * DRONE_CELL + 140
+    return DRONE_START_Y + rows * DRONE_CELL + 177
   }
 
   // ─── Background (extends 2000px beyond world to avoid black edges) ──────────
