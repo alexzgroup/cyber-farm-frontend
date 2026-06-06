@@ -102,13 +102,15 @@ export function getRaidHistory(): Promise<ApiRaid[]> {
 
 export interface MarketQueryParams {
   unit_type?: UnitType
-  sort?:      'newest' | 'price_asc' | 'price_desc'
+  sort?:      "newest" | "price_asc" | "price_desc"
+  currency?:  "gold" | "ton"
   page?:      number
 }
 
 export function getMarket(params: MarketQueryParams = {}): Promise<ApiMarketListing[]> {
   const qs = new URLSearchParams()
   if (params.unit_type) qs.set('unit_type', params.unit_type)
+  if (params.currency) qs.set("currency", params.currency)
   if (params.sort)      qs.set('sort',      params.sort)
   if (params.page)      qs.set('page',      String(params.page))
   const query = qs.toString()

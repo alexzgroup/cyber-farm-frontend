@@ -90,7 +90,10 @@
     "upgrades_one": "{{count}} улучш.",
     "upgrades_few": "{{count}} улучш.",
     "upgrades_many": "{{count}} улучш.",
-    "seller": "от {{name}}"
+    "seller": "от {{name}}",
+    "tabGold": "Золото",
+    "tabTon": "TON",
+    "buyTon": "Купить за TON"
   },
   "equipment": {
     "title": "Оборудование",

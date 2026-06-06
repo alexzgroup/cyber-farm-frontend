@@ -90,7 +90,10 @@
     "upgrades_one": "{{count}} upgr.",
     "upgrades_few": "{{count}} upgr.",
     "upgrades_many": "{{count}} upgr.",
-    "seller": "by {{name}}"
+    "seller": "by {{name}}",
+    "tabGold": "Gold",
+    "tabTon": "TON",
+    "buyTon": "Buy with TON"
   },
   "equipment": {
     "title": "Equipment",
