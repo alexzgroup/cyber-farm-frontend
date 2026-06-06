@@ -111,10 +111,10 @@ interface GameState {
   // Actions — data
   loadGameState:      () => Promise<void>
   tap:                () => void           // FarmScene tap mechanic
-  buyDrone:           (droneType?: string) => Promise<boolean>
+  buyDrone:           (droneType?: import('../api/types').DroneType) => Promise<boolean>
   upgradeDrone:       (droneId: string) => Promise<boolean>
   repairDrone:        (droneId: string) => Promise<boolean>
-  buyTurret:          (level?: number) => Promise<boolean>
+  buyTurret:          (level?: 1 | 2 | 3) => Promise<boolean>
   executeRaid:        (defenderId: number) => Promise<RaidResult | null>
   purchaseUnitUpgrade:(unitId: string, upgradeId: string, cost: number) => boolean
   syncPositions:      () => void
@@ -184,7 +184,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // ── Drones ─────────────────────────────────────────────────────────────
 
-  buyDrone: async (droneType = 'scout') => {
+  buyDrone: async (droneType: import('../api/types').DroneType = 'scout') => {
     try {
       const drone = await api.buyDrone(droneType)
       set((s) => ({
@@ -232,7 +232,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // ── Turrets ────────────────────────────────────────────────────────────
 
-  buyTurret: async (level = 1) => {
+  buyTurret: async (level: 1 | 2 | 3 = 1) => {
     try {
       const turret = await api.buyTurret(level)
       set((s) => ({

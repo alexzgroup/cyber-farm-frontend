@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { useGameStore, DRONE_UPGRADES, type Drone, type Turret } from '../../store/gameStore'
 import { getDroneTextureName, getFarmTurretTextureName } from '../utils/droneGraphics'
 import { soundManager } from '../utils/soundManager'
+import { syncPositions as apiSyncPositions } from '../../api'
 
 interface FloatingText { text: Phaser.GameObjects.Text; vy: number; life: number }
 
@@ -204,7 +205,11 @@ export class FarmScene extends Phaser.Scene {
     const { drones } = useGameStore.getState()
     const saved = this.loadPositions()
     drones.forEach((drone, i) => {
-      const pos = saved[drone.id] ?? this.defaultDronePos(i, drones.length)
+      // Priority: API position (positionX/Y) → localStorage → default grid
+      const apiPos = (drone.positionX && drone.positionX > 0 && drone.positionY && drone.positionY > 0)
+        ? { x: drone.positionX, y: drone.positionY }
+        : null
+      const pos = apiPos ?? saved[drone.id] ?? this.defaultDronePos(i, drones.length)
       this.addDroneSprite(drone, pos.x, pos.y)
     })
   }
@@ -260,7 +265,10 @@ export class FarmScene extends Phaser.Scene {
     const { turrets, drones } = useGameStore.getState()
     const saved = this.loadPositions()
     turrets.forEach((turret, i) => {
-      const pos = saved[turret.id] ?? this.defaultTurretPos(i, turrets.length, drones.length)
+      const apiPos = (turret.positionX && turret.positionX > 0 && turret.positionY && turret.positionY > 0)
+        ? { x: turret.positionX, y: turret.positionY }
+        : null
+      const pos = apiPos ?? saved[turret.id] ?? this.defaultTurretPos(i, turrets.length, drones.length)
       this.addTurretSprite(turret, pos.x, pos.y)
     })
   }
@@ -455,10 +463,26 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private savePositions() {
-    const pos: Record<string, { x: number, y: number }> = {}
-    this.droneSprites.forEach((s, id)  => { pos[id] = { x: Math.round(s.x), y: Math.round(s.y) } })
-    this.turretSprites.forEach((s, id) => { pos[id] = { x: Math.round(s.x), y: Math.round(s.y) } })
-    try { localStorage.setItem(POSITIONS_KEY, JSON.stringify(pos)) } catch { /* quota */ }
+    const dronePos:  Array<{ id: number; position_x: number; position_y: number }> = []
+    const turretPos: Array<{ id: number; position_x: number; position_y: number }> = []
+    const localStorage_pos: Record<string, { x: number, y: number }> = {}
+
+    this.droneSprites.forEach((s, id) => {
+      const x = Math.round(s.x), y = Math.round(s.y)
+      localStorage_pos[id] = { x, y }
+      dronePos.push({ id: Number(id), position_x: x, position_y: y })
+    })
+    this.turretSprites.forEach((s, id) => {
+      const x = Math.round(s.x), y = Math.round(s.y)
+      localStorage_pos[id] = { x, y }
+      turretPos.push({ id: Number(id), position_x: x, position_y: y })
+    })
+
+    // Save to localStorage (instant, offline-friendly)
+    try { localStorage.setItem(POSITIONS_KEY, JSON.stringify(localStorage_pos)) } catch { /* quota */ }
+
+    // Sync to API (persists across devices and sessions)
+    apiSyncPositions(dronePos, turretPos).catch(() => { /* silent — positions are cosmetic */ })
   }
 
   // ─── Update ───────────────────────────────────────────────────────────────

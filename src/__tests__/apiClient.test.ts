@@ -46,7 +46,7 @@ describe('apiFetch retry on 401', () => {
   it('clears JWT and re-authenticates on 401 response', async () => {
     let callCount = 0
 
-    global.fetch = vi.fn(async (url: string) => {
+    ;(globalThis as any).fetch = vi.fn(async (url: string) => {
       callCount++
       const u = String(url)
 

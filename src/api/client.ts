@@ -16,9 +16,9 @@ export const devMode = !_tgInitData
 // ── HMAC helpers ───────────────────────────────────────────────────────────
 const enc = new TextEncoder()
 
-async function hmacBytes(key: ArrayBuffer | Uint8Array, data: string): Promise<ArrayBuffer> {
+async function hmacBytes(key: ArrayBuffer | ArrayBufferView, data: string): Promise<ArrayBuffer> {
   const cryptoKey = await crypto.subtle.importKey(
-    'raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+    'raw', key as ArrayBuffer, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
   )
   return crypto.subtle.sign('HMAC', cryptoKey, enc.encode(data))
 }
@@ -55,7 +55,7 @@ async function buildSignedInitData(): Promise<string> {
     .join('\n')
 
   const secret    = await hmacBytes(enc.encode('WebAppData'), DEV_BOT_TOKEN)
-  const hashBytes = await hmacBytes(secret, dataCheckString)
+  const hashBytes = await hmacBytes(new Uint8Array(secret), dataCheckString)
   const hash      = toHex(hashBytes)
 
   return new URLSearchParams({ ...fields, hash }).toString()
