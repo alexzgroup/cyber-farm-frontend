@@ -29,6 +29,7 @@ const TURRET_LEVEL_KEYS: Record<number, string> = {
 }
 
 export function EquipmentScreen() {
+  const { t }        = useTranslation()
   const drones       = useGameStore((s) => s.drones)
   const turrets      = useGameStore((s) => s.turrets)
   const unitUpgrades = useGameStore((s) => s.unitUpgrades)
@@ -58,6 +59,13 @@ export function EquipmentScreen() {
           {t('common.back')}
         </button>
         <h2 className={styles.title}>{t('equipment.title')}</h2>
+        <button
+          style={{ marginLeft: 'auto', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
+            color: 'rgba(255,255,255,0.5)', padding: '5px 10px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}
+          onClick={() => setScreen('purchases')}
+        >
+          📋 {t('equipment.historyBtn')}
+        </button>
       </div>
 
       {/* Drones section */}

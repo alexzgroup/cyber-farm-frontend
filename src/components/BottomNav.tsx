@@ -13,6 +13,8 @@ const TABS: { id: Screen; icon: string; key: string }[] = [
 const SCREEN_PARENT: Partial<Record<string, string>> = {
   equipment:     'farm',
   'unit-detail': 'farm',
+  purchases:     'farm',
+  topup:         'profile',
   market:        'market',
 }
 

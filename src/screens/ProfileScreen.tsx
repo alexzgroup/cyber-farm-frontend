@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
+import { fmtGold } from '../utils/format'
 import styles from './ProfileScreen.module.css'
 
 const MOCK = {
@@ -60,6 +61,7 @@ function WinRateRing({ wins, losses }: { wins: number; losses: number }) {
 
 export function ProfileScreen() {
   const balance      = useGameStore((s) => s.balance)
+  const setScreen    = useGameStore((s) => s.setScreen)
   const raidLog      = useGameStore((s) => s.raidLog)
   const soundEnabled = useGameStore((s) => s.soundEnabled)
   const toggleSound      = useGameStore((s) => s.toggleSound)
@@ -141,7 +143,7 @@ export function ProfileScreen() {
                   <path d="M12 7l1.5 3.1 3.4.3-2.6 2.2.8 3.3L12 14.3 8.9 16.2l.8-3.3-2.6-2.2 3.4-.3L12 7z"/>
                 </svg>
               </div>
-              <div className={styles.balAmt}>{Math.floor(balance).toLocaleString('ru')}</div>
+              <div className={styles.balAmt}>{fmtGold(balance)}</div>
               <div className={styles.balSub}>{t('profile.gold')}</div>
             </div>
             <div className={`${styles.card} ${styles.bal} ${styles.balTon}`}>
@@ -156,6 +158,25 @@ export function ProfileScreen() {
               <div className={styles.balSub}>TON <span className={styles.balFiat}>≈ ${MOCK.tonUsd}</span></div>
             </div>
           </div>
+
+          {/* ── Wallet CTA ── */}
+          {/* ── Stars Top-up ── */}
+          <button
+            onClick={() => setScreen('topup')}
+            style={{
+              width: '100%', padding: '14px 18px', borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(124,58,237,0.18), rgba(91,33,182,0.25))',
+              border: '1px solid rgba(124,58,237,0.4)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+            }}
+          >
+            <span style={{ fontSize: 26 }}>⭐</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, color: '#e0e0e0' }}>{t('topup.title')}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{t('topup.profileHint')}</div>
+            </div>
+            <span style={{ color: '#7c3aed', fontSize: 18 }}>→</span>
+          </button>
 
           {/* ── Wallet CTA ── */}
           <section className={`${styles.card} ${styles.wallet}`}>

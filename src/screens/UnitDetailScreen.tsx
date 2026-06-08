@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore, type Drone, type Turret } from '../store/gameStore'
+import { fmtGold } from '../utils/format'
 import { DRONE_UPGRADE_TEMPLATES, TURRET_UPGRADE_TEMPLATES, type UpgradeTemplate } from '../data/unitUpgrades'
 import { UnitPreviewGame } from '../game/UnitPreviewGame'
 import styles from './UnitDetailScreen.module.css'
@@ -33,6 +35,7 @@ function UpgradeRow({
   accentColor: string
   onBuy: () => void
 }) {
+  const { t } = useTranslation()
   const nextLevel = currentLevel + 1
   const cost = currentLevel < template.maxLevel ? template.costs[currentLevel] : 0
   const maxed = currentLevel >= template.maxLevel
@@ -68,26 +71,24 @@ function UpgradeRow({
 }
 
 export function UnitDetailScreen() {
-  const selectedUnitId    = useGameStore((s) => s.selectedUnitId)
-  const drones            = useGameStore((s) => s.drones)
-  const turrets           = useGameStore((s) => s.turrets)
-  const unitUpgrades      = useGameStore((s) => s.unitUpgrades)
-  const balance           = useGameStore((s) => s.balance)
+  const selectedUnitId      = useGameStore((s) => s.selectedUnitId)
+  const drones              = useGameStore((s) => s.drones)
+  const turrets             = useGameStore((s) => s.turrets)
+  const unitUpgrades        = useGameStore((s) => s.unitUpgrades)
+  const balance             = useGameStore((s) => s.balance)
   const purchaseUnitUpgrade = useGameStore((s) => s.purchaseUnitUpgrade)
-  const setScreen         = useGameStore((s) => s.setScreen)
-
-  if (!selectedUnitId) {
-    setScreen('equipment')
-    return null
-  }
+  const setScreen           = useGameStore((s) => s.setScreen)
+  const { t }               = useTranslation()
 
   const drone  = drones.find((d) => d.id === selectedUnitId)
-  const turret = turrets.find((t) => t.id === selectedUnitId)
+  const turret = turrets.find((tt) => tt.id === selectedUnitId)
+  const shouldRedirect = !selectedUnitId || (!drone && !turret)
 
-  if (!drone && !turret) {
-    setScreen('equipment')
-    return null
-  }
+  useEffect(() => {
+    if (shouldRedirect) setScreen('equipment')
+  }, [shouldRedirect, setScreen])
+
+  if (shouldRedirect) return null
 
   const isDrone = Boolean(drone)
   const unit    = (drone ?? turret) as Drone | Turret
@@ -134,7 +135,7 @@ export function UnitDetailScreen() {
           <div className={styles.unitName}>{unitName}</div>
           <div className={styles.unitLevel} style={{ color: accentColor }}>{levelLabel}</div>
         </div>
-        <div className={styles.balance}>⬡ {balance.toFixed(0)}</div>
+        <div className={styles.balance}>⬡ {fmtGold(balance)}</div>
       </div>
 
       {/* Preview */}
@@ -172,7 +173,7 @@ export function UnitDetailScreen() {
               currentLevel={currentLevel}
               canAfford={canAfford}
               accentColor={accentColor}
-              onBuy={() => purchaseUnitUpgrade(selectedUnitId, template.id, cost)}
+              onBuy={() => void purchaseUnitUpgrade(selectedUnitId, template.id, cost)}
             />
           )
         })}

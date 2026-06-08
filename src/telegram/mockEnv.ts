@@ -1,7 +1,6 @@
 // Injects a minimal window.Telegram.WebApp mock so the app runs outside Telegram
 export function setupMockTelegram() {
   if (typeof window === 'undefined') return
-  if (window.Telegram?.WebApp) return
 
   const colorScheme = 'dark'
 

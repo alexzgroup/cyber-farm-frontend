@@ -71,7 +71,16 @@
     "stolenCoins": "Украдено {{amount}} монет у {{name}}",
     "droneHurt": "{{name}} отбил атаку — дрон повреждён",
     "back": "Назад к рейдам",
-    "droneBroken": "дрон сломан"
+    "droneBroken": "дрон сломан",
+    "tabOutgoing": "Атаки",
+    "tabIncoming": "На меня",
+    "incomingEmpty": "На вас ещё никто не нападал",
+    "incomingAttackedBy": "Атаковал",
+    "incomingStolen": "−{{amount}} монет",
+    "incomingDefended": "Отбито",
+    "alertDefended": "{{name}} атаковал — защитили {{amount}} монет!",
+    "alertLost": "💥 {{name}} украл {{amount}} монет",
+    "cooldownLabel": "Снова через"
   },
   "market": {
     "title": "P2P Рынок",
@@ -105,7 +114,21 @@
     "upgrade": "Улучшить",
     "myDrones": "⚡ Мои дроны",
     "myTurrets": "🛡 Башни защиты",
-    "bonusLvl": "{{val}} × уровень"
+    "bonusLvl": "{{val}} × уровень",
+    "historyBtn": "История покупок"
+  },
+  "purchases": {
+    "title": "История покупок",
+    "empty": "Покупок пока нет"
+  },
+  "topup": {
+    "title": "Пополнить золото",
+    "profileHint": "Купить золото за Telegram Stars",
+    "notice": "Оплата через Telegram Stars (XTR). Мгновенное зачисление на баланс.",
+    "noProducts": "Нет доступных пакетов",
+    "cancelled": "Оплата отменена",
+    "failed": "Ошибка оплаты. Попробуйте снова.",
+    "footer": "Telegram берёт 30% · Деньги уходят разработчикам игры"
   },
   "unitDetail": {
     "level": "Уровень",

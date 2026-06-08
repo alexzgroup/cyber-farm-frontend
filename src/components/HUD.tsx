@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useGameStore } from '../store/gameStore'
+import { fmtGold } from '../utils/format'
 import { SettingsModal } from './SettingsModal'
 import styles from './HUD.module.css'
 
@@ -20,7 +21,7 @@ export function HUD() {
       <div className={styles.hud}>
         <div className={styles.balance}>
           <span className={styles.coinIcon}>⬡</span>
-          <span className={styles.balanceValue}>{balance.toFixed(1)}</span>
+          <span className={styles.balanceValue}>{fmtGold(balance)}</span>
         </div>
 
         <div className={styles.right}>

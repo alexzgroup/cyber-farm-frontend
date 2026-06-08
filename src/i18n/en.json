@@ -71,7 +71,16 @@
     "stolenCoins": "Stole {{amount}} coins from {{name}}",
     "droneHurt": "{{name}} repelled the attack — drone damaged",
     "back": "Back to Raids",
-    "droneBroken": "drone broken"
+    "droneBroken": "drone broken",
+    "tabOutgoing": "Attacks",
+    "tabIncoming": "On me",
+    "incomingEmpty": "Nobody has attacked you yet",
+    "incomingAttackedBy": "Attacked by",
+    "incomingStolen": "−{{amount}} coins",
+    "incomingDefended": "Defended",
+    "alertDefended": "{{name}} attacked — saved {{amount}} coins!",
+    "alertLost": "💥 {{name}} stole {{amount}} coins",
+    "cooldownLabel": "Again in"
   },
   "market": {
     "title": "P2P Market",
@@ -105,7 +114,21 @@
     "upgrade": "Upgrade",
     "myDrones": "⚡ My Drones",
     "myTurrets": "🛡 Defense Turrets",
-    "bonusLvl": "{{val}} × level"
+    "bonusLvl": "{{val}} × level",
+    "historyBtn": "Purchase History"
+  },
+  "purchases": {
+    "title": "Purchase History",
+    "empty": "No purchases yet"
+  },
+  "topup": {
+    "title": "Top Up Gold",
+    "profileHint": "Buy Gold with Telegram Stars",
+    "notice": "Payments via Telegram Stars (XTR). Instant balance credit.",
+    "noProducts": "No packages available",
+    "cancelled": "Payment cancelled",
+    "failed": "Payment failed. Please try again.",
+    "footer": "Telegram takes 30% · Funds go to game developers"
   },
   "unitDetail": {
     "level": "Level",

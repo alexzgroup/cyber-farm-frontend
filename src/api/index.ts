@@ -8,6 +8,7 @@ import type {
   ApiRaid,
   ApiMarketListing,
   ApiLeaderboardEntry,
+  ApiPurchaseLog,
   DroneType,
   TurretUpgradeType,
   UnitType,
@@ -96,6 +97,40 @@ export function startRaid(defenderId: number): Promise<ApiRaid> {
 
 export function getRaidHistory(): Promise<ApiRaid[]> {
   return apiFetch('/api/raids/history')
+}
+
+export function getIncomingRaids(): Promise<ApiRaid[]> {
+  return apiFetch('/api/raids/incoming')
+}
+
+// ── Equipment upgrades ─────────────────────────────────────────────────────
+
+export function buyDroneEquipment(droneId: number, upgradeKey: string): Promise<ApiTurretUpgrade> {
+  return apiFetch(`/api/drones/${droneId}/equipment`, {
+    method: 'POST',
+    body:   JSON.stringify({ upgrade_key: upgradeKey }),
+  })
+}
+
+export function buyTurretEquipment(turretId: number, upgradeKey: string): Promise<ApiTurretUpgrade> {
+  return apiFetch(`/api/turrets/${turretId}/equipment`, {
+    method: 'POST',
+    body:   JSON.stringify({ upgrade_key: upgradeKey }),
+  })
+}
+
+export function getPurchaseHistory(): Promise<ApiPurchaseLog[]> {
+  return apiFetch('/api/purchases')
+}
+
+// ── Stars shop ─────────────────────────────────────────────────────────────
+
+export function getShopProducts(): Promise<import('./types').ApiProduct[]> {
+  return apiFetch('/api/shop/products')
+}
+
+export function buyProduct(productId: number): Promise<{ invoice_url: string }> {
+  return apiFetch(`/api/shop/products/${productId}/buy`, { method: 'POST' })
 }
 
 // ── Market ─────────────────────────────────────────────────────────────────

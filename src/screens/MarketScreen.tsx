@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
+import { fmtGold } from '../utils/format'
 import { getMarket, buyListing } from '../api'
 import type { ApiMarketListing } from '../api/types'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
@@ -211,7 +212,7 @@ export function MarketScreen() {
       {/* Header */}
       <div className={styles.header}>
         <h2 className={styles.title}>{t('market.title')}</h2>
-        <span className={styles.balance}>⬡ {balance.toFixed(0)}</span>
+        <span className={styles.balance}>⬡ {fmtGold(balance)}</span>
       </div>
 
       {toast && <div className={styles.toast}>{toast}</div>}

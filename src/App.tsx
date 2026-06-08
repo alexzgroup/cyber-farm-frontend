@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from './store/gameStore'
+import { connectWebSocket, disconnectWebSocket } from './api/websocket'
 import { BottomNav } from './components/BottomNav'
+import { RaidAlert } from './components/RaidAlert'
 import { FarmScreen } from './screens/FarmScreen'
 import { ShopScreen } from './screens/ShopScreen'
 import { RaidsScreen } from './screens/RaidsScreen'
@@ -9,6 +11,8 @@ import { EquipmentScreen } from './screens/EquipmentScreen'
 import { UnitDetailScreen } from './screens/UnitDetailScreen'
 import { MarketScreen } from './screens/MarketScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
+import { PurchaseHistoryScreen } from './screens/PurchaseHistoryScreen'
+import { TopUpScreen } from './screens/TopUpScreen'
 import { NAV_HEIGHT } from './layout'
 
 export function App() {
@@ -21,6 +25,13 @@ export function App() {
 
   useEffect(() => { loadGameState() }, [loadGameState])
 
+  useEffect(() => {
+    if (isLoaded && !loadError) {
+      connectWebSocket()
+      return disconnectWebSocket
+    }
+  }, [isLoaded, loadError])
+
   // Sync i18next language with the value loaded from the API
   useEffect(() => {
     if (language && i18n.language !== language) {
@@ -29,7 +40,11 @@ export function App() {
   }, [language, i18n])
 
   useEffect(() => {
-    const id = setInterval(() => useGameStore.getState().tickEnergyRegen(), 1000)
+    const id = setInterval(() => {
+      const s = useGameStore.getState()
+      s.tickEnergyRegen()
+      s.tickBalance()
+    }, 1000)
     return () => clearInterval(id)
   }, [])
 
@@ -66,6 +81,7 @@ export function App() {
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', background: '#0d1117' }}>
+      <RaidAlert />
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: NAV_HEIGHT, overflow: 'hidden' }}>
         {screen === 'farm'        && <FarmScreen />}
         {screen === 'shop'        && <ShopScreen />}
@@ -74,6 +90,8 @@ export function App() {
         {screen === 'equipment'   && <EquipmentScreen />}
         {screen === 'unit-detail' && <UnitDetailScreen />}
         {screen === 'profile'     && <ProfileScreen />}
+        {screen === 'purchases'   && <PurchaseHistoryScreen />}
+        {screen === 'topup'       && <TopUpScreen />}
       </div>
       <BottomNav />
     </div>

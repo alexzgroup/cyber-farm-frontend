@@ -56,11 +56,31 @@ export interface RaidResult {
   targetName: string
 }
 
-export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'equipment' | 'unit-detail'
+export interface IncomingRaidEntry {
+  id:           string
+  attackerName: string
+  attackerId:   number
+  won:          boolean   // true = defender won (attacker defeated)
+  amount:       number    // coins stolen from me (0 if defended)
+  timestamp:    number
+}
+
+export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'equipment' | 'unit-detail' | 'purchases' | 'topup'
 
 export type UnitUpgrades = Record<string, Record<string, number>>
 
 // ── API → local mappers ────────────────────────────────────────────────────
+
+// Maps backend DroneUpgradeType → frontend upgrade template id
+const DRONE_UPGRADE_TYPE_MAP: Record<string, string> = {
+  cargo_bay: 'cargo', stealth_module: 'stealth', energy_cell: 'energy',
+  ai_navigation: 'ai', armor: 'armor',
+}
+// Maps backend TurretUpgradeType → frontend upgrade template id
+const TURRET_UPGRADE_TYPE_MAP: Record<string, string> = {
+  scope: 'targeting', firepower: 'firepower', range: 'range',
+  reload: 'reload', shield: 'shield',
+}
 
 const DRONE_TYPE_MAP: Record<string, DroneType> = {
   scout: 1, combat: 2, stealth: 3,
@@ -91,14 +111,19 @@ export function mapTurret(t: ApiTurret): Turret {
 
 interface GameState {
   // Data
-  balance:        number
+  balance:          number   // display value — updated every second by tickBalance
+  balanceBase:      number   // last committed balance from server
+  balanceUpdatedAt: number   // ms timestamp of last server commit
+  incomeRateTotal:  number   // coins/second — sum of active drone income_rate
   energy:         number
   maxEnergy:      number
   energyProgress: number
   drones:         Drone[]
   turrets:        Turret[]
-  raidLog:        RaidLogEntry[]
-  lastRaidResult: RaidResult | null
+  raidLog:                 RaidLogEntry[]
+  lastRaidResult:          RaidResult | null
+  incomingRaidLog:         IncomingRaidEntry[]
+  incomingRaidNotification: IncomingRaidEntry | null
   unitUpgrades:   UnitUpgrades
   language:       string   // current UI language (ru/en), synced from API
 
@@ -111,6 +136,7 @@ interface GameState {
 
   // Actions — data
   loadGameState:      () => Promise<void>
+  tickBalance:        () => void           // called every second from App.tsx
   updateLanguage:     (lang: 'ru' | 'en') => Promise<void>
   tap:                () => void           // FarmScene tap mechanic
   buyDrone:           (droneType?: import('../api/types').DroneType) => Promise<boolean>
@@ -118,10 +144,12 @@ interface GameState {
   repairDrone:        (droneId: string) => Promise<boolean>
   buyTurret:          (level?: 1 | 2 | 3) => Promise<boolean>
   executeRaid:        (defenderId: number) => Promise<RaidResult | null>
-  purchaseUnitUpgrade:(unitId: string, upgradeId: string, cost: number) => boolean
+  purchaseUnitUpgrade:(unitId: string, upgradeId: string, cost: number) => Promise<boolean>
   syncPositions:      () => void
-  clearRaidResult:    () => void
-  addBalance:         (amount: number) => void   // for WebSocket income push
+  clearRaidResult:           () => void
+  addIncomingRaid:           (entry: IncomingRaidEntry) => void
+  clearIncomingNotification: () => void
+  addBalance:                (amount: number) => void
 
   // Actions — UI
   setScreen:     (screen: Screen) => void
@@ -137,14 +165,19 @@ interface GameState {
 let _energyAcc = 0
 
 export const useGameStore = create<GameState>((set, get) => ({
-  balance:        0,
-  energy:         100,
+  balance:          0,
+  balanceBase:      0,
+  balanceUpdatedAt: 0,
+  incomeRateTotal:  0,
+  energy:           100,
   maxEnergy:      100,
   energyProgress: 0,
   drones:         [],
   turrets:        [],
-  raidLog:        [],
-  lastRaidResult: null,
+  raidLog:                  [],
+  lastRaidResult:           null,
+  incomingRaidLog:          [],
+  incomingRaidNotification: null,
   unitUpgrades:   {},
   language:       'ru',
   activeScreen:   'farm',
@@ -171,19 +204,57 @@ export const useGameStore = create<GameState>((set, get) => ({
         api.getDrones(),
         api.getTurrets(),
       ])
+      // The server returns effective balance (base + accrued).
+      // We store that as the new base and reset the local timer.
+      const balanceBase      = Number(user.balance)
+      const balanceUpdatedAt = Date.now()
+
+      // Rebuild unitUpgrades from server data so they survive page refreshes
+      const unitUpgrades: UnitUpgrades = {}
+      for (const d of drones) {
+        if (!d.upgrades?.length) continue
+        const map: Record<string, number> = {}
+        for (const u of d.upgrades) {
+          const key = DRONE_UPGRADE_TYPE_MAP[u.upgrade_type]
+          if (key) map[key] = u.level
+        }
+        if (Object.keys(map).length) unitUpgrades[String(d.id)] = map
+      }
+      for (const t of turrets) {
+        if (!t.upgrades?.length) continue
+        const map: Record<string, number> = {}
+        for (const u of t.upgrades) {
+          const key = TURRET_UPGRADE_TYPE_MAP[u.upgrade_type]
+          if (key) map[key] = u.level
+        }
+        if (Object.keys(map).length) unitUpgrades[String(t.id)] = map
+      }
+
       set({
-        balance:   Number(user.balance),
-        energy:    user.energy,
-        maxEnergy: user.max_energy,
-        drones:    drones.map(mapDrone),
-        turrets:   turrets.map(mapTurret),
-        language:  user.language ?? 'ru',
-        isLoaded:  true,
-        loadError: null,
+        balance:          balanceBase,
+        balanceBase,
+        balanceUpdatedAt,
+        incomeRateTotal:  user.income_rate_total ?? 0,
+        energy:           user.energy,
+        maxEnergy:        user.max_energy,
+        drones:           drones.map(mapDrone),
+        turrets:          turrets.map(mapTurret),
+        unitUpgrades,
+        language:         user.language ?? 'ru',
+        isLoaded:         true,
+        loadError:        null,
       })
     } catch (err) {
       set({ loadError: (err as Error).message, isLoaded: true })
     }
+  },
+
+  // ── Local balance tick (runs every second, zero network) ──────────────
+  tickBalance: () => {
+    const { balanceBase, balanceUpdatedAt, incomeRateTotal } = get()
+    if (incomeRateTotal <= 0 || balanceUpdatedAt === 0) return
+    const elapsed = (Date.now() - balanceUpdatedAt) / 1000
+    set({ balance: balanceBase + incomeRateTotal * elapsed })
   },
 
   // ── Language ──────────────────────────────────────────────────
@@ -288,21 +359,35 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  // ── Unit upgrades (local — cosmetic/client-side) ───────────────────────
+  // ── Unit upgrades — persisted via API ─────────────────────────────────
 
-  purchaseUnitUpgrade: (unitId, upgradeId, cost) => {
-    const { balance, unitUpgrades } = get()
-    if (balance < cost) return false
+  purchaseUnitUpgrade: async (unitId, upgradeId, cost) => {
+    const { drones, turrets, unitUpgrades } = get()
     const current = unitUpgrades[unitId]?.[upgradeId] ?? 0
     if (current >= 3) return false
-    set((s) => ({
-      balance:      s.balance - cost,
-      unitUpgrades: {
-        ...s.unitUpgrades,
-        [unitId]: { ...(s.unitUpgrades[unitId] ?? {}), [upgradeId]: current + 1 },
-      },
-    }))
-    return true
+
+    const isDrone = drones.some((d) => d.id === unitId)
+    try {
+      if (isDrone) {
+        await api.buyDroneEquipment(Number(unitId), upgradeId)
+      } else {
+        await api.buyTurretEquipment(Number(unitId), upgradeId)
+      }
+      // Refresh balance from server (committed in transaction)
+      const user = await api.getMe()
+      set((s) => ({
+        balance:          Number(user.balance),
+        balanceBase:      Number(user.balance),
+        balanceUpdatedAt: Date.now(),
+        unitUpgrades: {
+          ...s.unitUpgrades,
+          [unitId]: { ...(s.unitUpgrades[unitId] ?? {}), [upgradeId]: current + 1 },
+        },
+      }))
+      return true
+    } catch {
+      return false
+    }
   },
 
   // ── Position sync ──────────────────────────────────────────────────────
@@ -315,8 +400,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     ).catch(() => {/* silent — positions are cosmetic */})
   },
 
-  // ── WebSocket income push ──────────────────────────────────────────────
-  addBalance: (amount) => set((s) => ({ balance: s.balance + amount })),
+  // ── Re-sync balance base (called after any server transaction) ───────
+  addBalance: (amount) => set((s) => ({
+    balance:          s.balance + amount,
+    balanceBase:      s.balance + amount,
+    balanceUpdatedAt: Date.now(),
+  })),
 
   // ── Energy regen (client-side smooth animation) ───────────────────────
   tickEnergyRegen: () => {
@@ -336,6 +425,11 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // ── UI ─────────────────────────────────────────────────────────────────
   clearRaidResult: () => set({ lastRaidResult: null }),
+  addIncomingRaid: (entry) => set((s) => ({
+    incomingRaidLog:          [entry, ...s.incomingRaidLog].slice(0, 50),
+    incomingRaidNotification: entry,
+  })),
+  clearIncomingNotification: () => set({ incomingRaidNotification: null }),
   setScreen:       (screen) => set({ activeScreen: screen }),
   toggleSound:     () => set((s) => ({ soundEnabled: !s.soundEnabled })),
   selectUnit:      (unitId) => set({ selectedUnitId: unitId }),

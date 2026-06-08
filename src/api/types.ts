@@ -6,25 +6,28 @@ export type RaidResultType    = 'victory' | 'defeat'
 export type ListingStatus     = 'active' | 'sold' | 'cancelled'
 
 export interface ApiUser {
-  id:           number
-  telegram_id:  number
-  username:     string
-  first_name:   string
-  last_name:    string
-  balance:      number
-  energy:       number
-  max_energy:   number
-  vip_until:    string | null
-  reg_language: string   // set at registration from Telegram, immutable
-  language:     string   // user-selected language (ru/en)
-  created_at:   string
+  id:                 number
+  telegram_id:        number
+  username:           string
+  first_name:         string
+  last_name:          string
+  balance:            number
+  balance_updated_at: string   // ISO timestamp of last balance commit
+  income_rate_total:  number   // coins/second from all non-broken drones
+  energy:             number
+  max_energy:         number
+  vip_until:          string | null
+  reg_language:       string   // set at registration from Telegram, immutable
+  language:           string   // user-selected language (ru/en)
+  created_at:         string
 }
 
 export interface ApiUserPublic {
-  id:         number
-  username:   string
-  first_name: string
-  balance:    number
+  id:             number
+  username:       string
+  first_name:     string
+  balance:        number
+  cooldown_until?: number   // unix timestamp; absent/null = can attack now
 }
 
 export interface ApiDroneUpgrade {
@@ -107,6 +110,28 @@ export interface UnitPosition {
   id:         number
   position_x: number
   position_y: number
+}
+
+export interface ApiProduct {
+  id:          number
+  name:        string
+  description: string
+  stars_price: number
+  gold_amount: number
+  bonus_label: string
+  sort_order:  number
+}
+
+export interface ApiPurchaseLog {
+  id:           number
+  item_type:    'drone_buy' | 'drone_upgrade' | 'drone_equip' | 'turret_buy' | 'turret_equip'
+  unit_id:      number
+  unit_name:    string
+  upgrade_key:  string
+  upgrade_name: string
+  level:        number
+  cost:         number
+  created_at:   string
 }
 
 export interface AuthResponse {

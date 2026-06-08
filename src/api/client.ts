@@ -120,6 +120,12 @@ async function ensureAuth(): Promise<void> {
   return _authPromise
 }
 
+// ── Token accessor (used by WebSocket client) ──────────────────────────────
+export async function getAuthToken(): Promise<string> {
+  await ensureAuth()
+  return _jwt!
+}
+
 // ── Base fetch ─────────────────────────────────────────────────────────────
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   await ensureAuth()

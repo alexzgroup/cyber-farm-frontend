@@ -1,12 +1,65 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useGameStore, type RaidResult, type Drone } from '../store/gameStore'
-import { getRaidTargets } from '../api'
-import type { ApiUserPublic } from '../api/types'
+import { useGameStore, type RaidResult, type Drone, type IncomingRaidEntry } from '../store/gameStore'
+import { getRaidTargets, getIncomingRaids } from '../api'
+import type { ApiUserPublic, ApiRaid } from '../api/types'
 import { RaidGame } from '../game/RaidGame'
+import { fmtGold } from '../utils/format'
+import { useCountdown, fmtCooldown } from '../hooks/useCooldown'
 import styles from './RaidsScreen.module.css'
 
-type View = 'targets' | 'battle' | 'result'
+type View    = 'targets' | 'battle' | 'result'
+type LogTab  = 'outgoing' | 'incoming'
+
+// ── Target card with its own cooldown countdown ────────────────────────────
+function TargetCard({ player, attackerLevel, workingDrones, onAttack }: {
+  player:        ApiUserPublic
+  attackerLevel: number
+  workingDrones: Drone[]
+  onAttack:      (id: number) => void
+}) {
+  const { t } = useTranslation()
+  const remaining = useCountdown(player.cooldown_until)
+  const onCooldown = remaining > 0
+
+  const winChance = Math.min(85, Math.max(20, Math.round((0.5 + attackerLevel * 0.2) * 100)))
+  const reward    = Math.round(Number(player.balance) * 0.1)
+  const disabled  = workingDrones.length === 0 || onCooldown
+
+  return (
+    <div className={styles.targetCard}>
+      <div className={styles.targetInfo}>
+        <p className={styles.targetName}>
+          {player.username || player.first_name || `Player #${player.id}`}
+        </p>
+        <div className={styles.targetStats}>
+          <span>⬡ {Math.round(Number(player.balance))}</span>
+        </div>
+        {onCooldown ? (
+          <p className={styles.cooldown}>
+            ⏱ {t('raids.cooldownLabel')} {fmtCooldown(remaining)}
+          </p>
+        ) : (
+          <p className={styles.reward}>
+            {t('raids.approxCoins', { amount: reward })} ·{' '}
+            <span style={{ color: winChance >= 60 ? '#39ff14' : winChance >= 40 ? '#ffaa00' : '#ff4444' }}>
+              {t('raids.winChance', { chance: winChance })}
+            </span>
+          </p>
+        )}
+      </div>
+      <button
+        className={`${styles.attackBtn} ${disabled ? styles.attackDisabled : ''} ${onCooldown ? styles.attackCooldown : ''}`}
+        onClick={() => !disabled && onAttack(player.id)}
+        disabled={disabled}
+      >
+        {onCooldown
+          ? <><span>{fmtCooldown(remaining)}</span></>
+          : <>⚔️<span>{t('raids.attack')}</span></>}
+      </button>
+    </div>
+  )
+}
 
 const TARGETS_PER_PAGE = 8
 const LOG_PER_PAGE     = 20
@@ -32,21 +85,24 @@ export function RaidsScreen() {
   const [targetTurrets, setTargetTurrets]   = useState<Array<{ level: 1|2|3 }>>([])
   const [targetsPage, setTargetsPage] = useState(0)
   const [logPage,     setLogPage]     = useState(0)
-  const [targets, setTargets]         = useState<ApiUserPublic[]>([])
+  const [logTab,      setLogTab]      = useState<LogTab>('outgoing')
+  const [targets, setTargets]             = useState<ApiUserPublic[]>([])
   const [targetsLoading, setTargetsLoading] = useState(true)
+  const [apiIncoming,   setApiIncoming]   = useState<ApiRaid[]>([])
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const drones      = useGameStore((s) => s.drones)
-  const raidLog     = useGameStore((s) => s.raidLog)
-  const executeRaid = useGameStore((s) => s.executeRaid)
+  const drones         = useGameStore((s) => s.drones)
+  const raidLog        = useGameStore((s) => s.raidLog)
+  const incomingRaidLog = useGameStore((s) => s.incomingRaidLog)
+  const executeRaid    = useGameStore((s) => s.executeRaid)
 
   const workingDrones = drones.filter((d) => !d.isBroken)
   const attackerLevel = workingDrones.length > 0
     ? Math.max(...workingDrones.map((d) => d.level))
     : 0
 
-  // Load raid targets from API
+  // Load raid targets
   useEffect(() => {
     getRaidTargets()
       .then(setTargets)
@@ -54,11 +110,24 @@ export function RaidsScreen() {
       .finally(() => setTargetsLoading(false))
   }, [])
 
+  // Load incoming raid history from API (merges with WS live entries)
+  useEffect(() => {
+    getIncomingRaids()
+      .then(setApiIncoming)
+      .catch(() => {})
+  }, [])
+
   const handleAttack = async (targetId: number) => {
     const result = await executeRaid(targetId)
     if (!result) return
+    // Set cooldown_until on this target immediately (optimistic, before next API reload)
+    setTargets((prev) => prev.map((p) =>
+      p.id === targetId
+        ? { ...p, cooldown_until: Math.floor(Date.now() / 1000) + 3600 }
+        : p
+    ))
     setAttackerDrones([...workingDrones])
-    setTargetTurrets([{ level: 1 }]) // turrets shown in battle scene
+    setTargetTurrets([{ level: 1 }])
     setResult(result)
     setView('battle')
   }
@@ -126,38 +195,15 @@ export function RaidsScreen() {
             ) : (
               <>
                 <div className={styles.targets}>
-                  {pagedTargets.map((player) => {
-                    const winChance = Math.min(85, Math.max(20,
-                      Math.round((0.5 + attackerLevel * 0.2) * 100)
-                    ))
-                    const reward = Math.round(Number(player.balance) * 0.1)
-
-                    return (
-                      <div key={player.id} className={styles.targetCard}>
-                        <div className={styles.targetInfo}>
-                          <p className={styles.targetName}>
-                            {player.username || player.first_name || `Player #${player.id}`}
-                          </p>
-                          <div className={styles.targetStats}>
-                            <span>⬡ {Math.round(Number(player.balance))}</span>
-                          </div>
-                          <p className={styles.reward}>
-                            {t('raids.approxCoins', {amount: reward})} ·{' '}
-                            <span style={{ color: winChance >= 60 ? '#39ff14' : winChance >= 40 ? '#ffaa00' : '#ff4444' }}>
-                              {t('raids.winChance', {chance: winChance})}
-                            </span>
-                          </p>
-                        </div>
-                        <button
-                          className={`${styles.attackBtn} ${workingDrones.length === 0 ? styles.attackDisabled : ''}`}
-                          onClick={() => handleAttack(player.id)}
-                          disabled={workingDrones.length === 0}
-                        >
-                          ⚔️<span>{t('raids.attack')}</span>
-                        </button>
-                      </div>
-                    )
-                  })}
+                  {pagedTargets.map((player) => (
+                    <TargetCard
+                      key={player.id}
+                      player={player}
+                      attackerLevel={attackerLevel}
+                      workingDrones={workingDrones}
+                      onAttack={handleAttack}
+                    />
+                  ))}
                 </div>
                 <Pagination
                   page={targetsPage} total={targets.length}
@@ -167,26 +213,92 @@ export function RaidsScreen() {
             )}
           </section>
 
-          {raidLog.length > 0 && (
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>{t('raids.log')}</h3>
-                <span className={styles.sectionCount}>{t('raids.raidCount', { count: raidLog.length })}</span>
-              </div>
-              <div className={styles.log}>
-                {pagedLog.map((entry) => (
-                  <div key={entry.id} className={`${styles.logEntry} ${entry.won ? styles.logWin : styles.logLose}`}>
-                    <span className={styles.logIcon}>{entry.won ? '✓' : '✗'}</span>
-                    <span className={styles.logName}>{entry.targetName}</span>
-                    <span className={styles.logResult}>
-                      {entry.won ? `+${entry.amount} ⬡` : t('raids.droneBroken')}
-                    </span>
+              {/* Log tabs */}
+          <section className={styles.section}>
+            <div className={styles.logTabs}>
+              <button
+                className={`${styles.logTab} ${logTab === 'outgoing' ? styles.logTabActive : ''}`}
+                onClick={() => { setLogTab('outgoing'); setLogPage(0) }}
+              >
+                {t('raids.tabOutgoing')}
+                {raidLog.length > 0 && <span className={styles.badge}>{raidLog.length}</span>}
+              </button>
+              <button
+                className={`${styles.logTab} ${logTab === 'incoming' ? styles.logTabActive : ''}`}
+                onClick={() => { setLogTab('incoming'); setLogPage(0) }}
+              >
+                {t('raids.tabIncoming')}
+                {(incomingRaidLog.length + apiIncoming.length) > 0 && (
+                  <span className={`${styles.badge} ${styles.badgeDanger}`}>
+                    {Math.max(incomingRaidLog.length, apiIncoming.length)}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {logTab === 'outgoing' && (
+              raidLog.length === 0
+                ? <div className={styles.warning}>{t('raids.noTargets')}</div>
+                : <>
+                    <div className={styles.log}>
+                      {pagedLog.map((entry) => (
+                        <div key={entry.id} className={`${styles.logEntry} ${entry.won ? styles.logWin : styles.logLose}`}>
+                          <span className={styles.logIcon}>{entry.won ? '✓' : '✗'}</span>
+                          <span className={styles.logName}>{entry.targetName}</span>
+                          <span className={styles.logResult}>
+                            {entry.won ? `+${fmtGold(entry.amount)} ⬡` : t('raids.droneBroken')}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <Pagination page={logPage} total={raidLog.length} pageSize={LOG_PER_PAGE} onChange={setLogPage} />
+                  </>
+            )}
+
+            {logTab === 'incoming' && (() => {
+              // Merge live WS entries with API history, deduplicate by id
+              const wsIds = new Set(incomingRaidLog.map((e) => e.id))
+              const apiEntries: IncomingRaidEntry[] = apiIncoming
+                .filter((r) => !wsIds.has(String(r.id)))
+                .map((r) => ({
+                  id:           String(r.id),
+                  attackerName: r.attacker?.username || r.attacker?.first_name || `#${r.attacker_id}`,
+                  attackerId:   r.attacker_id,
+                  won:          r.result !== 'victory',
+                  amount:       Number(r.coins_stolen),
+                  timestamp:    new Date(r.created_at).getTime(),
+                }))
+              const merged = [...incomingRaidLog, ...apiEntries]
+                .sort((a, b) => b.timestamp - a.timestamp)
+
+              if (merged.length === 0) {
+                return <div className={styles.warning}>{t('raids.incomingEmpty')}</div>
+              }
+
+              const paged = merged.slice(logPage * LOG_PER_PAGE, (logPage + 1) * LOG_PER_PAGE)
+              return (
+                <>
+                  <div className={styles.log}>
+                    {paged.map((entry) => (
+                      <div key={entry.id} className={`${styles.logEntry} ${entry.won ? styles.logWin : styles.logLose}`}>
+                        <span className={styles.logIcon}>{entry.won ? '🛡' : '💥'}</span>
+                        <span className={styles.logName}>
+                          <span style={{ opacity: 0.55, fontSize: 11, marginRight: 4 }}>{t('raids.incomingAttackedBy')}</span>
+                          {entry.attackerName}
+                        </span>
+                        <span className={styles.logResult}>
+                          {entry.won
+                            ? <span style={{ color: '#39ff90' }}>{t('raids.incomingDefended')} +{fmtGold(entry.amount)} 🛡</span>
+                            : <span style={{ color: '#ff6b6b' }}>{t('raids.incomingStolen', { amount: fmtGold(entry.amount) })}</span>
+                          }
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <Pagination page={logPage} total={raidLog.length} pageSize={LOG_PER_PAGE} onChange={setLogPage} />
-            </section>
-          )}
+                  <Pagination page={logPage} total={merged.length} pageSize={LOG_PER_PAGE} onChange={setLogPage} />
+                </>
+              )
+            })()}</section>
         </>
       )}
     </div>

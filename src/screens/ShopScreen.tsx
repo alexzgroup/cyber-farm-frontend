@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useGameStore, DRONE_UPGRADES, REPAIR_COSTS } from '../store/gameStore'
+import { fmtGold } from '../utils/format'
 import styles from './ShopScreen.module.css'
 
 export function ShopScreen() {
@@ -17,7 +18,7 @@ export function ShopScreen() {
   return (
     <div className={styles.screen}>
       <h2 className={styles.title}>{t('shop.title')}</h2>
-      <p className={styles.balance}>⬡ {balance.toFixed(1)}</p>
+      <p className={styles.balance}>⬡ {fmtGold(balance)}</p>
 
       {/* Repair section — shown only when drones are broken */}
       {brokenDrones.length > 0 && (
