@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { DRONE_UPGRADE_TEMPLATES, TURRET_UPGRADE_TEMPLATES } from '../data/unitUpgrades'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
+import { SellModal } from '../components/SellModal'
 import styles from './EquipmentScreen.module.css'
 
 const DRONE_TYPE_COLORS: Record<number, string> = {
@@ -36,6 +38,10 @@ export function EquipmentScreen() {
   const selectUnit   = useGameStore((s) => s.selectUnit)
   const setScreen    = useGameStore((s) => s.setScreen)
 
+  const [sellTarget, setSellTarget] = useState<{
+    id: number; type: 'drone' | 'turret'; name: string
+  } | null>(null)
+
   const handleSelectDrone = (id: string) => {
     selectUnit(id)
     setScreen('unit-detail')
@@ -53,6 +59,15 @@ export function EquipmentScreen() {
 
   return (
     <div className={styles.screen}>
+      {sellTarget && (
+        <SellModal
+          unitId={sellTarget.id}
+          unitType={sellTarget.type}
+          unitName={sellTarget.name}
+          onClose={() => setSellTarget(null)}
+          onSold={() => { setSellTarget(null); setScreen('market') }}
+        />
+      )}
       {/* Header */}
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => setScreen('farm')}>
@@ -105,6 +120,20 @@ export function EquipmentScreen() {
                 <div className={styles.upgradeCount} style={{ color }}>
                   {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
                 </div>
+                <div
+                  role="button"
+                  className={styles.sellBtn}
+                  onClick={e => {
+                    e.stopPropagation()
+                    setSellTarget({
+                      id: Number(drone.id),
+                      type: 'drone',
+                      name: `${t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #${idx + 1} LVL${drone.level}`,
+                    })
+                  }}
+                >
+                  📤 {t('sell.sellBtn')}
+                </div>
               </button>
             )
           })}
@@ -145,6 +174,20 @@ export function EquipmentScreen() {
                 </div>
                 <div className={styles.upgradeCount} style={{ color }}>
                   {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
+                </div>
+                <div
+                  role="button"
+                  className={styles.sellBtn}
+                  onClick={e => {
+                    e.stopPropagation()
+                    setSellTarget({
+                      id: Number(turret.id),
+                      type: 'turret',
+                      name: `${t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #${idx + 1} DEF LV${turret.level}`,
+                    })
+                  }}
+                >
+                  📤 {t('sell.sellBtn')}
                 </div>
               </button>
             )

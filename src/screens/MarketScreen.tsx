@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
-import { getMarket, buyListing } from '../api'
+import { getMarket, reserveListing, buyListing, getWalletRate, buyListingWithStars } from '../api'
 import type { ApiMarketListing } from '../api/types'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
 import styles from './MarketScreen.module.css'
@@ -38,19 +38,30 @@ function Pagination({ page, total, pageSize, onChange }: {
   )
 }
 
-function PriceTag({ price, currency }: { price: number; currency: 'gold' | 'ton' }) {
+function PriceTag({ price, currency, starsPerTon }: {
+  price: number; currency: 'gold' | 'ton'; starsPerTon?: number
+}) {
   if (currency === 'ton') {
+    const stars = starsPerTon && starsPerTon > 0 ? Math.ceil(price * starsPerTon) : null
     return (
-      <span style={{ color: '#5b9cf6', fontWeight: 700 }}>
-        ◈ {price % 1 === 0 ? price.toFixed(0) : price.toFixed(2)} TON
-      </span>
+      <div>
+        <span style={{ color: '#5b9cf6', fontWeight: 700 }}>
+          ◈ {price % 1 === 0 ? price.toFixed(0) : price.toFixed(2)} TON
+        </span>
+        {stars && (
+          <div style={{ fontSize: 11, color: '#a855f7', marginTop: 2 }}>
+            ~{stars.toLocaleString()} ⭐
+          </div>
+        )}
+      </div>
     )
   }
   return <span style={{ color: '#ffd700', fontWeight: 700 }}>⬡ {price.toLocaleString()}</span>
 }
 
-function MarketCard({ item, onBuy, canBuy }: {
-  item: ApiMarketListing; onBuy: () => void; canBuy: boolean
+function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
+  item: ApiMarketListing; onBuy: () => void; onBuyStars?: () => void
+  canBuy: boolean; starsPerTon?: number
 }) {
   const { t } = useTranslation()
 
@@ -114,23 +125,35 @@ function MarketCard({ item, onBuy, canBuy }: {
       </div>
 
       <div className={styles.cardFooter}>
-        <PriceTag price={item.price} currency={item.currency} />
+        <PriceTag price={item.price} currency={item.currency} starsPerTon={starsPerTon} />
         {isTon ? (
-          <button
-            className={`${styles.buyBtn} ${styles.buyTon}`}
-            disabled={!canBuy}
-            onClick={onBuy}
-          >
-            {t('market.buyTon')}
-          </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              className={`${styles.buyBtn} ${styles.buyTon}`}
+              style={{ flex: 1 }}
+              disabled={!canBuy}
+              onClick={onBuy}
+            >
+              {t('market.buyTon')}
+            </button>
+            {onBuyStars && (
+              <button
+                className={`${styles.buyBtn}`}
+                style={{ flex: 1, background: 'linear-gradient(135deg,#7c3aed,#5b21b6)', borderColor: '#7c3aed' }}
+                onClick={onBuyStars}
+              >
+                ⭐ Stars
+              </button>
+            )}
+          </div>
         ) : (
+          // Gold buy: always clickable — insufficient funds shows top-up overlay
           <button
             className={`${styles.buyBtn} ${canBuy ? styles.buyActive : styles.buyDisabled}`}
             style={canBuy ? { borderColor: meta.color, color: meta.color } : {}}
-            disabled={!canBuy}
             onClick={onBuy}
           >
-            {t('market.buy')}
+            {canBuy ? t('market.buy') : '⬡ ' + t('market.buy')}
           </button>
         )}
       </div>
@@ -142,15 +165,23 @@ export function MarketScreen() {
   const { t } = useTranslation()
   const balance    = useGameStore((s) => s.balance)
   const addBalance = useGameStore((s) => s.addBalance)
+  const setScreen  = useGameStore((s) => s.setScreen)
 
-  const [currencyTab, setCurrencyTab] = useState<CurrencyTab>('gold')
-  const [filterType,  setFilterType]  = useState<FilterType>('all')
-  const [sortBy,      setSortBy]      = useState<SortKey>('newest')
-  const [page,        setPage]        = useState(0)
-  const [listings,    setListings]    = useState<ApiMarketListing[]>([])
-  const [loading,     setLoading]     = useState(true)
-  const [toast,       setToast]       = useState<string | null>(null)
-  const [boughtIds,   setBoughtIds]   = useState<Set<number>>(new Set())
+  const [currencyTab,      setCurrencyTab]      = useState<CurrencyTab>('gold')
+  const [filterType,       setFilterType]       = useState<FilterType>('all')
+  const [sortBy,           setSortBy]           = useState<SortKey>('newest')
+  const [page,             setPage]             = useState(0)
+  const [listings,         setListings]         = useState<ApiMarketListing[]>([])
+  const [loading,          setLoading]          = useState(true)
+  const [toast,            setToast]            = useState<string | null>(null)
+  const [boughtIds,        setBoughtIds]        = useState<Set<number>>(new Set())
+  const [insufficientItem, setInsufficientItem] = useState<ApiMarketListing | null>(null)
+  const [starsPerTon,     setStarsPerTon]     = useState(0)
+
+  // Fetch Stars/TON rate once
+  useEffect(() => {
+    getWalletRate().then(r => setStarsPerTon(r.stars_per_ton ?? 0)).catch(() => {})
+  }, [])
 
   // Load listings from real API
   useEffect(() => {
@@ -162,6 +193,27 @@ export function MarketScreen() {
       .finally(() => setLoading(false))
   }, [currencyTab])
 
+  const handleBuyStars = async (item: ApiMarketListing) => {
+    try {
+      const { invoice_url } = await buyListingWithStars(item.id)
+      const tgWebApp = window.Telegram?.WebApp
+      if (tgWebApp?.openInvoice) {
+        tgWebApp.openInvoice(invoice_url, (status) => {
+          if (status === 'paid') {
+            setBoughtIds(s => new Set(s).add(item.id))
+            showToast('⭐ Куплено за Stars!')
+          } else if (status !== 'cancelled') {
+            showToast(t('market.purchaseFailed'))
+          }
+        })
+      } else {
+        showToast('Dev mode: ' + invoice_url)
+      }
+    } catch {
+      showToast(t('market.purchaseFailed'))
+    }
+  }
+
   const showToast = (msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(null), 2200)
@@ -172,8 +224,15 @@ export function MarketScreen() {
       showToast('TON wallet coming soon! 🔜')
       return
     }
-    if (balance < item.price) return
+    // Insufficient funds: show toast with "Buy Gold" CTA
+    if (balance < item.price) {
+      setInsufficientItem(item)
+      return
+    }
     try {
+      // Step 1: reserve the lot for 1 minute
+      await reserveListing(item.id)
+      // Step 2: complete the purchase
       await buyListing(item.id)
       addBalance(-item.price)
       setBoughtIds((s) => new Set(s).add(item.id))
@@ -181,8 +240,14 @@ export function MarketScreen() {
         ? t(DRONE_COLORS[item.drone.drone_type]?.key ?? 'drone.scout')
         : t(TURRET_COLORS[item.turret?.level ?? 1]?.key ?? 'turret.light')
       showToast(`${name} — ${t('market.buy').toLowerCase()}!`)
-    } catch {
-      showToast('Purchase failed')
+    } catch (e: any) {
+      if (e?.status === 409) {
+        showToast(t('market.reserved'))
+      } else if (e?.status === 402) {
+        setInsufficientItem(item)
+      } else {
+        showToast(t('market.purchaseFailed'))
+      }
     }
   }
 
@@ -209,6 +274,55 @@ export function MarketScreen() {
 
   return (
     <div className={styles.screen}>
+
+      {/* Insufficient funds overlay */}
+      {insufficientItem && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          zIndex: 600, paddingBottom: 60,
+        }} onClick={() => setInsufficientItem(null)}>
+          <div style={{
+            width: '100%', maxWidth: 420,
+            background: '#111827', border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: '18px 18px 0 0', padding: '24px 20px 28px',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 10 }}>⬡</div>
+            <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 17, marginBottom: 8 }}>
+              {t('market.insufficientTitle')}
+            </div>
+            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>
+              {t('market.insufficientDesc', {
+                need: fmtGold(insufficientItem.price),
+                have: fmtGold(balance),
+                diff: fmtGold(insufficientItem.price - balance),
+              })}
+            </div>
+            <button
+              style={{
+                width: '100%', padding: 14,
+                background: 'linear-gradient(135deg,#7c3aed,#5b21b6)',
+                border: 'none', borderRadius: 12, color: '#fff',
+                fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 10,
+              }}
+              onClick={() => { setInsufficientItem(null); setScreen('topup') }}
+            >
+              ⭐ {t('market.buyGold')}
+            </button>
+            <button
+              style={{
+                width: '100%', padding: 12, background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
+                color: 'rgba(255,255,255,0.45)', fontSize: 13, cursor: 'pointer',
+              }}
+              onClick={() => setInsufficientItem(null)}
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className={styles.header}>
         <h2 className={styles.title}>{t('market.title')}</h2>
@@ -275,6 +389,8 @@ export function MarketScreen() {
               item={item}
               canBuy={item.currency === 'ton' || balance >= item.price}
               onBuy={() => handleBuy(item)}
+              onBuyStars={item.currency === 'ton' ? () => handleBuyStars(item) : undefined}
+              starsPerTon={starsPerTon}
             />
           ))}
         </div>

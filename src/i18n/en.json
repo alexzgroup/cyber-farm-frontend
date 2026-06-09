@@ -102,7 +102,12 @@
     "seller": "by {{name}}",
     "tabGold": "Gold",
     "tabTon": "TON",
-    "buyTon": "Buy with TON"
+    "buyTon": "Buy with TON",
+    "reserved": "Lot is reserved, try again shortly",
+    "purchaseFailed": "Purchase failed",
+    "insufficientTitle": "Not enough coins",
+    "insufficientDesc": "Need ⬡{{need}}, you have ⬡{{have}}. Missing ⬡{{diff}}.",
+    "buyGold": "Top up Gold"
   },
   "equipment": {
     "title": "Equipment",
@@ -120,6 +125,18 @@
   "purchases": {
     "title": "Purchase History",
     "empty": "No purchases yet"
+  },
+  "sell": {
+    "title": "List for Sale",
+    "gold": "Gold",
+    "priceLabel": "Price",
+    "yourBalance": "Your balance",
+    "submit": "List",
+    "errorPrice": "Enter a price greater than 0",
+    "errorFailed": "Error. Please try again.",
+    "sellBtn": "Sell",
+    "reserved": "Reserved",
+    "reservedSec": "{{n}}s left"
   },
   "topup": {
     "title": "Top Up Gold",
@@ -179,6 +196,7 @@
     "level": "Lv. {{n}}",
     "energy": "energy",
     "back": "← Back",
+    "cancel": "Cancel",
     "broken": "⚠ Broken",
     "noEnergy": "No energy!",
     "droneN": "Drone #{{n}}",

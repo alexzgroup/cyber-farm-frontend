@@ -67,6 +67,7 @@ export interface TelegramWebApp {
   sendData: (data: string) => void
   openLink: (url: string, options?: { try_instant_view?: boolean }) => void
   openTelegramLink: (url: string) => void
+  openInvoice: (url: string, callback: (status: string) => void) => void
   showAlert: (message: string, callback?: () => void) => void
   showConfirm: (message: string, callback?: (ok: boolean) => void) => void
   showPopup: (params: object, callback?: (btn: string) => void) => void
@@ -79,12 +80,37 @@ export interface TelegramWebApp {
   isVersionAtLeast: (version: string) => boolean
 }
 
-export const webApp: TelegramWebApp = (window as { Telegram?: { WebApp?: TelegramWebApp } })
-  .Telegram!.WebApp!
+// Lazy getter — safe to call at any time; returns null if not inside Telegram.
+// Never evaluated at module-load time so there's no crash on cold import.
+export function getWebApp(): TelegramWebApp | null {
+  return (window as { Telegram?: { WebApp?: TelegramWebApp } })?.Telegram?.WebApp ?? null
+}
+
+// Convenience re-export used by existing code (keeps old import paths working).
+// Accessing this outside of Telegram returns null — always guard before calling methods.
+export const webApp = new Proxy({} as TelegramWebApp, {
+  get(_target, prop) {
+    const app = getWebApp()
+    if (!app) return undefined
+    const val = (app as unknown as Record<string, unknown>)[prop as string]
+    return typeof val === 'function' ? val.bind(app) : val
+  },
+})
 
 export function initTelegramApp(): void {
-  webApp.ready()
-  webApp.expand()
-  webApp.setHeaderColor('#0d1117')
-  webApp.setBackgroundColor('#0d1117')
+  const app = getWebApp()
+  if (!app) {
+    // Running outside Telegram (browser dev, Playwright) — skip silently
+    return
+  }
+  try {
+    app.ready()
+    app.expand()
+    if (app.isVersionAtLeast('6.1')) {
+      app.setHeaderColor('#0d1117')
+      app.setBackgroundColor('#0d1117')
+    }
+  } catch (e) {
+    console.warn('[TelegramWebApp] init error:', e)
+  }
 }

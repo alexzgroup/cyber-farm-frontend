@@ -133,6 +133,14 @@ export function buyProduct(productId: number): Promise<{ invoice_url: string }> 
   return apiFetch(`/api/shop/products/${productId}/buy`, { method: 'POST' })
 }
 
+export function getWalletRate(): Promise<{ stars_per_ton: number; ton_to_usd: number; source: string }> {
+  return apiFetch('/api/wallet/rate')
+}
+
+export function buyListingWithStars(listingId: number): Promise<{ invoice_url: string; stars_amount: number; ton_price: number }> {
+  return apiFetch(`/api/market/${listingId}/buy-stars`, { method: 'POST' })
+}
+
 // ── Market ─────────────────────────────────────────────────────────────────
 
 export interface MarketQueryParams {
@@ -163,8 +171,19 @@ export function listUnit(
   })
 }
 
+export function reserveListing(id: number): Promise<{ reserved_until: number; reserved_by: number }> {
+  return apiFetch(`/api/market/${id}/reserve`, { method: 'POST' })
+}
+
 export function buyListing(id: number): Promise<{ ok: boolean }> {
   return apiFetch(`/api/market/${id}/buy`, { method: 'POST' })
+}
+
+export function createListing(unitType: 'drone' | 'turret', unitId: number, price: number, currency: 'gold' | 'ton'): Promise<ApiMarketListing> {
+  return apiFetch('/api/market', {
+    method: 'POST',
+    body:   JSON.stringify({ unit_type: unitType, unit_id: unitId, price, currency }),
+  })
 }
 
 export function cancelListing(id: number): Promise<{ ok: boolean }> {

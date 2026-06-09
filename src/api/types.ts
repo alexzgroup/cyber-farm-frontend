@@ -84,16 +84,18 @@ export interface ApiRaid {
 export type MarketCurrency = 'gold' | 'ton'
 
 export interface ApiMarketListing {
-  id:         number
-  seller_id:  number
-  unit_type:  UnitType
-  drone_id:   number | null
-  turret_id:  number | null
-  price:      number
-  currency:   MarketCurrency  // 'gold' = in-game coins, 'ton' = TON crypto
-  status:     ListingStatus
-  expires_at: string | null
-  created_at: string
+  id:             number
+  seller_id:      number
+  unit_type:      UnitType
+  drone_id:       number | null
+  turret_id:      number | null
+  price:          number
+  currency:       MarketCurrency
+  status:         ListingStatus
+  expires_at:     string | null
+  reserved_until: number | null  // unix timestamp
+  reserved_by:    number | null
+  created_at:     string
   seller:     ApiUserPublic
   drone:      ApiDrone | null
   turret:     ApiTurret | null

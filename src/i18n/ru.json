@@ -102,7 +102,12 @@
     "seller": "от {{name}}",
     "tabGold": "Золото",
     "tabTon": "TON",
-    "buyTon": "Купить за TON"
+    "buyTon": "Купить за TON",
+    "reserved": "Лот зарезервирован, попробуйте позже",
+    "purchaseFailed": "Ошибка покупки",
+    "insufficientTitle": "Не хватает монет",
+    "insufficientDesc": "Нужно ⬡{{need}}, у вас ⬡{{have}}. Не хватает ⬡{{diff}}.",
+    "buyGold": "Пополнить золото"
   },
   "equipment": {
     "title": "Оборудование",
@@ -120,6 +125,18 @@
   "purchases": {
     "title": "История покупок",
     "empty": "Покупок пока нет"
+  },
+  "sell": {
+    "title": "Выставить на продажу",
+    "gold": "Золото",
+    "priceLabel": "Цена",
+    "yourBalance": "Ваш баланс",
+    "submit": "Выставить",
+    "errorPrice": "Введите цену больше 0",
+    "errorFailed": "Ошибка. Попробуйте снова.",
+    "sellBtn": "Продать",
+    "reserved": "Зарезервировано",
+    "reservedSec": "ещё {{n}} сек"
   },
   "topup": {
     "title": "Пополнить золото",
@@ -179,6 +196,7 @@
     "level": "Ур. {{n}}",
     "energy": "энергия",
     "back": "← Назад",
+    "cancel": "Отмена",
     "broken": "⚠ Сломан",
     "noEnergy": "Нет энергии!",
     "droneN": "Дрон #{{n}}",

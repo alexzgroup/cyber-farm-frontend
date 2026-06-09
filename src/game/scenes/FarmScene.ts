@@ -463,6 +463,8 @@ export class FarmScene extends Phaser.Scene {
     catch { return {} }
   }
 
+  private _syncTimer: ReturnType<typeof setTimeout> | null = null
+
   private savePositions() {
     const dronePos:  Array<{ id: number; position_x: number; position_y: number }> = []
     const turretPos: Array<{ id: number; position_x: number; position_y: number }> = []
@@ -479,11 +481,16 @@ export class FarmScene extends Phaser.Scene {
       turretPos.push({ id: Number(id), position_x: x, position_y: y })
     })
 
-    // Save to localStorage (instant, offline-friendly)
+    // Save to localStorage immediately (instant, offline-friendly)
     try { localStorage.setItem(POSITIONS_KEY, JSON.stringify(localStorage_pos)) } catch { /* quota */ }
 
-    // Sync to API (persists across devices and sessions)
-    apiSyncPositions(dronePos, turretPos).catch(() => { /* silent — positions are cosmetic */ })
+    // Debounce API sync: wait 1.5s after last drag before sending network request.
+    // Prevents 429 when user repositions multiple units in quick succession.
+    if (this._syncTimer) clearTimeout(this._syncTimer)
+    this._syncTimer = setTimeout(() => {
+      this._syncTimer = null
+      apiSyncPositions(dronePos, turretPos).catch(() => {/* silent — positions are cosmetic */})
+    }, 1500)
   }
 
   // ─── Update ───────────────────────────────────────────────────────────────
