@@ -98,6 +98,7 @@
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: stretch;   /* все карточки одной высоты */
   gap: 10px;
   padding: 10px 12px;
 }
@@ -121,6 +122,8 @@
   gap: 6px;
   overflow: hidden;
   transition: border-color 0.15s, transform 0.1s;
+  /* Вертикальное выравнивание: footer всегда прижат к низу */
+  justify-content: space-between;
 }
 
 .card:hover {
@@ -201,9 +204,73 @@
 
 .cardFooter {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 4px;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.cardBtns {
+  display: flex;
+  gap: 6px;
+}
+.cardBtns > button { flex: 1; }
+
+/* TON buy button — TON brand blue */
+.buyTon {
+  background: linear-gradient(135deg, #0088cc, #006aaa) !important;
+  border-color: #0099e5 !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+.buyTon:hover { opacity: 0.88; }
+.buyTon:disabled {
+  background: rgba(0, 136, 204, 0.25) !important;
+  border-color: rgba(0, 153, 229, 0.3) !important;
+  color: rgba(255,255,255,0.35) !important;
+  opacity: 0.75;
+}
+
+/* Stars buy button */
+.buyStars {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6) !important;
+  border-color: #7c3aed !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+.buyStars:hover { opacity: 0.88; }
+
+/* "КУПИТЬ" neon label above TON buttons */
+.buyLabel {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #00e5ff;
+  text-shadow:
+    0 0 6px #00e5ff,
+    0 0 14px rgba(0, 229, 255, 0.6),
+    0 0 28px rgba(0, 229, 255, 0.3);
+  animation: neonPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 6px #00e5ff,
+      0 0 14px rgba(0, 229, 255, 0.6),
+      0 0 28px rgba(0, 229, 255, 0.3);
+    color: #00e5ff;
+  }
+  50% {
+    text-shadow:
+      0 0 10px #a855f7,
+      0 0 22px rgba(168, 85, 247, 0.7),
+      0 0 40px rgba(168, 85, 247, 0.35);
+    color: #c084fc;
+  }
 }
 
 .price {
@@ -216,12 +283,19 @@
   background: transparent;
   border: 1px solid;
   border-radius: 8px;
-  padding: 5px 12px;
-  font-family: monospace;
+  padding: 4px 8px;
+  font-family: inherit;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, opacity 0.15s;
+  /* иконка и текст строго в одну линию */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .buyActive:hover {
@@ -231,8 +305,10 @@
 .buyActive:active { transform: scale(0.96); }
 
 .buyDisabled {
-  border-color: #2a3545 !important;
-  color: #333 !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  opacity: 0.75;
   cursor: not-allowed;
 }
 

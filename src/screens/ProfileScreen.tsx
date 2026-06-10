@@ -1,24 +1,36 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useTonWallet, useTonConnectUI } from '@tonconnect/ui-react'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
+import { getWalletInvoice, connectWallet, disconnectWallet, getRaidHistory, prepareReferralMessage, getReferralStats } from '../api'
+import type { ApiWalletInvoice, ApiRaid, ReferralStats } from '../api/types'
 import styles from './ProfileScreen.module.css'
 
-const MOCK = {
-  name: 'Александр Волков',
-  initials: 'АВ',
-  username: '@alex_volkov',
-  tgId: '728 459 102',
-  level: 24,
-  xp: 1240,
-  xpNext: 2000,
-  ton: 3.42,
-  tonUsd: 18.70,
-  wins: 142,
-  losses: 67,
-  streak: 11,
-  season: 4,
-  referrals: 8,
+function calcStreak(raids: ApiRaid[]): number {
+  // API returns newest first; count consecutive victories from the top
+  let s = 0
+  for (const r of raids) {
+    if (r.result === 'victory') s++
+    else break
+  }
+  return s
+}
+
+function getInitials(firstName: string, lastName: string): string {
+  const f = firstName.trim()
+  const l = lastName.trim()
+  if (f && l) return (f[0] + l[0]).toUpperCase()
+  if (f.length >= 2) return f.slice(0, 2).toUpperCase()
+  return f.toUpperCase() || '?'
+}
+
+function getTgPhotoUrl(): string | null {
+  try {
+    return (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.photo_url ?? null
+  } catch {
+    return null
+  }
 }
 
 const RING_R = 44
@@ -61,22 +73,154 @@ function WinRateRing({ wins, losses }: { wins: number; losses: number }) {
 
 export function ProfileScreen() {
   const balance      = useGameStore((s) => s.balance)
+  const tonBalance   = useGameStore((s) => s.tonBalance)
+  const tonWallet    = useGameStore((s) => s.tonWallet)
+  const setTonWallet = useGameStore((s) => s.setTonWallet)
   const setScreen    = useGameStore((s) => s.setScreen)
   const raidLog      = useGameStore((s) => s.raidLog)
   const soundEnabled = useGameStore((s) => s.soundEnabled)
   const toggleSound      = useGameStore((s) => s.toggleSound)
   const language         = useGameStore((s) => s.language)
   const updateLanguage   = useGameStore((s) => s.updateLanguage)
+  const drones           = useGameStore((s) => s.drones)
+  const turrets          = useGameStore((s) => s.turrets)
+  const incomeRateTotal  = useGameStore((s) => s.incomeRateTotal)
+  const firstName        = useGameStore((s) => s.firstName)
+  const lastName         = useGameStore((s) => s.lastName)
+  const username         = useGameStore((s) => s.username)
+  const telegramId       = useGameStore((s) => s.telegramId)
   const { t, i18n }     = useTranslation()
   const [notifs, setNotifs] = useState(true)
 
-  const wins   = raidLog.length > 0 ? raidLog.filter((r) => r.won).length   : MOCK.wins
-  const losses = raidLog.length > 0 ? raidLog.filter((r) => !r.won).length  : MOCK.losses
-  const total  = wins + losses
-  const xpPct  = (MOCK.xp / MOCK.xpNext) * 100
+  // Full raid history for stats
+  const [allRaids,    setAllRaids]    = useState<ApiRaid[]>([])
+  const [statsLoaded, setStatsLoaded] = useState(false)
 
-  const winPct  = total > 0 ? Math.round((wins / total) * 100) : Math.round((MOCK.wins / (MOCK.wins + MOCK.losses)) * 100)
+  // Referral stats
+  const [refStats, setRefStats] = useState<ReferralStats | null>(null)
+
+  useEffect(() => {
+    getRaidHistory()
+      .then(raids => { setAllRaids(raids); setStatsLoaded(true) })
+      .catch(()  => setStatsLoaded(true))
+    getReferralStats()
+      .then(setRefStats)
+      .catch(() => {})
+  }, [])
+
+  const displayName = [firstName, lastName].filter(Boolean).join(' ') || username || `#${telegramId}`
+  const initials    = getInitials(firstName, lastName)
+  const photoUrl    = getTgPhotoUrl()
+
+  // TON Connect
+  const tcWallet         = useTonWallet()
+  const [tonConnectUI]   = useTonConnectUI()
+
+  // Sync TON Connect wallet address → API whenever it changes
+  useEffect(() => {
+    const address = tcWallet?.account?.address ?? ''
+    if (address && address !== tonWallet) {
+      connectWallet(address)
+        .then(() => setTonWallet(address))
+        .catch(() => {/* silent — user can retry */})
+    }
+    if (!address && tonWallet) {
+      // Wallet disconnected on the TON Connect side
+      disconnectWallet()
+        .then(() => setTonWallet(''))
+        .catch(() => {})
+    }
+  }, [tcWallet?.account?.address]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [tonModal,   setTonModal]   = useState(false)
+  const [invoice,    setInvoice]    = useState<ApiWalletInvoice | null>(null)
+  const [invoiceErr, setInvoiceErr] = useState(false)
+  const [copied,     setCopied]     = useState<'wallet' | 'comment' | null>(null)
+
+  const walletConnected = !!tcWallet?.account?.address
+  const walletAddress   = tcWallet?.account?.address ?? tonWallet
+
+  // Referral link
+  const botUrl   = import.meta.env.VITE_BOT_URL ?? ''
+  const refLink  = botUrl
+    ? `${botUrl}?start=ref_${telegramId}`
+    : ''
+  const [refCopied,  setRefCopied]  = useState(false)
+  const [shareState, setShareState] = useState<'idle' | 'loading' | 'error'>('idle')
+
+  const canShare = !!(window as any).Telegram?.WebApp?.sendPreparedMessage
+
+  const handleShare = async () => {
+    // Fallback: if Telegram API unavailable, just copy the link
+    if (!canShare) {
+      copyRefLink()
+      return
+    }
+    setShareState('loading')
+    try {
+      const prepared = await prepareReferralMessage()
+      ;(window as any).Telegram.WebApp.sendPreparedMessage(
+        { id: prepared.id },
+        (sent: boolean) => {
+          setShareState('idle')
+          if (!sent) console.warn('referral share cancelled')
+        },
+      )
+      setShareState('idle')
+    } catch {
+      setShareState('error')
+      setTimeout(() => setShareState('idle'), 2000)
+    }
+  }
+
+  const copyRefLink = () => {
+    if (!refLink) return
+    navigator.clipboard.writeText(refLink).then(() => {
+      setRefCopied(true)
+      setTimeout(() => setRefCopied(false), 1500)
+    })
+  }
+
+  const openTonModal = async () => {
+    setTonModal(true)
+    setInvoiceErr(false)
+    if (!invoice) {
+      try {
+        const data = await getWalletInvoice()
+        setInvoice(data)
+      } catch {
+        setInvoiceErr(true)
+      }
+    }
+  }
+
+  const copyText = (text: string, key: 'wallet' | 'comment') => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key)
+      setTimeout(() => setCopied(null), 1500)
+    })
+  }
+
+  // Battle stats from full history (falls back to session raidLog while loading)
+  const wins   = statsLoaded ? allRaids.filter(r => r.result === 'victory').length
+                             : raidLog.filter(r => r.won).length
+  const losses = statsLoaded ? allRaids.filter(r => r.result === 'defeat').length
+                             : raidLog.filter(r => !r.won).length
+  const total  = wins + losses
+  const streak = statsLoaded ? calcStreak(allRaids) : 0
+
+  // Level: 1 level per 10 raids, starts at 1
+  const level     = Math.max(1, Math.floor(total / 10) + 1)
+  const xpInLevel = total % 10
+  const xpToNext  = 10
+  const xpPct     = (xpInLevel / xpToNext) * 100
+
+  const winPct  = total > 0 ? Math.round((wins / total) * 100) : 0
   const lossPct = 100 - winPct
+
+  // Farm stats
+  const incomePerHour = Math.round(incomeRateTotal * 3600)
+  const dronesActive  = drones.filter(d => !d.isBroken).length
 
   return (
     <div className={styles.screen}>
@@ -98,33 +242,37 @@ export function ProfileScreen() {
           <section className={styles.card + ' ' + styles.hero}>
             <div className={styles.heroRow}>
               <div className={styles.avatarRing}>
-                <div className={styles.avatarInner}>
-                  <span className={styles.initials}>{MOCK.initials}</span>
-                </div>
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt={displayName}
+                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div className={styles.avatarInner}>
+                    <span className={styles.initials}>{initials}</span>
+                  </div>
+                )}
                 <span className={styles.onlineDot} />
               </div>
               <div className={styles.heroId}>
                 <div className={styles.nameRow}>
-                  <span className={styles.name}>{MOCK.name}</span>
-                  <svg className={styles.verified} width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l2.4 1.8 3 .1 1 2.8 2.3 1.9-.9 2.9.9 2.9-2.3 1.9-1 2.8-3 .1L12 22l-2.4-1.8-3-.1-1-2.8L3.3 15.4 4.2 12.5l-.9-2.9 2.3-1.9 1-2.8 3-.1L12 2z"/>
-                    <path d="M9.5 12.3l1.8 1.8 3.4-3.6" fill="none" stroke="#04121d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <span className={styles.name}>{displayName}</span>
                 </div>
-                <div className={styles.uname}>{MOCK.username}</div>
-                <div className={styles.tgId}>TG ID · {MOCK.tgId}</div>
+                {username ? <div className={styles.uname}>@{username}</div> : null}
+                <div className={styles.tgId}>TG ID · {telegramId || '—'}</div>
                 <div className={styles.lvlChip}>
                   <svg className={styles.lvlChipIcon} width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>
                   </svg>
-                  {t('profile.levelN', {n: MOCK.level})}
+                  {t('profile.levelN', {n: level})}
                 </div>
               </div>
             </div>
             <div className={styles.xp}>
               <div className={styles.xpTop}>
-                <span>{t('profile.expTo', {n: MOCK.level + 1})}</span>
-                <span><b>{MOCK.xp.toLocaleString('ru')}</b> / {MOCK.xpNext.toLocaleString('ru')} XP</span>
+                <span>{t('profile.expTo', {n: level + 1})}</span>
+                <span><b>{xpInLevel}</b> / {xpToNext} {t('profile.raids').toLowerCase()}</span>
               </div>
               <div className={styles.xpTrack}>
                 <div className={styles.xpFill} style={{ width: `${xpPct}%` }} />
@@ -146,7 +294,11 @@ export function ProfileScreen() {
               <div className={styles.balAmt}>{fmtGold(balance)}</div>
               <div className={styles.balSub}>{t('profile.gold')}</div>
             </div>
-            <div className={`${styles.card} ${styles.bal} ${styles.balTon}`}>
+            <button
+              className={`${styles.card} ${styles.bal} ${styles.balTon}`}
+              onClick={openTonModal}
+              style={{ cursor: 'pointer', textAlign: 'left', border: '1px solid rgba(54,179,246,0.25)' }}
+            >
               <div className={styles.balIc}>
                 <svg width="22" height="22" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10" fill="#36b3f6"/>
@@ -154,12 +306,30 @@ export function ProfileScreen() {
                   <path d="M12 9v8.4" stroke="#36b3f6" strokeWidth="1.1"/>
                 </svg>
               </div>
-              <div className={styles.balAmt}>{MOCK.ton}</div>
-              <div className={styles.balSub}>TON <span className={styles.balFiat}>≈ ${MOCK.tonUsd}</span></div>
-            </div>
+              <div className={styles.balAmt}>{tonBalance.toFixed(4)}</div>
+              <div className={styles.balSub}>TON <span style={{ fontSize: 10, color: '#36b3f6', marginLeft: 4 }}>+ {t('profile.topupTon')}</span></div>
+            </button>
           </div>
 
-          {/* ── Wallet CTA ── */}
+          {/* ── Farm stats ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {[
+              { label: t('profile.stat_drones'),  value: `${dronesActive}/${drones.length}`,     icon: '🛸' },
+              { label: t('profile.stat_turrets'), value: String(turrets.length),                  icon: '🛡' },
+              { label: t('profile.stat_income'),  value: `⬡${incomePerHour.toLocaleString('ru')}`, icon: '⚡' },
+            ].map(({ label, value, icon }) => (
+              <div key={label} style={{
+                background: 'rgba(255,255,255,0.04)', borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.07)',
+                padding: '10px 8px', textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>{icon}</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#e2e8f0' }}>{value}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+
           {/* ── Stars Top-up ── */}
           <button
             onClick={() => setScreen('topup')}
@@ -178,23 +348,46 @@ export function ProfileScreen() {
             <span style={{ color: '#7c3aed', fontSize: 18 }}>→</span>
           </button>
 
-          {/* ── Wallet CTA ── */}
+          {/* ── Wallet CTA (withdrawal only) ── */}
           <section className={`${styles.card} ${styles.wallet}`}>
             <div className={styles.walletIc}>
               <svg width="24" height="24" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10.5" fill="#36b3f6"/>
+                <circle cx="12" cy="12" r="10.5" fill={walletConnected ? '#22c55e' : '#36b3f6'}/>
                 <path d="M6.7 8.3h10.6c.5 0 .8.55.55.98l-5.3 9.05a.62.62 0 0 1-1.06 0L6.15 9.28a.62.62 0 0 1 .55-.98z" fill="#fff"/>
-                <path d="M12 8.8v9.2" stroke="#36b3f6" strokeWidth="1.2"/>
+                <path d="M12 8.8v9.2" stroke={walletConnected ? '#22c55e' : '#36b3f6'} strokeWidth="1.2"/>
               </svg>
             </div>
             <div className={styles.walletTxt}>
               <div className={styles.walletT1}>
                 <span className={styles.walletT1Name}>{t('profile.tonWallet')}</span>
-                <span className={styles.walletStat}>{t('profile.notConnected')}</span>
+                <span className={styles.walletStat} style={{ color: walletConnected ? '#4ade80' : undefined }}>
+                  {walletConnected ? t('profile.connected') : t('profile.notConnected')}
+                </span>
               </div>
-              <div className={styles.walletT2}>{t('profile.connectDesc')}</div>
+              {walletConnected && walletAddress ? (
+                <div className={styles.walletT2} style={{ fontFamily: 'monospace', fontSize: 11 }}>
+                  {walletAddress.slice(0, 8)}…{walletAddress.slice(-6)}
+                </div>
+              ) : (
+                <div className={styles.walletT2}>{t('profile.walletWithdrawOnly')}</div>
+              )}
             </div>
-            <button className={styles.walletBtn}>{t('profile.connectWallet')}</button>
+            {walletConnected ? (
+              <button
+                className={styles.walletBtn}
+                style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)' }}
+                onClick={() => tonConnectUI.disconnect()}
+              >
+                {t('profile.disconnectWallet')}
+              </button>
+            ) : (
+              <button
+                className={styles.walletBtn}
+                onClick={() => tonConnectUI.openModal()}
+              >
+                {t('profile.connectWallet')}
+              </button>
+            )}
           </section>
 
           {/* ── Battle stats ── */}
@@ -202,7 +395,9 @@ export function ProfileScreen() {
           <section className={`${styles.card} ${styles.battle}`}>
             <div className={styles.battleHead}>
               <span className={styles.battleTitle}>{t('profile.raids')}</span>
-              <span className={styles.season}>{t('profile.season', {n: MOCK.season})}</span>
+              {!statsLoaded && (
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{t('app.loading')}</span>
+              )}
             </div>
             <div className={styles.battleTop}>
               <WinRateRing wins={wins} losses={losses} />
@@ -230,27 +425,152 @@ export function ProfileScreen() {
               </div>
               <div className={styles.mini}>
                 <div className={styles.miniKey}>{t('profile.streak')}</div>
-                <div className={styles.miniVal}>{MOCK.streak} <small>{t('common.in_a_row')}</small></div>
+                <div className={styles.miniVal}>{streak} <small>{t('common.in_a_row')}</small></div>
               </div>
             </div>
           </section>
 
           {/* ── Referral ── */}
           <div className={styles.secLabel}><span className={styles.secDot} />{t('profile.section_friends')}</div>
-          <section className={`${styles.card} ${styles.ref}`}>
-            <div className={styles.refIc}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="8" width="18" height="4" rx="1"/>
-                <path d="M12 8v13M5 12v9h14v-9"/>
-                <path d="M12 8C12 8 11 3 8 3a2.5 2.5 0 0 0 0 5h4z"/>
-                <path d="M12 8s1-5 4-5a2.5 2.5 0 0 1 0 5h-4z"/>
-              </svg>
+          <section className={`${styles.card} ${styles.ref}`} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}>
+
+            {/* Header row: icon + title + share button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className={styles.refIc}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="8" width="18" height="4" rx="1"/>
+                  <path d="M12 8v13M5 12v9h14v-9"/>
+                  <path d="M12 8C12 8 11 3 8 3a2.5 2.5 0 0 0 0 5h4z"/>
+                  <path d="M12 8s1-5 4-5a2.5 2.5 0 0 1 0 5h-4z"/>
+                </svg>
+              </div>
+              <div className={styles.refTxt} style={{ flex: 1 }}>
+                <div className={styles.refT1}>{t('profile.friends')}</div>
+                <div className={styles.refT2} style={{ color: refStats && refStats.total > 0 ? '#22d3ee' : undefined }}>
+                  {refStats
+                    ? t('profile.invitedCount', { n: refStats.total })
+                    : t('profile.inviteDesc')}
+                </div>
+              </div>
+
+              {/* Share button — always visible, right of the title */}
+              <button
+                onClick={handleShare}
+                disabled={shareState === 'loading'}
+                title={t('profile.share')}
+                style={{
+                  flexShrink: 0,
+                  width: 44, height: 44, borderRadius: 12,
+                  border: '1px solid rgba(6,182,212,0.35)',
+                  background: shareState === 'error'
+                    ? 'rgba(239,68,68,0.15)'
+                    : shareState === 'loading'
+                    ? 'rgba(6,182,212,0.08)'
+                    : 'linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.1))',
+                  color: shareState === 'error' ? '#f87171' : '#22d3ee',
+                  cursor: shareState === 'loading' ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 0.2s',
+                }}
+              >
+                {shareState === 'loading' ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                  </svg>
+                ) : shareState === 'error' ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                ) : (
+                  /* Telegram-style paper-plane send icon */
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 2L11 13"/>
+                    <path d="M22 2L15 22 11 13 2 9l20-7z"/>
+                  </svg>
+                )}
+              </button>
             </div>
-            <div className={styles.refTxt}>
-              <div className={styles.refT1}>{t('profile.friends')}</div>
-              <div className={styles.refT2}>{t('profile.inviteDesc', {n: MOCK.referrals})}</div>
-            </div>
-            <button className={styles.refBtn}>{t('profile.invite')}</button>
+
+            {/* Referral link + copy */}
+            {refLink && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 10,
+                  padding: '8px 12px', fontFamily: 'monospace', fontSize: 11,
+                  color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}>
+                  {refLink}
+                </div>
+                <button
+                  onClick={copyRefLink}
+                  title={t('profile.copyLink')}
+                  style={{
+                    flexShrink: 0, width: 36, height: 36, borderRadius: 9,
+                    background: refCopied ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.06)',
+                    border: `1px solid ${refCopied ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                    color: refCopied ? '#4ade80' : '#64748b',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  {refCopied ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Level breakdown */}
+            {refStats && refStats.by_level?.length > 0 && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                {refStats.by_level.map(({ level, count }) => (
+                  <div key={level} style={{
+                    flex: 1, background: 'rgba(6,182,212,0.08)', borderRadius: 10,
+                    padding: '8px 6px', textAlign: 'center',
+                    border: '1px solid rgba(6,182,212,0.15)',
+                  }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#22d3ee' }}>{count}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                      {t('profile.level')} {level}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Recent invites */}
+            {refStats && refStats.recent?.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {refStats.recent.slice(0, 5).map((r, i) => {
+                  const name = r.username ? `@${r.username}` : [r.first_name, r.last_name].filter(Boolean).join(' ')
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '6px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 8,
+                    }}>
+                      <span style={{ fontSize: 13, color: '#cbd5e1' }}>{name}</span>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{
+                          fontSize: 11, color: '#22d3ee', background: 'rgba(6,182,212,0.12)',
+                          padding: '2px 7px', borderRadius: 6,
+                        }}>
+                          {t('profile.level')} {r.level}
+                        </span>
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                          {r.created_at.slice(0, 10)}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </section>
 
           {/* ── Settings ── */}
@@ -332,6 +652,128 @@ export function ProfileScreen() {
 
         </div>
       </div>
+
+      {/* ── TON Top-up modal ── */}
+      {tonModal && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            zIndex: 700, paddingBottom: 60,
+          }}
+          onClick={() => setTonModal(false)}
+        >
+          <div
+            style={{
+              width: '100%', maxWidth: 420,
+              background: '#0f172a', border: '1px solid rgba(54,179,246,0.25)',
+              borderRadius: '20px 20px 0 0', padding: '24px 20px 28px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, fontSize: 17, color: '#e2e8f0' }}>
+                ◈ {t('profile.tonDeposit')}
+              </div>
+              <button onClick={() => setTonModal(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
+
+            {invoiceErr && (
+              <div style={{ textAlign: 'center', color: '#f87171', padding: '20px 0', fontSize: 14 }}>
+                {t('app.error')}
+              </div>
+            )}
+
+            {!invoice && !invoiceErr && (
+              <div style={{ textAlign: 'center', color: '#64748b', padding: '20px 0', fontSize: 14 }}>
+                {t('app.loading')}
+              </div>
+            )}
+
+            {invoice && (
+              <>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 16, lineHeight: 1.5 }}>
+                  {t('profile.tonDepositDesc')}
+                </p>
+
+                {/* QR code */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(invoice.deeplink)}&size=180x180&bgcolor=0f172a&color=e2e8f0&margin=10`}
+                    alt="QR TON"
+                    width={180}
+                    height={180}
+                    style={{ borderRadius: 12, border: '1px solid rgba(54,179,246,0.2)' }}
+                  />
+                </div>
+
+                {/* Wallet address */}
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{t('profile.walletAddress')}</div>
+                  <div
+                    style={{
+                      background: '#1e293b', borderRadius: 8, padding: '10px 12px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, fontFamily: 'monospace', color: '#cbd5e1', wordBreak: 'break-all', flex: 1 }}>
+                      {invoice.wallet}
+                    </span>
+                    <button
+                      onClick={() => copyText(invoice.wallet, 'wallet')}
+                      style={{ background: 'none', border: 'none', color: copied === 'wallet' ? '#4ade80' : '#36b3f6', cursor: 'pointer', fontSize: 13, flexShrink: 0 }}
+                    >
+                      {copied === 'wallet' ? '✓' : '⎘'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Comment */}
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>
+                    {t('profile.depositComment')}
+                    <span style={{ color: '#f87171', marginLeft: 4 }}>★</span>
+                  </div>
+                  <div
+                    style={{
+                      background: '#1e293b', borderRadius: 8, padding: '10px 12px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                      border: '1px solid rgba(248,113,113,0.25)',
+                    }}
+                  >
+                    <span style={{ fontSize: 13, fontFamily: 'monospace', color: '#fde68a', flex: 1 }}>
+                      {invoice.comment}
+                    </span>
+                    <button
+                      onClick={() => copyText(invoice.comment, 'comment')}
+                      style={{ background: 'none', border: 'none', color: copied === 'comment' ? '#4ade80' : '#36b3f6', cursor: 'pointer', fontSize: 13, flexShrink: 0 }}
+                    >
+                      {copied === 'comment' ? '✓' : '⎘'}
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#f87171', marginTop: 5 }}>
+                    {t('profile.depositCommentWarning')}
+                  </div>
+                </div>
+
+                {/* Open in wallet */}
+                <button
+                  onClick={() => window.open(invoice.deeplink, '_blank')}
+                  style={{
+                    width: '100%', padding: 13,
+                    background: 'linear-gradient(135deg, #1e40af, #1d4ed8)',
+                    border: '1px solid rgba(54,179,246,0.4)', borderRadius: 12,
+                    color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                  }}
+                >
+                  ◈ {t('profile.openInWallet')}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

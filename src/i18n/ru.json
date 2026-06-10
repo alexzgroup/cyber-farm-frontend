@@ -107,7 +107,11 @@
     "purchaseFailed": "Ошибка покупки",
     "insufficientTitle": "Не хватает монет",
     "insufficientDesc": "Нужно ⬡{{need}}, у вас ⬡{{have}}. Не хватает ⬡{{diff}}.",
-    "buyGold": "Пополнить золото"
+    "buyGold": "Пополнить золото",
+    "bought": "Куплено!",
+    "insufficientTonTitle": "Недостаточно TON",
+    "insufficientTonDesc": "На балансе {{have}} TON. Нужно {{need}} TON.",
+    "topupTon": "Пополнить TON баланс"
   },
   "equipment": {
     "title": "Оборудование",
@@ -169,7 +173,14 @@
     "support": "Поддержка",
     "friends": "Друзья",
     "invite": "Пригласить",
-    "inviteDesc": "+50 золота за друга · приглашено {{n}}",
+    "inviteDesc": "Приглашай друзей и получай бонусы",
+    "invitedCount": "Приглашено: {{n}} игроков",
+    "share": "Поделиться",
+    "copyLink": "Скопировать ссылку",
+    "copied": "Скопировано",
+    "stat_drones": "Дроны",
+    "stat_turrets": "Башни",
+    "stat_income": "/ час",
     "settings": "Настройки",
     "winRate": "Win rate",
     "wins": "Побед",
@@ -189,7 +200,16 @@
     "tonWallet": "TON-кошелёк",
     "notConnected": "Не подключён",
     "connectWallet": "Подключить",
-    "connectDesc": "Подключите, чтобы выводить и пополнять TON"
+    "connected": "Подключён",
+    "disconnectWallet": "Отключить",
+    "walletWithdrawOnly": "Нужен только для вывода TON",
+    "topupTon": "Пополнить",
+    "tonDeposit": "Пополнение TON",
+    "tonDepositDesc": "Отправьте TON на адрес ниже с обязательным комментарием. Зачисление происходит автоматически.",
+    "walletAddress": "Адрес кошелька",
+    "depositComment": "Комментарий к переводу",
+    "depositCommentWarning": "Без комментария монеты не зачислятся!",
+    "openInWallet": "Открыть в кошельке"
   },
   "common": {
     "coins": "монет",

@@ -137,6 +137,39 @@ export function getWalletRate(): Promise<{ stars_per_ton: number; ton_to_usd: nu
   return apiFetch('/api/wallet/rate')
 }
 
+export function getWalletInvoice(): Promise<import('./types').ApiWalletInvoice> {
+  return apiFetch('/api/wallet/invoice')
+}
+
+export function connectWallet(walletAddress: string): Promise<{ ok: boolean; wallet_address: string }> {
+  return apiFetch('/api/wallet/address', {
+    method: 'PATCH',
+    body: JSON.stringify({ wallet_address: walletAddress }),
+  })
+}
+
+export function disconnectWallet(): Promise<{ ok: boolean }> {
+  return apiFetch('/api/wallet/address', { method: 'DELETE' })
+}
+
+export function getReferralLink(): Promise<{ link: string }> {
+  return apiFetch('/api/referral/link')
+}
+
+export interface ReferralStats {
+  total: number
+  by_level: { level: number; count: number }[]
+  recent: { level: number; username: string; first_name: string; last_name: string; created_at: string }[]
+}
+
+export function getReferralStats(): Promise<ReferralStats> {
+  return apiFetch('/api/referral/stats')
+}
+
+export function prepareReferralMessage(): Promise<{ id: string; expiration_date: number }> {
+  return apiFetch('/api/referral/prepare', { method: 'POST' })
+}
+
 export function buyListingWithStars(listingId: number): Promise<{ invoice_url: string; stars_amount: number; ton_price: number }> {
   return apiFetch(`/api/market/${listingId}/buy-stars`, { method: 'POST' })
 }

@@ -51,6 +51,8 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding: 16px;
+  /* subgrid: каждые 4 строки — name | desc | gold+rate | button */
+  grid-auto-rows: auto;
 }
 
 .card {
@@ -59,9 +61,10 @@
   border: 1px solid rgba(255,255,255,0.09);
   border-radius: 14px;
   padding: 16px 14px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-row: span 4;
+  grid-template-rows: subgrid;
+  row-gap: 6px;
   transition: border-color 0.15s;
 }
 
@@ -97,6 +100,7 @@
   align-items: baseline;
   gap: 4px;
   margin-top: 4px;
+  align-self: end;
 }
 
 .goldIcon { font-size: 14px; color: #fbbf24; }
@@ -114,7 +118,7 @@
 }
 
 .buyBtn {
-  margin-top: 8px;
+  margin-top: auto;
   width: 100%;
   padding: 9px 0;
   background: linear-gradient(135deg, #7c3aed, #5b21b6);

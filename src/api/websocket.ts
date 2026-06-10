@@ -67,6 +67,14 @@ function dispatch(msg: WsMessage) {
 
   switch (msg.type) {
     case 'farm.push': {
+      // TON deposit credited — update ton_balance immediately
+      if (msg.payload?.type === 'ton.deposit') {
+        const newBal = Number(msg.payload.ton_balance ?? 0)
+        const amount = Number(msg.payload.amount ?? 0)
+        store.setTonBalance(newBal)
+        store.setTonDepositToast({ amount })
+        break
+      }
       // Sub-type dispatch: raid_incoming arrives on this channel
       if (msg.payload?.type === 'raid_incoming') {
         const defended = msg.payload.result !== 'victory'

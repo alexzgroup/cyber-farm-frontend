@@ -125,36 +125,41 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
       </div>
 
       <div className={styles.cardFooter}>
+        {/* Price row */}
         <PriceTag price={item.price} currency={item.currency} starsPerTon={starsPerTon} />
+
+        {/* Buttons row — always second line */}
         {isTon ? (
-          <div style={{ display: 'flex', gap: 6 }}>
+          <>
+            <div className={styles.buyLabel}>КУПИТЬ</div>
+            <div className={styles.cardBtns}>
+              <button
+                className={`${styles.buyBtn} ${styles.buyTon}`}
+                disabled={!canBuy}
+                onClick={onBuy}
+              >
+                ◈ TON
+              </button>
+              {onBuyStars && (
+                <button
+                  className={`${styles.buyBtn} ${styles.buyStars}`}
+                  onClick={onBuyStars}
+                >
+                  ⭐ Stars
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className={styles.cardBtns}>
             <button
-              className={`${styles.buyBtn} ${styles.buyTon}`}
-              style={{ flex: 1 }}
-              disabled={!canBuy}
+              className={`${styles.buyBtn} ${canBuy ? styles.buyActive : styles.buyDisabled}`}
+              style={canBuy ? { borderColor: meta.color, color: meta.color } : {}}
               onClick={onBuy}
             >
-              {t('market.buyTon')}
+              {canBuy ? t('market.buy') : '⬡ ' + t('market.buy')}
             </button>
-            {onBuyStars && (
-              <button
-                className={`${styles.buyBtn}`}
-                style={{ flex: 1, background: 'linear-gradient(135deg,#7c3aed,#5b21b6)', borderColor: '#7c3aed' }}
-                onClick={onBuyStars}
-              >
-                ⭐ Stars
-              </button>
-            )}
           </div>
-        ) : (
-          // Gold buy: always clickable — insufficient funds shows top-up overlay
-          <button
-            className={`${styles.buyBtn} ${canBuy ? styles.buyActive : styles.buyDisabled}`}
-            style={canBuy ? { borderColor: meta.color, color: meta.color } : {}}
-            onClick={onBuy}
-          >
-            {canBuy ? t('market.buy') : '⬡ ' + t('market.buy')}
-          </button>
         )}
       </div>
     </div>
@@ -163,9 +168,11 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
 
 export function MarketScreen() {
   const { t } = useTranslation()
-  const balance    = useGameStore((s) => s.balance)
-  const addBalance = useGameStore((s) => s.addBalance)
-  const setScreen  = useGameStore((s) => s.setScreen)
+  const balance       = useGameStore((s) => s.balance)
+  const tonBalance    = useGameStore((s) => s.tonBalance)
+  const setTonBalance = useGameStore((s) => s.setTonBalance)
+  const addBalance    = useGameStore((s) => s.addBalance)
+  const setScreen     = useGameStore((s) => s.setScreen)
 
   const [currencyTab,      setCurrencyTab]      = useState<CurrencyTab>('gold')
   const [filterType,       setFilterType]       = useState<FilterType>('all')
@@ -175,7 +182,8 @@ export function MarketScreen() {
   const [loading,          setLoading]          = useState(true)
   const [toast,            setToast]            = useState<string | null>(null)
   const [boughtIds,        setBoughtIds]        = useState<Set<number>>(new Set())
-  const [insufficientItem, setInsufficientItem] = useState<ApiMarketListing | null>(null)
+  const [insufficientItem,    setInsufficientItem]    = useState<ApiMarketListing | null>(null)
+  const [insufficientTonItem, setInsufficientTonItem] = useState<ApiMarketListing | null>(null)
   const [starsPerTon,     setStarsPerTon]     = useState(0)
 
   // Fetch Stars/TON rate once
@@ -221,10 +229,24 @@ export function MarketScreen() {
 
   const handleBuy = async (item: ApiMarketListing) => {
     if (item.currency === 'ton') {
-      showToast('TON wallet coming soon! 🔜')
+      if (tonBalance < item.price) {
+        setInsufficientTonItem(item)
+        return
+      }
+      try {
+        await reserveListing(item.id)
+        await buyListing(item.id)
+        setTonBalance(tonBalance - item.price)
+        setBoughtIds((s) => new Set(s).add(item.id))
+        showToast('◈ ' + t('market.bought'))
+      } catch (e: any) {
+        if (e?.status === 409) showToast(t('market.reserved'))
+        else if (e?.status === 402) setInsufficientTonItem(item)
+        else showToast(t('market.purchaseFailed'))
+      }
       return
     }
-    // Insufficient funds: show toast with "Buy Gold" CTA
+    // Insufficient gold funds
     if (balance < item.price) {
       setInsufficientItem(item)
       return
@@ -323,6 +345,53 @@ export function MarketScreen() {
         </div>
       )}
 
+      {/* Insufficient TON overlay */}
+      {insufficientTonItem && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          zIndex: 600, paddingBottom: 60,
+        }} onClick={() => setInsufficientTonItem(null)}>
+          <div style={{
+            width: '100%', maxWidth: 420,
+            background: '#0f172a', border: '1px solid rgba(54,179,246,0.3)',
+            borderRadius: '18px 18px 0 0', padding: '24px 20px 28px',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 10 }}>◈</div>
+            <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 17, marginBottom: 8 }}>
+              {t('market.insufficientTonTitle')}
+            </div>
+            <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>
+              {t('market.insufficientTonDesc', {
+                need: insufficientTonItem.price.toFixed(4),
+                have: tonBalance.toFixed(4),
+              })}
+            </div>
+            <button
+              style={{
+                width: '100%', padding: 14,
+                background: 'linear-gradient(135deg,#1e40af,#1d4ed8)',
+                border: '1px solid rgba(54,179,246,0.4)', borderRadius: 12,
+                color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 10,
+              }}
+              onClick={() => { setInsufficientTonItem(null); setScreen('profile') }}
+            >
+              ◈ {t('market.topupTon')}
+            </button>
+            <button
+              style={{
+                width: '100%', padding: 12, background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
+                color: 'rgba(255,255,255,0.45)', fontSize: 13, cursor: 'pointer',
+              }}
+              onClick={() => setInsufficientTonItem(null)}
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className={styles.header}>
         <h2 className={styles.title}>{t('market.title')}</h2>
@@ -387,7 +456,7 @@ export function MarketScreen() {
             <MarketCard
               key={item.id}
               item={item}
-              canBuy={item.currency === 'ton' || balance >= item.price}
+              canBuy={item.currency === 'ton' ? tonBalance >= item.price : balance >= item.price}
               onBuy={() => handleBuy(item)}
               onBuyStars={item.currency === 'ton' ? () => handleBuyStars(item) : undefined}
               starsPerTon={starsPerTon}

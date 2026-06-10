@@ -1,4 +1,85 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#0d1117"/>
-  <text x="16" y="22" text-anchor="middle" font-size="18">⚡</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#162033"/>
+      <stop offset="100%" stop-color="#060c15"/>
+    </radialGradient>
+    <radialGradient id="domeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="halo" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <clipPath id="round">
+      <rect width="512" height="512" rx="112"/>
+    </clipPath>
+  </defs>
+
+  <!-- App icon background (rounded rect like iOS) -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Outer ring hint -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#06b6d4" stroke-width="1" stroke-opacity="0.2"/>
+
+  <!-- ── Drone saucer ── -->
+
+  <!-- Under-glow -->
+  <ellipse cx="256" cy="310" rx="110" ry="22" fill="#06b6d4" filter="url(#halo)" opacity="0.35"/>
+
+  <!-- Left arm -->
+  <rect x="120" y="255" width="72" height="10" rx="5" fill="#1a3a5c"/>
+  <line x1="120" y1="260" x2="192" y2="260" stroke="#06b6d4" stroke-width="1" stroke-opacity="0.6"/>
+
+  <!-- Right arm -->
+  <rect x="320" y="255" width="72" height="10" rx="5" fill="#1a3a5c"/>
+  <line x1="320" y1="260" x2="392" y2="260" stroke="#06b6d4" stroke-width="1" stroke-opacity="0.6"/>
+
+  <!-- Left propeller -->
+  <ellipse cx="156" cy="255" rx="32" ry="8" fill="#0d2035" stroke="#22d3ee" stroke-width="1.8" transform="rotate(-25 156 255)"/>
+  <ellipse cx="156" cy="255" rx="32" ry="8" fill="#0d2035" stroke="#22d3ee" stroke-width="1.8" transform="rotate(65 156 255)"/>
+  <circle cx="156" cy="255" r="5" fill="#22d3ee"/>
+
+  <!-- Right propeller -->
+  <ellipse cx="356" cy="255" rx="32" ry="8" fill="#0d2035" stroke="#22d3ee" stroke-width="1.8" transform="rotate(25 356 255)"/>
+  <ellipse cx="356" cy="255" rx="32" ry="8" fill="#0d2035" stroke="#22d3ee" stroke-width="1.8" transform="rotate(115 356 255)"/>
+  <circle cx="356" cy="255" r="5" fill="#22d3ee"/>
+
+  <!-- Saucer main body -->
+  <ellipse cx="256" cy="268" rx="128" ry="38" fill="#0e2340" stroke="#06b6d4" stroke-width="2"/>
+
+  <!-- Saucer dome -->
+  <ellipse cx="256" cy="248" rx="68" ry="40" fill="#0a1c32"/>
+  <ellipse cx="256" cy="248" rx="68" ry="40" fill="url(#domeGlow)"/>
+  <ellipse cx="256" cy="247" rx="68" ry="40" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-opacity="0.7"/>
+
+  <!-- Dome inner highlight -->
+  <ellipse cx="244" cy="234" rx="30" ry="16" fill="#22d3ee" opacity="0.07"/>
+
+  <!-- Saucer body lights -->
+  <circle cx="180" cy="272" r="7" fill="#06b6d4" filter="url(#softGlow)" opacity="0.95"/>
+  <circle cx="218" cy="280" r="5" fill="#22d3ee" opacity="0.8"/>
+  <circle cx="256" cy="284" r="7" fill="#06b6d4" filter="url(#softGlow)" opacity="0.95"/>
+  <circle cx="294" cy="280" r="5" fill="#22d3ee" opacity="0.8"/>
+  <circle cx="332" cy="272" r="7" fill="#06b6d4" filter="url(#softGlow)" opacity="0.95"/>
+
+  <!-- Bottom fin -->
+  <ellipse cx="256" cy="304" rx="22" ry="10" fill="#0e2340" stroke="#06b6d4" stroke-width="1.5"/>
+  <circle cx="256" cy="304" r="4" fill="#06b6d4" opacity="0.9"/>
+
+  <!-- ── Stars ── -->
+  <circle cx="148" cy="148" r="2.5" fill="#22d3ee" opacity="0.7"/>
+  <circle cx="368" cy="132" r="2"   fill="#06b6d4" opacity="0.6"/>
+  <circle cx="390" cy="210" r="1.5" fill="#22d3ee" opacity="0.5"/>
+  <circle cx="122" cy="330" r="2"   fill="#06b6d4" opacity="0.5"/>
+  <circle cx="408" cy="360" r="2.5" fill="#22d3ee" opacity="0.6"/>
+  <circle cx="176" cy="390" r="1.5" fill="#06b6d4" opacity="0.4"/>
+  <circle cx="340" cy="400" r="2"   fill="#22d3ee" opacity="0.5"/>
+  <circle cx="440" cy="170" r="1.5" fill="#06b6d4" opacity="0.4"/>
+  <circle cx="80"  cy="200" r="2"   fill="#22d3ee" opacity="0.5"/>
+  <circle cx="430" cy="290" r="1.5" fill="#06b6d4" opacity="0.4"/>
 </svg>

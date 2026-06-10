@@ -115,6 +115,13 @@ interface GameState {
   balanceBase:      number   // last committed balance from server
   balanceUpdatedAt: number   // ms timestamp of last server commit
   incomeRateTotal:  number   // coins/second — sum of active drone income_rate
+  tonBalance:       number   // real TON crypto balance
+  tonWallet:        string   // connected TON wallet address (empty = not connected)
+  // Telegram user profile
+  telegramId:       number
+  firstName:        string
+  lastName:         string
+  username:         string
   energy:         number
   maxEnergy:      number
   energyProgress: number
@@ -150,6 +157,10 @@ interface GameState {
   addIncomingRaid:           (entry: IncomingRaidEntry) => void
   clearIncomingNotification: () => void
   addBalance:                (amount: number) => void
+  setTonBalance:             (amount: number) => void
+  tonDepositToast:           { amount: number } | null
+  setTonDepositToast:        (n: { amount: number } | null) => void
+  setTonWallet:              (address: string) => void
 
   // Actions — UI
   setScreen:     (screen: Screen) => void
@@ -169,6 +180,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   balanceBase:      0,
   balanceUpdatedAt: 0,
   incomeRateTotal:  0,
+  tonBalance:       0,
+  tonWallet:        '',
+  telegramId:       0,
+  firstName:        '',
+  lastName:         '',
+  username:         '',
   energy:           100,
   maxEnergy:      100,
   energyProgress: 0,
@@ -235,6 +252,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         balanceBase,
         balanceUpdatedAt,
         incomeRateTotal:  user.income_rate_total ?? 0,
+        tonBalance:       Number(user.ton_balance ?? 0),
+        tonWallet:        user.ton_wallet ?? '',
+        telegramId:       user.telegram_id,
+        firstName:        user.first_name ?? '',
+        lastName:         user.last_name  ?? '',
+        username:         user.username   ?? '',
         energy:           user.energy,
         maxEnergy:        user.max_energy,
         drones:           drones.map(mapDrone),
@@ -406,6 +429,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     balanceBase:      s.balance + amount,
     balanceUpdatedAt: Date.now(),
   })),
+  setTonBalance:      (amount) => set({ tonBalance: amount }),
+  tonDepositToast:    null,
+  setTonDepositToast: (n) => set({ tonDepositToast: n }),
+  setTonWallet:  (address) => set({ tonWallet: address }),
 
   // ── Energy regen (client-side smooth animation) ───────────────────────
   tickEnergyRegen: () => {

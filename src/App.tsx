@@ -4,6 +4,7 @@ import { useGameStore } from './store/gameStore'
 import { connectWebSocket, disconnectWebSocket } from './api/websocket'
 import { BottomNav } from './components/BottomNav'
 import { RaidAlert } from './components/RaidAlert'
+import { TonDepositToast } from './components/TonDepositToast'
 import { FarmScreen } from './screens/FarmScreen'
 import { ShopScreen } from './screens/ShopScreen'
 import { RaidsScreen } from './screens/RaidsScreen'
@@ -82,6 +83,7 @@ export function App() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', background: '#0d1117' }}>
       <RaidAlert />
+      <TonDepositToast />
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: NAV_HEIGHT, overflow: 'hidden' }}>
         {screen === 'farm'        && <FarmScreen />}
         {screen === 'shop'        && <ShopScreen />}

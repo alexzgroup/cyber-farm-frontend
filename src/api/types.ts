@@ -1,3 +1,9 @@
+export interface ReferralStats {
+  total:    number
+  by_level: { level: number; count: number }[]
+  recent:   { level: number; username: string; first_name: string; last_name: string; created_at: string }[]
+}
+
 export type DroneType         = 'scout' | 'combat' | 'stealth'
 export type DroneUpgradeType  = 'cargo_bay' | 'stealth_module' | 'energy_cell' | 'ai_navigation' | 'armor'
 export type TurretUpgradeType = 'scope' | 'firepower' | 'range' | 'reload' | 'shield'
@@ -14,12 +20,20 @@ export interface ApiUser {
   balance:            number
   balance_updated_at: string   // ISO timestamp of last balance commit
   income_rate_total:  number   // coins/second from all non-broken drones
+  ton_balance:        number   // real TON crypto balance
+  ton_wallet:         string   // connected TON wallet address (for withdrawals)
   energy:             number
   max_energy:         number
   vip_until:          string | null
   reg_language:       string   // set at registration from Telegram, immutable
   language:           string   // user-selected language (ru/en)
   created_at:         string
+}
+
+export interface ApiWalletInvoice {
+  wallet:   string   // game TON wallet address
+  comment:  string   // unique deposit comment (cf-{userId}-{ts})
+  deeplink: string   // ton://transfer/{wallet}?text={comment}
 }
 
 export interface ApiUserPublic {

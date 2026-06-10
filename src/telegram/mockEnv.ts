@@ -69,6 +69,10 @@ export function setupMockTelegram() {
     closeScanQrPopup: () => {},
     readTextFromClipboard: (cb?: (text: string) => void) => cb?.(''),
     isVersionAtLeast: (v: string) => true,
+    sendPreparedMessage: (msg: { id: string }, cb?: (sent: boolean) => void) => {
+      console.log('[MockTG] sendPreparedMessage:', msg)
+      cb?.(true)
+    },
   }
 
   ;(window as any).Telegram = { WebApp: webApp }

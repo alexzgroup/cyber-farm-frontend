@@ -107,7 +107,11 @@
     "purchaseFailed": "Purchase failed",
     "insufficientTitle": "Not enough coins",
     "insufficientDesc": "Need ⬡{{need}}, you have ⬡{{have}}. Missing ⬡{{diff}}.",
-    "buyGold": "Top up Gold"
+    "buyGold": "Top up Gold",
+    "bought": "Purchased!",
+    "insufficientTonTitle": "Insufficient TON",
+    "insufficientTonDesc": "Your balance is {{have}} TON. Required: {{need}} TON.",
+    "topupTon": "Top up TON balance"
   },
   "equipment": {
     "title": "Equipment",
@@ -169,7 +173,14 @@
     "support": "Support",
     "friends": "Friends",
     "invite": "Invite",
-    "inviteDesc": "+50 gold per friend · invited {{n}}",
+    "inviteDesc": "Invite friends and earn bonuses",
+    "invitedCount": "Invited: {{n}} players",
+    "share": "Share",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "stat_drones": "Drones",
+    "stat_turrets": "Turrets",
+    "stat_income": "/ hour",
     "settings": "Settings",
     "winRate": "Win rate",
     "wins": "Wins",
@@ -189,7 +200,16 @@
     "tonWallet": "TON Wallet",
     "notConnected": "Not connected",
     "connectWallet": "Connect",
-    "connectDesc": "Connect to withdraw and deposit TON"
+    "connected": "Connected",
+    "disconnectWallet": "Disconnect",
+    "walletWithdrawOnly": "Required for withdrawals only",
+    "topupTon": "Top up",
+    "tonDeposit": "TON Top-up",
+    "tonDepositDesc": "Send TON to the address below with the required comment. Funds are credited automatically.",
+    "walletAddress": "Wallet address",
+    "depositComment": "Transfer comment",
+    "depositCommentWarning": "Without the comment your TON won't be credited!",
+    "openInWallet": "Open in wallet"
   },
   "common": {
     "coins": "coins",
