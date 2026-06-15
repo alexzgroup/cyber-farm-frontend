@@ -80,9 +80,11 @@ export function ProfileScreen() {
   const raidLog      = useGameStore((s) => s.raidLog)
   const soundEnabled = useGameStore((s) => s.soundEnabled)
   const toggleSound      = useGameStore((s) => s.toggleSound)
-  const language         = useGameStore((s) => s.language)
-  const updateLanguage   = useGameStore((s) => s.updateLanguage)
-  const drones           = useGameStore((s) => s.drones)
+  const language            = useGameStore((s) => s.language)
+  const updateLanguage      = useGameStore((s) => s.updateLanguage)
+  const allowNotification   = useGameStore((s) => s.allowNotification)
+  const updateNotifications = useGameStore((s) => s.updateNotifications)
+  const drones              = useGameStore((s) => s.drones)
   const turrets          = useGameStore((s) => s.turrets)
   const incomeRateTotal  = useGameStore((s) => s.incomeRateTotal)
   const firstName        = useGameStore((s) => s.firstName)
@@ -90,7 +92,6 @@ export function ProfileScreen() {
   const username         = useGameStore((s) => s.username)
   const telegramId       = useGameStore((s) => s.telegramId)
   const { t, i18n }     = useTranslation()
-  const [notifs, setNotifs] = useState(true)
 
   // Full raid history for stats
   const [allRaids,    setAllRaids]    = useState<ApiRaid[]>([])
@@ -577,7 +578,7 @@ export function ProfileScreen() {
           <div className={styles.secLabel}><span className={styles.secDot} />{t('profile.section_settings')}</div>
           <section className={`${styles.card} ${styles.settings}`}>
             {/* Notifications */}
-            <div className={styles.setRow} onClick={() => setNotifs((v) => !v)}>
+            <div className={styles.setRow} onClick={() => updateNotifications(!allowNotification)}>
               <span className={styles.setIc}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -585,7 +586,7 @@ export function ProfileScreen() {
                 </svg>
               </span>
               <span className={styles.setKey}>{t('profile.notifs')}</span>
-              <div className={`${styles.toggle} ${notifs ? styles.toggleOn : styles.toggleOff}`}>
+              <div className={`${styles.toggle} ${allowNotification ? styles.toggleOn : styles.toggleOff}`}>
                 <div className={styles.toggleKnob} />
               </div>
             </div>

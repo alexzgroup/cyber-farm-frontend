@@ -25,9 +25,10 @@ export interface ApiUser {
   energy:             number
   max_energy:         number
   vip_until:          string | null
-  reg_language:       string   // set at registration from Telegram, immutable
-  language:           string   // user-selected language (ru/en)
-  created_at:         string
+  reg_language:        string   // set at registration from Telegram, immutable
+  language:            string   // user-selected language (ru/en)
+  allow_notification:  boolean  // false = user opted out of re-engagement reminders
+  created_at:          string
 }
 
 export interface ApiWalletInvoice {

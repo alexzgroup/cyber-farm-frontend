@@ -132,7 +132,8 @@ interface GameState {
   incomingRaidLog:         IncomingRaidEntry[]
   incomingRaidNotification: IncomingRaidEntry | null
   unitUpgrades:   UnitUpgrades
-  language:       string   // current UI language (ru/en), synced from API
+  language:            string   // current UI language (ru/en), synced from API
+  allowNotification:   boolean  // synced from API allow_notification
 
   // UI
   activeScreen:   Screen
@@ -144,7 +145,8 @@ interface GameState {
   // Actions — data
   loadGameState:      () => Promise<void>
   tickBalance:        () => void           // called every second from App.tsx
-  updateLanguage:     (lang: 'ru' | 'en') => Promise<void>
+  updateLanguage:       (lang: 'ru' | 'en') => Promise<void>
+  updateNotifications:  (enabled: boolean) => Promise<void>
   tap:                () => void           // FarmScene tap mechanic
   buyDrone:           (droneType?: import('../api/types').DroneType) => Promise<boolean>
   upgradeDrone:       (droneId: string) => Promise<boolean>
@@ -195,9 +197,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   lastRaidResult:           null,
   incomingRaidLog:          [],
   incomingRaidNotification: null,
-  unitUpgrades:   {},
-  language:       'ru',
-  activeScreen:   'farm',
+  unitUpgrades:        {},
+  language:            'ru',
+  allowNotification:   true,
+  activeScreen:        'farm',
   selectedUnitId: null,
   soundEnabled:   true,
   isLoaded:       false,
@@ -263,9 +266,10 @@ export const useGameStore = create<GameState>((set, get) => ({
         drones:           drones.map(mapDrone),
         turrets:          turrets.map(mapTurret),
         unitUpgrades,
-        language:         user.language ?? 'ru',
-        isLoaded:         true,
-        loadError:        null,
+        language:            user.language ?? 'ru',
+        allowNotification:   user.allow_notification ?? true,
+        isLoaded:            true,
+        loadError:           null,
       })
     } catch (err) {
       set({ loadError: (err as Error).message, isLoaded: true })
@@ -284,6 +288,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   updateLanguage: async (lang) => {
     set({ language: lang })
     try { await api.updateUserLanguage(lang) } catch { /* silent */ }
+  },
+
+  // ── Notifications opt-in / opt-out ────────────────────────────
+  updateNotifications: async (enabled) => {
+    set({ allowNotification: enabled })
+    try { await api.updateUserNotifications(enabled) } catch { set({ allowNotification: !enabled }) }
   },
 
   // ── Drones ─────────────────────────────────────────────────────────────

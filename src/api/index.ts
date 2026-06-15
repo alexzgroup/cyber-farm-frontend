@@ -28,6 +28,13 @@ export function updateUserLanguage(language: 'ru' | 'en'): Promise<{ language: s
   })
 }
 
+export function updateUserNotifications(enabled: boolean): Promise<{ allow_notification: boolean }> {
+  return apiFetch('/api/user/notifications', {
+    method: 'PATCH',
+    body:   JSON.stringify({ enabled }),
+  })
+}
+
 export function syncPositions(
   drones:  UnitPosition[],
   turrets: UnitPosition[],
