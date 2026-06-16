@@ -46,7 +46,7 @@ function PriceTag({ price, currency, starsPerTon }: {
     return (
       <div>
         <span style={{ color: '#5b9cf6', fontWeight: 700 }}>
-          ◈ {price % 1 === 0 ? price.toFixed(0) : price.toFixed(2)} TON
+          ◈ {parseFloat(price.toFixed(4))} TON
         </span>
         {stars && (
           <div style={{ fontSize: 11, color: '#a855f7', marginTop: 2 }}>

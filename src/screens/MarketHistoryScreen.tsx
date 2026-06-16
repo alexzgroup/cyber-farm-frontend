@@ -73,7 +73,7 @@ function HistoryRow({ item }: { item: ApiMarketHistoryItem }) {
     : t('market.toUser',   { name: item.counterparty || '—' })
 
   const priceStr = isTon
-    ? `◈ ${item.price % 1 === 0 ? item.price.toFixed(0) : item.price.toFixed(4)}`
+    ? `◈ ${parseFloat(item.price.toFixed(4))}`
     : `⬡ ${item.price.toLocaleString('ru')}`
 
   return (

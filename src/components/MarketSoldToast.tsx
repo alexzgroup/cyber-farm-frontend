@@ -18,7 +18,7 @@ export function MarketSoldToast() {
 
   const isTon = toast.currency === 'ton'
   const priceStr = isTon
-    ? `◈ ${toast.price.toFixed(4)} TON`
+    ? `◈ ${parseFloat(toast.price.toFixed(4))} TON`
     : `⬡ ${toast.price.toLocaleString('ru')}`
 
   const label = i18n.language === 'en' ? 'listing sold!' : 'лот продан!'
