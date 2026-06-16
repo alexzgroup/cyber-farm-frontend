@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { getContestCurrent, getContestLast } from '../api'
 import type { ContestCurrent, ContestLast } from '../api/types'
-import { fmtGold } from '../utils/format'
 import styles from './ContestScreen.module.css'
 
 // ── Countdown ──────────────────────────────────────────────────────────────
@@ -87,8 +86,8 @@ function Podium({ last }: { last: ContestLast }) {
           <div key={w.rank} className={`${styles.podiumItem} ${orderClass[i]}`}>
             <span className={styles.podiumMedal}>{orderMedal[i]}</span>
             <span className={styles.podiumName}>{name}</span>
-            <span className={styles.podiumScore}>{fmtGold(w.score)}</span>
-            <span className={styles.podiumPrize}>⬡ {fmtGold(w.prize_gold)}</span>
+            <span className={styles.podiumScore}>⬡ {w.score.toLocaleString('ru')}</span>
+            <span className={styles.podiumPrize}>◈ {parseFloat(w.prize_gold.toFixed(4))} TON</span>
           </div>
         )
       })}
@@ -135,8 +134,8 @@ export function ContestScreen() {
           <div className={styles.poolCard}>
             <div className={styles.poolLabel}>{t('contest.pool')}</div>
             <div className={styles.poolAmount}>
-              <span className={styles.poolCoin}>⬡</span>
-              {fmtGold(current?.pool_gold ?? 0)}
+              <span className={styles.poolCoin}>◈</span>
+              {parseFloat((current?.pool_ton ?? 0).toFixed(4))}
             </div>
             <div className={styles.poolHint}>{t('contest.contribution')}</div>
           </div>
@@ -177,10 +176,10 @@ export function ContestScreen() {
                       {isTop ? MEDALS[entry.rank - 1] : entry.rank}
                     </span>
                     <span className={styles.lbName}>{name}{isMe ? ' 👈' : ''}</span>
-                    <span className={styles.lbScore}>{fmtGold(entry.score)}</span>
+                    <span className={styles.lbScore}>⬡ {entry.score.toLocaleString('ru')}</span>
                     {entry.projected_prize > 0 && (
                       <span className={styles.lbPrize}>
-                        {t('contest.projectedPrize', { amount: fmtGold(entry.projected_prize) })}
+                        ~◈ {parseFloat(entry.projected_prize.toFixed(4))} TON
                       </span>
                     )}
                   </div>

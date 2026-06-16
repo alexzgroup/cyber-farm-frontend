@@ -161,7 +161,7 @@ export interface ContestLeaderboardEntry {
 }
 
 export interface ContestCurrent {
-  pool_gold:       number
+  pool_ton:        number
   next_contest_at: string   // ISO timestamp — next Monday 00:00 UTC
   participants:    number
   leaderboard:     ContestLeaderboardEntry[]
@@ -181,7 +181,7 @@ export interface ContestLast {
     id:         number
     week_start: string
     week_end:   string
-    pool_gold:  number
+    pool_ton:   number
   } | null
   winners: ContestWinner[]
 }
