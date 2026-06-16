@@ -226,6 +226,14 @@ export function createListing(unitType: 'drone' | 'turret', unitId: number, pric
   })
 }
 
+export function getContestCurrent(): Promise<import('./types').ContestCurrent> {
+  return apiFetch('/api/contest/current')
+}
+
+export function getContestLast(): Promise<import('./types').ContestLast> {
+  return apiFetch('/api/contest/last')
+}
+
 export function getMarketHistory(page = 0): Promise<import('./types').ApiMarketHistoryResponse> {
   return apiFetch(`/api/market/history?page=${page}`)
 }

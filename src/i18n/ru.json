@@ -153,6 +153,28 @@
     "reserved": "Зарезервировано",
     "reservedSec": "ещё {{n}} сек"
   },
+  "contest": {
+    "title": "Конкурсы",
+    "pool": "Призовой пул",
+    "nextContest": "Следующий розыгрыш",
+    "participants": "Участников",
+    "leaderboard": "Текущий рейтинг",
+    "projectedPrize": "~{{amount}} монет",
+    "lastWinners": "Победители прошлой недели",
+    "noLastContest": "Розыгрышей ещё не было",
+    "place1": "🥇 1 место",
+    "place2": "🥈 2 место",
+    "place3": "🥉 3 место",
+    "prize": "⬡ {{amount}} монет",
+    "score": "Баланс: {{score}}",
+    "days": "д",
+    "hours": "ч",
+    "minutes": "м",
+    "seconds": "с",
+    "contribution": "5% от покупок дронов и башен идёт в пул",
+    "emptyLeaderboard": "Пока нет участников",
+    "farmBtn": "🏆 Конкурс"
+  },
   "topup": {
     "title": "Пополнить золото",
     "profileHint": "Купить золото за Telegram Stars",

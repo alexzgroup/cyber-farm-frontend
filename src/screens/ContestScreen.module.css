@@ -1,0 +1,262 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #090c12;
+  color: #e0e0e0;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #ffd700;
+  cursor: pointer;
+  padding: 4px 6px 4px 0;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+}
+
+/* ── Scrollable body ── */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Pool hero card ── */
+.poolCard {
+  background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,165,0,0.06));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 18px;
+  padding: 20px 18px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.poolCard::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,215,0,0.15), transparent 70%);
+  pointer-events: none;
+}
+
+.poolLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255,215,0,0.6);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.poolAmount {
+  font-size: 38px;
+  font-weight: 800;
+  color: #ffd700;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(255,215,0,0.4));
+}
+
+.poolCoin {
+  font-size: 28px;
+  margin-right: 4px;
+}
+
+.poolHint {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  margin-top: 8px;
+}
+
+/* ── Countdown ── */
+.countdownCard {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.countdownLabel {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+}
+
+.countdownTime {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.countdownUnit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.countdownNum {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffd700;
+  line-height: 1;
+  min-width: 28px;
+  text-align: center;
+}
+
+.countdownSep {
+  font-size: 20px;
+  font-weight: 800;
+  color: rgba(255,215,0,0.4);
+  margin-bottom: 10px;
+}
+
+.countdownUnitLabel {
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* ── Section label ── */
+.secLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.secDot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ffd700;
+  flex-shrink: 0;
+}
+
+/* ── Podium — last winners ── */
+.podium {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.podiumItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 6px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.04);
+}
+
+.podiumItem.first  { background: rgba(255,215,0,0.1);  border-color: rgba(255,215,0,0.3); }
+.podiumItem.second { background: rgba(192,192,192,0.08); border-color: rgba(192,192,192,0.25); }
+.podiumItem.third  { background: rgba(205,127,50,0.08);  border-color: rgba(205,127,50,0.25); }
+
+.podiumMedal { font-size: 24px; }
+.podiumName  { font-size: 11px; font-weight: 700; color: #ddd; text-align: center; word-break: break-all; }
+.podiumScore { font-size: 10px; color: rgba(255,255,255,0.35); }
+.podiumPrize { font-size: 13px; font-weight: 800; color: #ffd700; }
+
+/* ── Leaderboard rows ── */
+.lbRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.lbRow.myRow {
+  background: rgba(255,215,0,0.07);
+  border-color: rgba(255,215,0,0.2);
+}
+
+.lbRank {
+  width: 22px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.lbRankTop { color: #ffd700; }
+
+.lbName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lbScore {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  flex-shrink: 0;
+}
+
+.lbPrize {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffd700;
+  flex-shrink: 0;
+  min-width: 70px;
+  text-align: right;
+}
+
+/* ── Empty ── */
+.empty {
+  text-align: center;
+  color: rgba(255,255,255,0.2);
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+/* ── Loading ── */
+.loading {
+  text-align: center;
+  color: rgba(255,255,255,0.25);
+  font-size: 13px;
+  padding: 40px 0;
+}

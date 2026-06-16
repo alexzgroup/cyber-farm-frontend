@@ -151,6 +151,41 @@ export interface ApiPurchaseLog {
   created_at:   string
 }
 
+export interface ContestLeaderboardEntry {
+  rank:            number
+  user_id:         number
+  username:        string
+  first_name:      string
+  score:           number
+  projected_prize: number
+}
+
+export interface ContestCurrent {
+  pool_gold:       number
+  next_contest_at: string   // ISO timestamp — next Monday 00:00 UTC
+  participants:    number
+  leaderboard:     ContestLeaderboardEntry[]
+}
+
+export interface ContestWinner {
+  rank:       number
+  user_id:    number
+  username:   string
+  first_name: string
+  score:      number
+  prize_gold: number
+}
+
+export interface ContestLast {
+  contest: {
+    id:         number
+    week_start: string
+    week_end:   string
+    pool_gold:  number
+  } | null
+  winners: ContestWinner[]
+}
+
 export interface ApiMarketHistoryItem {
   id:           number
   direction:    'buy' | 'sell'

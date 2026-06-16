@@ -37,6 +37,9 @@ export function FarmScreen() {
       <button className={styles.equipBtn} onClick={() => setScreen('equipment')}>
         {t('farm.equipment')}
       </button>
+      <button className={styles.contestBtn} onClick={() => setScreen('contest')}>
+        {t('contest.farmBtn')}
+      </button>
 
       {/* Zoom controls */}
       <div className={styles.zoomControls}>

@@ -153,6 +153,28 @@
     "reserved": "Reserved",
     "reservedSec": "{{n}}s left"
   },
+  "contest": {
+    "title": "Contests",
+    "pool": "Prize Pool",
+    "nextContest": "Next draw",
+    "participants": "Participants",
+    "leaderboard": "Current ranking",
+    "projectedPrize": "~{{amount}} coins",
+    "lastWinners": "Last week's winners",
+    "noLastContest": "No contests yet",
+    "place1": "🥇 1st place",
+    "place2": "🥈 2nd place",
+    "place3": "🥉 3rd place",
+    "prize": "⬡ {{amount}} coins",
+    "score": "Balance: {{score}}",
+    "days": "d",
+    "hours": "h",
+    "minutes": "m",
+    "seconds": "s",
+    "contribution": "5% of drone & turret purchases goes to the pool",
+    "emptyLeaderboard": "No participants yet",
+    "farmBtn": "🏆 Contest"
+  },
   "topup": {
     "title": "Top Up Gold",
     "profileHint": "Buy Gold with Telegram Stars",

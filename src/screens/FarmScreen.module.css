@@ -27,6 +27,28 @@
 .equipBtn:hover  { background: #112233; border-color: #00e5ff99; }
 .equipBtn:active { transform: translateX(-50%) scale(0.97); }
 
+.contestBtn {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  z-index: 20;
+  background: #1a1400;
+  border: 1px solid rgba(255,215,0,0.45);
+  color: #ffd700;
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 5px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.contestBtn:hover  { background: #251e00; border-color: rgba(255,215,0,0.75); }
+.contestBtn:active { transform: scale(0.97); }
+
 /* Zoom controls */
 .zoomControls {
   position: absolute;
