@@ -75,11 +75,15 @@ export function EquipmentScreen() {
         </button>
         <h2 className={styles.title}>{t('equipment.title')}</h2>
         <button
-          style={{ marginLeft: 'auto', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
-            color: 'rgba(255,255,255,0.5)', padding: '5px 10px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}
+          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5,
+            background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)',
+            color: '#00e5ff', padding: '5px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
           onClick={() => setScreen('purchases')}
         >
-          📋 {t('equipment.historyBtn')}
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          {t('equipment.historyBtn')}
         </button>
       </div>
 

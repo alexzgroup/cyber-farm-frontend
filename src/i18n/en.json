@@ -135,7 +135,7 @@
     "myDrones": "⚡ My Drones",
     "myTurrets": "🛡 Defense Turrets",
     "bonusLvl": "{{val}} × level",
-    "historyBtn": "Purchase History"
+    "historyBtn": "History"
   },
   "purchases": {
     "title": "Purchase History",
