@@ -211,6 +211,7 @@ export function MarketScreen() {
           if (status === 'paid') {
             setBoughtIds(s => new Set(s).add(item.id))
             showToast('⭐ Куплено за Stars!')
+            loadGameState()
           } else if (status !== 'cancelled') {
             showToast(t('market.purchaseFailed'))
           }
