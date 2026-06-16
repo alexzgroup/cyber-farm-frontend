@@ -151,7 +151,9 @@
     "errorFailed": "Ошибка. Попробуйте снова.",
     "sellBtn": "Продать",
     "reserved": "Зарезервировано",
-    "reservedSec": "ещё {{n}} сек"
+    "reservedSec": "ещё {{n}} сек",
+    "tonCommissionHint": "Вы получите ◈ {{net}} TON (комиссия {{pct}})",
+    "tonPoolHint": "3% от продажи идёт в еженедельный призовой пул 🏆"
   },
   "contest": {
     "title": "Конкурсы",

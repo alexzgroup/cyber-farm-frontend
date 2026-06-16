@@ -151,7 +151,9 @@
     "errorFailed": "Error. Please try again.",
     "sellBtn": "Sell",
     "reserved": "Reserved",
-    "reservedSec": "{{n}}s left"
+    "reservedSec": "{{n}}s left",
+    "tonCommissionHint": "You will receive ◈ {{net}} TON ({{pct}} fee)",
+    "tonPoolHint": "3% goes to the weekly prize pool 🏆"
   },
   "contest": {
     "title": "Contests",

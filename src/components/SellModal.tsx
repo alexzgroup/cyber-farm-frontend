@@ -83,6 +83,19 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
               {t('sell.yourBalance')}: ⬡ {fmtGold(balance)}
             </div>
           )}
+          {currency === 'ton' && priceNum > 0 && (
+            <div className={styles.hint}>
+              {t('sell.tonCommissionHint', {
+                net: parseFloat((priceNum * 0.97).toFixed(4)),
+                pct: '3%',
+              })}
+            </div>
+          )}
+          {currency === 'ton' && (
+            <div className={styles.hintMuted}>
+              {t('sell.tonPoolHint')}
+            </div>
+          )}
         </div>
 
         {error && <div className={styles.error}>{error}</div>}
