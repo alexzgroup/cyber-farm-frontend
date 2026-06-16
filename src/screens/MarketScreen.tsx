@@ -168,11 +168,12 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
 
 export function MarketScreen() {
   const { t } = useTranslation()
-  const balance       = useGameStore((s) => s.balance)
-  const tonBalance    = useGameStore((s) => s.tonBalance)
-  const setTonBalance = useGameStore((s) => s.setTonBalance)
-  const addBalance    = useGameStore((s) => s.addBalance)
-  const setScreen     = useGameStore((s) => s.setScreen)
+  const balance         = useGameStore((s) => s.balance)
+  const tonBalance      = useGameStore((s) => s.tonBalance)
+  const setTonBalance   = useGameStore((s) => s.setTonBalance)
+  const addBalance      = useGameStore((s) => s.addBalance)
+  const loadGameState   = useGameStore((s) => s.loadGameState)
+  const setScreen       = useGameStore((s) => s.setScreen)
 
   const [currencyTab,      setCurrencyTab]      = useState<CurrencyTab>('gold')
   const [filterType,       setFilterType]       = useState<FilterType>('all')
@@ -236,9 +237,9 @@ export function MarketScreen() {
       try {
         await reserveListing(item.id)
         await buyListing(item.id)
-        setTonBalance(tonBalance - item.price)
         setBoughtIds((s) => new Set(s).add(item.id))
         showToast('◈ ' + t('market.bought'))
+        loadGameState()
       } catch (e: any) {
         if (e?.status === 409) showToast(t('market.reserved'))
         else if (e?.status === 402) setInsufficientTonItem(item)
@@ -262,6 +263,7 @@ export function MarketScreen() {
         ? t(DRONE_COLORS[item.drone.drone_type]?.key ?? 'drone.scout')
         : t(TURRET_COLORS[item.turret?.level ?? 1]?.key ?? 'turret.light')
       showToast(`${name} — ${t('market.buy').toLowerCase()}!`)
+      loadGameState()
     } catch (e: any) {
       if (e?.status === 409) {
         showToast(t('market.reserved'))

@@ -162,6 +162,8 @@ interface GameState {
   setTonBalance:             (amount: number) => void
   tonDepositToast:           { amount: number } | null
   setTonDepositToast:        (n: { amount: number } | null) => void
+  marketSoldToast:           { price: number; currency: string; unitType: string } | null
+  setMarketSoldToast:        (n: { price: number; currency: string; unitType: string } | null) => void
   setTonWallet:              (address: string) => void
 
   // Actions — UI
@@ -442,6 +444,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setTonBalance:      (amount) => set({ tonBalance: amount }),
   tonDepositToast:    null,
   setTonDepositToast: (n) => set({ tonDepositToast: n }),
+  marketSoldToast:    null,
+  setMarketSoldToast: (n) => set({ marketSoldToast: n }),
   setTonWallet:  (address) => set({ tonWallet: address }),
 
   // ── Energy regen (client-side smooth animation) ───────────────────────

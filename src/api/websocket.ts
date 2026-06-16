@@ -100,7 +100,15 @@ function dispatch(msg: WsMessage) {
       store.loadGameState()
       break
     case 'market.bid':
-      // another user bought/listed — no immediate UI action needed
+      if (msg.payload?.type === 'listing_sold') {
+        // Our listing was bought — refresh state and show toast
+        store.loadGameState()
+        store.setMarketSoldToast({
+          price:    Number(msg.payload.price ?? 0),
+          currency: String(msg.payload.currency ?? 'gold'),
+          unitType: String(msg.payload.unit_type ?? ''),
+        })
+      }
       break
   }
 }
