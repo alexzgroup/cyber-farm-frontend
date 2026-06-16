@@ -111,7 +111,18 @@
     "bought": "Куплено!",
     "insufficientTonTitle": "Недостаточно TON",
     "insufficientTonDesc": "На балансе {{have}} TON. Нужно {{need}} TON.",
-    "topupTon": "Пополнить TON баланс"
+    "topupTon": "Пополнить TON баланс",
+    "historyBtn": "История",
+    "historyTitle": "История P2P",
+    "historyEmpty": "Сделок пока нет",
+    "dirBuy": "КУПЛЕНО",
+    "dirSell": "ПРОДАНО",
+    "fromUser": "от {{name}}",
+    "toUser": "→ {{name}}",
+    "unitDroneScout": "Разведчик",
+    "unitDroneCombat": "Боевой",
+    "unitDroneStealth": "Невидимка",
+    "unitTurret": "Башня"
   },
   "equipment": {
     "title": "Оборудование",

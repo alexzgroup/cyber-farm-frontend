@@ -111,7 +111,18 @@
     "bought": "Purchased!",
     "insufficientTonTitle": "Insufficient TON",
     "insufficientTonDesc": "Your balance is {{have}} TON. Required: {{need}} TON.",
-    "topupTon": "Top up TON balance"
+    "topupTon": "Top up TON balance",
+    "historyBtn": "History",
+    "historyTitle": "P2P History",
+    "historyEmpty": "No transactions yet",
+    "dirBuy": "BOUGHT",
+    "dirSell": "SOLD",
+    "fromUser": "from {{name}}",
+    "toUser": "→ {{name}}",
+    "unitDroneScout": "Scout",
+    "unitDroneCombat": "Combat",
+    "unitDroneStealth": "Stealth",
+    "unitTurret": "Turret"
   },
   "equipment": {
     "title": "Equipment",

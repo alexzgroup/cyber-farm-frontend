@@ -397,6 +397,20 @@ export function MarketScreen() {
       {/* Header */}
       <div className={styles.header}>
         <h2 className={styles.title}>{t('market.title')}</h2>
+        <button
+          onClick={() => setScreen('market-history')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)',
+            borderRadius: 8, padding: '5px 10px', cursor: 'pointer',
+            color: '#00e5ff', fontSize: 12, fontWeight: 700,
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          {t('market.historyBtn')}
+        </button>
         <span className={styles.balance}>⬡ {fmtGold(balance)}</span>
       </div>
 

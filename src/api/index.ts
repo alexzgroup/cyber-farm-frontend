@@ -226,6 +226,10 @@ export function createListing(unitType: 'drone' | 'turret', unitId: number, pric
   })
 }
 
+export function getMarketHistory(page = 0): Promise<import('./types').ApiMarketHistoryResponse> {
+  return apiFetch(`/api/market/history?page=${page}`)
+}
+
 export function cancelListing(id: number): Promise<{ ok: boolean }> {
   return apiFetch(`/api/market/${id}`, { method: 'DELETE' })
 }

@@ -151,6 +151,24 @@ export interface ApiPurchaseLog {
   created_at:   string
 }
 
+export interface ApiMarketHistoryItem {
+  id:           number
+  direction:    'buy' | 'sell'
+  unit_type:    'drone' | 'turret'
+  unit_level:   number
+  drone_type?:  string
+  price:        number
+  currency:     'gold' | 'ton'
+  counterparty: string
+  created_at:   string
+}
+
+export interface ApiMarketHistoryResponse {
+  items: ApiMarketHistoryItem[]
+  total: number
+  page:  number
+}
+
 export interface AuthResponse {
   token:      string
   expires_in: number   // seconds until token expiry (1 hour = 3600)

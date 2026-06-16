@@ -15,6 +15,7 @@ import { MarketScreen } from './screens/MarketScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { PurchaseHistoryScreen } from './screens/PurchaseHistoryScreen'
 import { TopUpScreen } from './screens/TopUpScreen'
+import { MarketHistoryScreen } from './screens/MarketHistoryScreen'
 import { NAV_HEIGHT } from './layout'
 
 export function App() {
@@ -90,7 +91,8 @@ export function App() {
         {screen === 'farm'        && <FarmScreen />}
         {screen === 'shop'        && <ShopScreen />}
         {screen === 'raids'       && <RaidsScreen />}
-        {screen === 'market'      && <MarketScreen />}
+        {screen === 'market'         && <MarketScreen />}
+        {screen === 'market-history' && <MarketHistoryScreen />}
         {screen === 'equipment'   && <EquipmentScreen />}
         {screen === 'unit-detail' && <UnitDetailScreen />}
         {screen === 'profile'     && <ProfileScreen />}
