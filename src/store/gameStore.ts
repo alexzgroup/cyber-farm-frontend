@@ -356,13 +356,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   buyDrone: async (droneType: import('../api/types').DroneType = 'scout') => {
     try {
       const drone = await api.buyDrone(droneType)
-      set((s) => ({
-        balance: s.balance - 100, // optimistic, real value refreshed on next load
-        drones:  [...s.drones, mapDrone(drone)],
-      }))
-      // Refresh balance from server
+      set((s) => ({ drones: [...s.drones, mapDrone(drone)] }))
       const user = await api.getMe()
-      set({ balance: Number(user.balance) })
+      set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
       return true
     } catch {
       return false
@@ -376,7 +372,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         drones: s.drones.map((d) => d.id === droneId ? mapDrone(upgraded) : d),
       }))
       const user = await api.getMe()
-      set({ balance: Number(user.balance) })
+      set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
       return true
     } catch {
       return false
@@ -387,12 +383,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     try {
       await api.repairDrone(Number(droneId))
       set((s) => ({
-        drones: s.drones.map((d) =>
-          d.id === droneId ? { ...d, isBroken: false } : d
-        ),
+        drones: s.drones.map((d) => d.id === droneId ? { ...d, isBroken: false } : d),
       }))
       const user = await api.getMe()
-      set({ balance: Number(user.balance) })
+      set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
       return true
     } catch {
       return false
@@ -404,11 +398,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   buyTurret: async (level: 1 | 2 | 3 = 1) => {
     try {
       const turret = await api.buyTurret(level)
-      set((s) => ({
-        turrets: [...s.turrets, mapTurret(turret)],
-      }))
+      set((s) => ({ turrets: [...s.turrets, mapTurret(turret)] }))
       const user = await api.getMe()
-      set({ balance: Number(user.balance) })
+      set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
       return true
     } catch {
       return false
