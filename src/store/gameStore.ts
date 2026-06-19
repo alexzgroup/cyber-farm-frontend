@@ -115,7 +115,8 @@ export function mapDrone(d: ApiDrone): Drone {
 export function mapTurret(t: ApiTurret): Turret {
   return {
     id:        String(t.id),
-    level:     (t.level as 1 | 2 | 3) ?? 1,
+    // backend returns turret_level, not level
+    level:     ((t.turret_level ?? t.level) as 1 | 2 | 3) ?? 1,
     positionX: t.position_x,
     positionY: t.position_y,
   }

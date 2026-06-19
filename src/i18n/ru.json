@@ -39,6 +39,7 @@
   "shop": {
     "newTurret": "Новая башня",
     "turretDefense": "Защита: {{n}}",
+    "turretBought": "Башня добавлена на ферму",
     "hour": "час",
     "perTap": "за клик",
     "title": "Магазин",

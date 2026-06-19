@@ -39,6 +39,7 @@
   "shop": {
     "newTurret": "New Tower",
     "turretDefense": "Defense: {{n}}",
+    "turretBought": "Tower added to farm",
     "hour": "hr",
     "perTap": "per tap",
     "title": "Shop",

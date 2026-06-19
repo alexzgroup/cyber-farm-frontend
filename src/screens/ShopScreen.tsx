@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore, DRONE_UPGRADES, REPAIR_COSTS } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
@@ -19,8 +20,21 @@ export function ShopScreen() {
   const setScreen    = useGameStore((s) => s.setScreen)
   const { t } = useTranslation()
 
+  const [buyingTurret, setBuyingTurret] = useState<number | null>(null)
+  const [turretToast,  setTurretToast]  = useState('')
+
   const brokenDrones   = drones.filter((d) => d.isBroken)
   const newDronePrice  = 300 + drones.length * 200
+
+  const handleBuyTurret = async (level: 1 | 2 | 3) => {
+    setBuyingTurret(level)
+    const ok = await buyTurret(level)
+    setBuyingTurret(null)
+    if (ok) {
+      setTurretToast(t('shop.turretBought'))
+      setTimeout(() => setTurretToast(''), 2500)
+    }
+  }
 
   return (
     <div className={styles.screen}>
@@ -138,9 +152,15 @@ export function ShopScreen() {
       {/* Buy new turret */}
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>{t('shop.newTurret')}</h3>
+        {turretToast && (
+          <div className={styles.toast} style={{ color: '#39ff14', marginBottom: 8 }}>
+            ✓ {turretToast}
+          </div>
+        )}
         <div className={styles.cards}>
           {TURRET_CONFIGS.map(({ level, icon, price, defense, nameKey }) => {
             const canAfford = balance >= price
+            const loading   = buyingTurret === level
             return (
               <div key={level} className={styles.card}>
                 <div className={styles.droneIcon}>{icon}</div>
@@ -149,11 +169,11 @@ export function ShopScreen() {
                   <p className={styles.droneStats}>{t('shop.turretDefense', { n: defense })}</p>
                 </div>
                 <button
-                  className={`${styles.btn} ${canAfford ? styles.btnActive : styles.btnDisabled}`}
-                  onClick={() => buyTurret(level)}
-                  disabled={!canAfford}
+                  className={`${styles.btn} ${canAfford && !loading ? styles.btnActive : styles.btnDisabled}`}
+                  onClick={() => handleBuyTurret(level)}
+                  disabled={!canAfford || loading}
                 >
-                  <span className={styles.btnLevel}>{t('shop.buy')}</span>
+                  <span className={styles.btnLevel}>{loading ? '...' : t('shop.buy')}</span>
                   <span className={styles.btnPrice}>⬡ {price}</span>
                 </button>
               </div>
