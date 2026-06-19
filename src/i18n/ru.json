@@ -37,6 +37,10 @@
     "heavy": "Тяжёлая"
   },
   "shop": {
+    "newTurret": "Новая башня",
+    "turretDefense": "Защита: {{n}}",
+    "hour": "час",
+    "perTap": "за клик",
     "title": "Магазин",
     "repairSection": "⚠ Починка",
     "myDrones": "МОИ ДРОНЫ",

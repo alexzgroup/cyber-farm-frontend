@@ -37,6 +37,10 @@
     "heavy": "Heavy"
   },
   "shop": {
+    "newTurret": "New Tower",
+    "turretDefense": "Defense: {{n}}",
+    "hour": "hr",
+    "perTap": "per tap",
     "title": "Shop",
     "repairSection": "⚠ Repair",
     "myDrones": "MY DRONES",
