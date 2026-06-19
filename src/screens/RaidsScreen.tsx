@@ -62,7 +62,16 @@ function TargetCard({ player, attackerLevel, workingDrones, onAttack }: {
 }
 
 const TARGETS_PER_PAGE = 8
-const LOG_PER_PAGE     = 20
+const LOG_PER_PAGE = 20
+
+const tabStyle = (active: boolean): React.CSSProperties => ({
+  flex: 1, padding: '8px 0', fontSize: 13, fontWeight: 600,
+  background: 'none', border: 'none',
+  borderBottom: active ? '2px solid #00e5ff' : '2px solid transparent',
+  color: active ? '#00e5ff' : '#475569',
+  cursor: active ? 'default' : 'pointer',
+  fontFamily: 'monospace', letterSpacing: 0.3,
+})
 
 function Pagination({ page, total, pageSize, onChange }: {
   page: number; total: number; pageSize: number; onChange: (p: number) => void
@@ -96,6 +105,7 @@ export function RaidsScreen() {
   const raidLog        = useGameStore((s) => s.raidLog)
   const incomingRaidLog = useGameStore((s) => s.incomingRaidLog)
   const executeRaid    = useGameStore((s) => s.executeRaid)
+  const setScreen      = useGameStore((s) => s.setScreen)
 
   const workingDrones = drones.filter((d) => !d.isBroken)
   const attackerLevel = workingDrones.length > 0
@@ -174,6 +184,12 @@ export function RaidsScreen() {
 
       {view === 'targets' && (
         <>
+          {/* PvP mode switcher */}
+          <div style={{ display: 'flex', borderBottom: '1px solid #1e293b', flexShrink: 0 }}>
+            <button style={tabStyle(false)} onClick={() => setScreen('duel')}>⚔️ {t('nav.duel')}</button>
+            <button style={tabStyle(true)}>💥 {t('raids.title')}</button>
+          </div>
+
           <h2 className={styles.title}>{t('raids.title')}</h2>
 
           {workingDrones.length === 0 && (

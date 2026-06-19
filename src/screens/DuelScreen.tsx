@@ -76,6 +76,10 @@ export function DuelScreen() {
             {t('duel.historyBtn')}
           </button>
         </div>
+        <div style={s.modeTabs}>
+          <button style={{ ...s.modeTab, ...s.modeTabActive }}>⚔️ {t('duel.title')}</button>
+          <button style={s.modeTab} onClick={() => setScreen('raids')}>💥 {t('nav.raids')}</button>
+        </div>
         <div style={s.stub}>
           <div style={s.stubIcon}>🔕</div>
           <div style={s.stubTitle}>{t('duel.disabledTitle')}</div>
@@ -99,6 +103,16 @@ export function DuelScreen() {
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
           {t('duel.historyBtn')}
+        </button>
+      </div>
+
+      {/* PvP mode switcher */}
+      <div style={s.modeTabs}>
+        <button style={{ ...s.modeTab, ...s.modeTabActive }}>
+          ⚔️ {t('duel.title')}
+        </button>
+        <button style={s.modeTab} onClick={() => setScreen('raids')}>
+          💥 {t('nav.raids')}
         </button>
       </div>
 
@@ -214,6 +228,21 @@ const s: Record<string, React.CSSProperties> = {
   backBtn: { background: 'none', border: 'none', color: '#94a3b8', fontSize: 18, cursor: 'pointer', padding: '0 6px' },
   title:   { fontSize: 17, fontWeight: 700, color: '#e2e8f0', letterSpacing: 1, flex: 1 },
   historyBtn: { display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', color: '#00e5ff', fontSize: 12, fontWeight: 700, flexShrink: 0 },
+
+  // Mode switcher tabs
+  modeTabs: {
+    display: 'flex', gap: 0, padding: '8px 12px 0',
+    borderBottom: '1px solid #1e293b', flexShrink: 0,
+  },
+  modeTab: {
+    flex: 1, padding: '8px 0', fontSize: 13, fontWeight: 600,
+    background: 'none', border: 'none', borderBottom: '2px solid transparent',
+    color: '#475569', cursor: 'pointer', fontFamily: 'monospace',
+    letterSpacing: 0.3, transition: 'color 0.15s, border-color 0.15s',
+  },
+  modeTabActive: {
+    color: '#00e5ff', borderBottomColor: '#00e5ff',
+  },
 
   // My power panel
   myPowerBox: {
