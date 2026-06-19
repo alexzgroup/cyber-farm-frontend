@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import * as api from '../api'
-import type { ApiDrone, ApiTurret, ApiUser } from '../api/types'
+import type { ApiDrone, ApiTurret, ApiUser, ApiDuelPlayer, ApiDuelChallenge, DuelCurrency } from '../api/types'
 
 // ── Constants (used by UI screens and Phaser scenes) ──────────────────────
 
@@ -65,9 +65,23 @@ export interface IncomingRaidEntry {
   timestamp:    number
 }
 
-export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'unit-detail' | 'purchases' | 'topup' | 'contest'
+export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'unit-detail' | 'purchases' | 'topup' | 'contest' | 'duel' | 'duel-battle' | 'duel-history'
 
 export type UnitUpgrades = Record<string, Record<string, number>>
+
+// ── Duel types ────────────────────────────────────────────────────────────────
+
+export interface DuelConfig {
+  duelId:           number
+  playerDroneType:  1 | 2 | 3
+  playerUpgrades:   Record<string, number>
+  opponentId:       number
+  opponentName:     string
+  opponentType:     1 | 2 | 3
+  opponentUpgrades: Record<string, number>
+  betAmount:        number
+  currency:         DuelCurrency
+}
 
 // ── API → local mappers ────────────────────────────────────────────────────
 
@@ -118,6 +132,7 @@ interface GameState {
   tonBalance:       number   // real TON crypto balance
   tonWallet:        string   // connected TON wallet address (empty = not connected)
   // Telegram user profile
+  userId:           number   // PostgreSQL users.id (needed to determine duel winner)
   telegramId:       number
   firstName:        string
   lastName:         string
@@ -134,6 +149,7 @@ interface GameState {
   unitUpgrades:   UnitUpgrades
   language:            string   // current UI language (ru/en), synced from API
   allowNotification:   boolean  // synced from API allow_notification
+  allowDuel:           boolean  // synced from API allow_duel
 
   // UI
   activeScreen:   Screen
@@ -147,6 +163,7 @@ interface GameState {
   tickBalance:        () => void           // called every second from App.tsx
   updateLanguage:       (lang: 'ru' | 'en') => Promise<void>
   updateNotifications:  (enabled: boolean) => Promise<void>
+  updateDuelSettings:   (enabled: boolean) => Promise<void>
   tap:                () => void           // FarmScene tap mechanic
   buyDrone:           (droneType?: import('../api/types').DroneType) => Promise<boolean>
   upgradeDrone:       (droneId: string) => Promise<boolean>
@@ -165,6 +182,21 @@ interface GameState {
   marketSoldToast:           { price: number; currency: string; unitType: string } | null
   setMarketSoldToast:        (n: { price: number; currency: string; unitType: string } | null) => void
   setTonWallet:              (address: string) => void
+
+  // Duel
+  pendingDuelChallenge:  ApiDuelChallenge | null
+  activeDuelConfig:      DuelConfig | null
+  pendingDuelConfig:     DuelConfig | null   // challenger waits here until duel.start WS
+  duelWaiting:           { duelId: number; opponentName: string; expiresAt: number } | null
+  duelDeclined:          boolean
+  setPendingDuelChallenge: (c: ApiDuelChallenge | null) => void
+  startDuelWithPlayer:   (player: ApiDuelPlayer, betAmount: number, currency: DuelCurrency) => Promise<void>
+  acceptDuelChallenge:   () => Promise<void>
+  declineDuelChallenge:  () => void
+  activatePendingDuel:   () => void   // called when duel.start WS arrives (challenger side)
+  endDuel:               (won: boolean) => void
+  clearDuel:             () => void
+  clearDuelDeclined:     () => void
 
   // Actions — UI
   setScreen:     (screen: Screen) => void
@@ -186,6 +218,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   incomeRateTotal:  0,
   tonBalance:       0,
   tonWallet:        '',
+  userId:           0,
   telegramId:       0,
   firstName:        '',
   lastName:         '',
@@ -202,6 +235,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   unitUpgrades:        {},
   language:            'ru',
   allowNotification:   true,
+  allowDuel:           true,
   activeScreen:        'farm',
   selectedUnitId: null,
   soundEnabled:   true,
@@ -226,6 +260,16 @@ export const useGameStore = create<GameState>((set, get) => ({
         api.getDrones(),
         api.getTurrets(),
       ])
+
+      // Clear stale duel state: if server says no active duel, wipe frontend cache
+      api.getMyActiveDuel().then((res) => {
+        if (!res.active) {
+          const { activeDuelConfig, duelWaiting } = get()
+          if (activeDuelConfig || duelWaiting) {
+            set({ activeDuelConfig: null, pendingDuelConfig: null, duelWaiting: null })
+          }
+        }
+      }).catch(() => {/* silent — duel check is best-effort */})
       // The server returns effective balance (base + accrued).
       // We store that as the new base and reset the local timer.
       const balanceBase      = Number(user.balance)
@@ -259,6 +303,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         incomeRateTotal:  user.income_rate_total ?? 0,
         tonBalance:       Number(user.ton_balance ?? 0),
         tonWallet:        user.ton_wallet ?? '',
+        userId:           user.id,
         telegramId:       user.telegram_id,
         firstName:        user.first_name ?? '',
         lastName:         user.last_name  ?? '',
@@ -270,6 +315,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         unitUpgrades,
         language:            user.language ?? 'ru',
         allowNotification:   user.allow_notification ?? true,
+        allowDuel:           user.allow_duel ?? true,
         isLoaded:            true,
         loadError:           null,
       })
@@ -296,6 +342,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   updateNotifications: async (enabled) => {
     set({ allowNotification: enabled })
     try { await api.updateUserNotifications(enabled) } catch { set({ allowNotification: !enabled }) }
+  },
+
+  // ── Duel challenges opt-in / opt-out ──────────────────────────
+  updateDuelSettings: async (enabled) => {
+    set({ allowDuel: enabled })
+    try { await api.updateUserDuelSettings(enabled) } catch { set({ allowDuel: !enabled }) }
   },
 
   // ── Drones ─────────────────────────────────────────────────────────────
@@ -447,6 +499,124 @@ export const useGameStore = create<GameState>((set, get) => ({
   marketSoldToast:    null,
   setMarketSoldToast: (n) => set({ marketSoldToast: n }),
   setTonWallet:  (address) => set({ tonWallet: address }),
+
+  // ── Duel ───────────────────────────────────────────────────────────────────
+
+  pendingDuelChallenge: null,
+  activeDuelConfig:     null,
+  pendingDuelConfig:    null,
+  duelWaiting:          null,
+  duelDeclined:         false,
+
+  setPendingDuelChallenge: (c) => set({ pendingDuelChallenge: c }),
+
+  // Challenger sends challenge → waits for duel.start WS event
+  startDuelWithPlayer: async (player, betAmount, currency) => {
+    const { drones, unitUpgrades } = get()
+    const bestDrone = [...drones].sort((a, b) => b.level - a.level)[0]
+    if (!bestDrone) return
+
+    const duel = await api.sendDuelChallenge(player.id, betAmount, currency)
+    const droneUpgrades = unitUpgrades[bestDrone.id] ?? {}
+
+    set({
+      duelWaiting: {
+        duelId:       duel.id,
+        opponentName: player.first_name || player.username,
+        expiresAt:    Date.now() + 29_000,
+      },
+      pendingDuelConfig: {
+        duelId:           duel.id,
+        playerDroneType:  bestDrone.droneType,
+        playerUpgrades:   droneUpgrades,
+        opponentId:       player.id,
+        opponentName:     player.first_name || player.username,
+        opponentType:     1,
+        opponentUpgrades: {},
+        betAmount,
+        currency,
+      },
+    })
+  },
+
+  // Defender accepts → go straight to battle
+  acceptDuelChallenge: async () => {
+    const { pendingDuelChallenge, drones, unitUpgrades } = get()
+    if (!pendingDuelChallenge) return
+
+    await api.acceptDuelChallenge(pendingDuelChallenge.duel_id)
+
+    const bestDrone = [...drones].sort((a, b) => b.level - a.level)[0]
+    const droneUpgrades = bestDrone ? (unitUpgrades[bestDrone.id] ?? {}) : {}
+
+    set({
+      pendingDuelChallenge: null,
+      activeDuelConfig: {
+        duelId:           pendingDuelChallenge.duel_id,
+        playerDroneType:  bestDrone?.droneType ?? 1,
+        playerUpgrades:   droneUpgrades,
+        opponentId:       pendingDuelChallenge.challenger_id,
+        opponentName:     pendingDuelChallenge.challenger_name,
+        opponentType:     1,
+        opponentUpgrades: {},
+        betAmount:        pendingDuelChallenge.bet_amount,
+        currency:         pendingDuelChallenge.currency,
+      },
+      activeScreen: 'duel-battle',
+    })
+  },
+
+  declineDuelChallenge: () => {
+    const { pendingDuelChallenge } = get()
+    if (pendingDuelChallenge) {
+      api.declineDuelChallenge(pendingDuelChallenge.duel_id).catch(() => {/* silent */})
+    }
+    set({ pendingDuelChallenge: null })
+  },
+
+  // WS duel.start arrives → challenger activates pending config
+  activatePendingDuel: () => {
+    const { pendingDuelConfig } = get()
+    if (!pendingDuelConfig) return
+    set({
+      activeDuelConfig:  pendingDuelConfig,
+      pendingDuelConfig: null,
+      duelWaiting:       null,
+      activeScreen:      'duel-battle',
+    })
+  },
+
+  endDuel: (won) => {
+    const { activeDuelConfig, userId } = get()
+    if (!activeDuelConfig) return
+
+    const winnerId = won ? userId : activeDuelConfig.opponentId
+    // Guard against double-submit (both local detection + WS result)
+    api.submitDuelResult(activeDuelConfig.duelId, winnerId)
+      .then(() => api.getMe())
+      .then((user) => {
+        set({
+          balance:          Number(user.balance),
+          balanceBase:      Number(user.balance),
+          balanceUpdatedAt: Date.now(),
+          tonBalance:       Number(user.ton_balance ?? 0),
+        })
+      })
+      .catch(() => {
+        // 409 = result already submitted by opponent — still refresh balance
+        api.getMe().then((user) => {
+          set({
+            balance:          Number(user.balance),
+            balanceBase:      Number(user.balance),
+            balanceUpdatedAt: Date.now(),
+            tonBalance:       Number(user.ton_balance ?? 0),
+          })
+        }).catch(() => {/* silent */})
+      })
+  },
+
+  clearDuel: () => set({ activeDuelConfig: null, pendingDuelConfig: null, duelWaiting: null }),
+  clearDuelDeclined: () => set({ duelDeclined: false }),
 
   // ── Energy regen (client-side smooth animation) ───────────────────────
   tickEnergyRegen: () => {

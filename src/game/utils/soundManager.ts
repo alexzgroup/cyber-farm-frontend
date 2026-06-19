@@ -92,6 +92,37 @@ export const soundManager = {
     src.stop(t + duration)
   },
 
+  beep(high = false) {
+    if (!isOn()) return
+    const c = ac()
+    const t = c.currentTime
+    const osc = c.createOscillator()
+    const gain = c.createGain()
+    osc.connect(gain); gain.connect(c.destination)
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(high ? 880 : 440, t)
+    gain.gain.setValueAtTime(0.22, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18)
+    osc.start(t); osc.stop(t + 0.18)
+  },
+
+  fight() {
+    if (!isOn()) return
+    const c = ac()
+    const t = c.currentTime
+    // Two-tone "fight" hit
+    for (const [freq, delay] of [[220, 0], [440, 0.04], [880, 0.08]] as const) {
+      const osc = c.createOscillator()
+      const gain = c.createGain()
+      osc.connect(gain); gain.connect(c.destination)
+      osc.type = 'sawtooth'
+      osc.frequency.setValueAtTime(freq, t + delay)
+      gain.gain.setValueAtTime(0.3, t + delay)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.35)
+      osc.start(t + delay); osc.stop(t + delay + 0.35)
+    }
+  },
+
   coin() {
     if (!isOn()) return
     const c = ac()

@@ -28,6 +28,7 @@ export interface ApiUser {
   reg_language:        string   // set at registration from Telegram, immutable
   language:            string   // user-selected language (ru/en)
   allow_notification:  boolean  // false = user opted out of re-engagement reminders
+  allow_duel:          boolean  // false = hidden from duel list, cannot receive challenges
   created_at:          string
 }
 
@@ -208,4 +209,51 @@ export interface AuthResponse {
   token:      string
   expires_in: number   // seconds until token expiry (1 hour = 3600)
   user:       ApiUser
+}
+
+// ── Duel ──────────────────────────────────────────────────────────────────────
+
+export type DuelCurrency = 'gold' | 'ton'
+export type DuelStatus   = 'pending' | 'active' | 'completed' | 'declined' | 'expired'
+
+export interface ApiDuelPlayer {
+  id:          number
+  username:    string
+  first_name:  string
+  balance:     number
+  ton_balance: number
+  power:       number   // total battle power from all active drones + upgrades
+}
+
+export interface ApiDuelChallenge {
+  duel_id:          number
+  challenger_id:    number
+  challenger_name:  string
+  challenger_power: number   // total battle power of challenger
+  bet_amount:       number
+  currency:         DuelCurrency
+  expires_at:       number  // unix timestamp
+}
+
+export interface ApiDuel {
+  id:            number
+  challenger_id: number
+  defender_id:   number
+  bet_amount:    number
+  currency:      DuelCurrency
+  status:        DuelStatus
+  winner_id:     number | null
+  challenger:    ApiDuelPlayer | null
+  defender:      ApiDuelPlayer | null
+  expires_at:    string
+  created_at:    string
+  updated_at:    string
+}
+
+export interface ApiDuelResult {
+  duel_id:   number
+  winner_id: number
+  loser_id:  number
+  prize:     number
+  currency:  DuelCurrency
 }

@@ -5,7 +5,7 @@ import styles from './BottomNav.module.css'
 const TABS: { id: Screen; icon: string; key: string }[] = [
   { id: 'farm',    icon: '⚡', key: 'nav.farm'    },
   { id: 'shop',    icon: '🛒', key: 'nav.shop'    },
-  { id: 'raids',   icon: '⚔️',  key: 'nav.raids'   },
+  { id: 'duel',   icon: '⚔️',  key: 'nav.duel'    },
   { id: 'market',  icon: '💱', key: 'nav.market'  },
   { id: 'profile', icon: '👤', key: 'nav.profile' },
 ]
@@ -16,6 +16,9 @@ const SCREEN_PARENT: Partial<Record<string, string>> = {
   purchases:     'farm',
   topup:         'profile',
   market:        'market',
+  raids:          'duel',
+  'duel-battle':  'duel',
+  'duel-history': 'duel',
 }
 
 export function BottomNav() {

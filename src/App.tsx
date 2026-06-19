@@ -17,6 +17,11 @@ import { PurchaseHistoryScreen } from './screens/PurchaseHistoryScreen'
 import { TopUpScreen } from './screens/TopUpScreen'
 import { MarketHistoryScreen } from './screens/MarketHistoryScreen'
 import { ContestScreen } from './screens/ContestScreen'
+import { DuelScreen } from './screens/DuelScreen'
+import { DuelBattleScreen } from './screens/DuelBattleScreen'
+import { DuelHistoryScreen } from './screens/DuelHistoryScreen'
+import { DuelChallengeModal } from './components/DuelChallengeModal'
+import { DuelWaitingModal } from './components/DuelWaitingModal'
 import { NAV_HEIGHT } from './layout'
 
 export function App() {
@@ -88,6 +93,8 @@ export function App() {
       <RaidAlert />
       <TonDepositToast />
       <MarketSoldToast />
+      <DuelChallengeModal />
+      <DuelWaitingModal />
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: NAV_HEIGHT, overflow: 'hidden' }}>
         {screen === 'farm'        && <FarmScreen />}
         {screen === 'shop'        && <ShopScreen />}
@@ -100,6 +107,9 @@ export function App() {
         {screen === 'profile'     && <ProfileScreen />}
         {screen === 'purchases'   && <PurchaseHistoryScreen />}
         {screen === 'topup'       && <TopUpScreen />}
+        {screen === 'duel'         && <DuelScreen />}
+        {screen === 'duel-battle'  && <DuelBattleScreen />}
+        {screen === 'duel-history' && <DuelHistoryScreen />}
       </div>
       <BottomNav />
     </div>

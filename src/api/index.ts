@@ -35,6 +35,13 @@ export function updateUserNotifications(enabled: boolean): Promise<{ allow_notif
   })
 }
 
+export function updateUserDuelSettings(enabled: boolean): Promise<{ allow_duel: boolean }> {
+  return apiFetch('/api/user/duel', {
+    method: 'PATCH',
+    body:   JSON.stringify({ enabled }),
+  })
+}
+
 export function syncPositions(
   drones:  UnitPosition[],
   turrets: UnitPosition[],
@@ -246,4 +253,46 @@ export function cancelListing(id: number): Promise<{ ok: boolean }> {
 
 export function getLeaderboard(limit = 50): Promise<ApiLeaderboardEntry[]> {
   return apiFetch(`/api/leaderboard?limit=${limit}`)
+}
+
+// ── Duel ───────────────────────────────────────────────────────────────────
+
+export function getDuelPlayers(): Promise<import('./types').ApiDuelPlayer[]> {
+  return apiFetch('/api/duel/players')
+}
+
+export function getMyActiveDuel(): Promise<{ active: boolean; duel_id?: number }> {
+  return apiFetch('/api/duel/my-active')
+}
+
+export function sendDuelChallenge(defenderId: number, betAmount: number, currency: 'gold' | 'ton'): Promise<import('./types').ApiDuel> {
+  return apiFetch('/api/duel/challenge', {
+    method: 'POST',
+    body:   JSON.stringify({ defender_id: defenderId, bet_amount: betAmount, currency }),
+  })
+}
+
+export function acceptDuelChallenge(duelId: number): Promise<import('./types').ApiDuel> {
+  return apiFetch(`/api/duel/${duelId}/accept`, { method: 'POST' })
+}
+
+// Challenger cancels their own pending challenge (notifies defender)
+export function cancelDuelChallenge(duelId: number): Promise<{ ok: boolean }> {
+  return apiFetch(`/api/duel/${duelId}/cancel`, { method: 'POST' })
+}
+
+// Defender declines incoming challenge (notifies challenger)
+export function declineDuelChallenge(duelId: number): Promise<{ ok: boolean }> {
+  return apiFetch(`/api/duel/${duelId}/decline`, { method: 'POST' })
+}
+
+export function submitDuelResult(duelId: number, winnerId: number): Promise<import('./types').ApiDuelResult> {
+  return apiFetch(`/api/duel/${duelId}/result`, {
+    method: 'POST',
+    body:   JSON.stringify({ winner_id: winnerId }),
+  })
+}
+
+export function getDuelHistory(): Promise<import('./types').ApiDuel[]> {
+  return apiFetch('/api/duel/history')
 }

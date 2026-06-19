@@ -1,5 +1,6 @@
 import { getAuthToken } from './client'
 import { useGameStore, type IncomingRaidEntry } from '../store/gameStore'
+import type { ApiDuelChallenge } from './types'
 
 const WS_BASE = import.meta.env.VITE_WS_URL
   ?? (import.meta.env.VITE_API_URL ?? 'http://localhost:8080').replace(/^http/, 'ws')
@@ -14,6 +15,12 @@ let stopped = false
 export function connectWebSocket(): void {
   stopped = false
   open()
+}
+
+export function sendWsEvent(type: string, payload: Record<string, unknown>): void {
+  if (ws?.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type, payload }))
+  }
 }
 
 export function disconnectWebSocket(): void {
@@ -110,5 +117,92 @@ function dispatch(msg: WsMessage) {
         })
       }
       break
+
+    case 'duel.challenge': {
+      const challenge: ApiDuelChallenge = {
+        duel_id:         Number(msg.payload.duel_id ?? 0),
+        challenger_id:   Number(msg.payload.challenger_id ?? 0),
+        challenger_name: String(msg.payload.challenger_name ?? '?'),
+        bet_amount:      Number(msg.payload.bet_amount ?? 0),
+        currency:        (msg.payload.currency as 'gold' | 'ton') ?? 'gold',
+        expires_at:      Number(msg.payload.expires_at ?? 0),
+      }
+      store.setPendingDuelChallenge(challenge)
+      break
+    }
+
+    case 'duel.start':
+      // Defender accepted — challenger activates pending duel config
+      store.activatePendingDuel()
+      break
+
+    case 'duel.cancelled':
+      // Challenger cancelled — close the incoming challenge modal on defender's side
+      store.setPendingDuelChallenge(null)
+      break
+
+    case 'duel.abandoned': {
+      // Duel timed out (player closed browser) — clear all duel state
+      const canvas = document.querySelector('canvas[data-duel]')
+      if (canvas) {
+        // If battle scene is active, force-end it as a draw/loss
+        canvas.dispatchEvent(new CustomEvent('duel-force-end', { detail: { won: false } }))
+      }
+      store.clearDuel()
+      store.setPendingDuelChallenge(null)
+      useGameStore.setState({
+        activeScreen: 'duel',
+        duelDeclined: false,
+      })
+      break
+    }
+
+    case 'duel.declined':
+      // Defender declined — show "declined" notification to challenger
+      store.clearDuel()
+      store.setPendingDuelChallenge(null)
+      useGameStore.setState({ duelDeclined: true })
+      break
+
+    case 'duel.move': {
+      // Normalised position (0–1) — DuelScene denormalises to local pixels
+      const canvas = document.querySelector('canvas[data-duel]')
+      canvas?.dispatchEvent(new CustomEvent('duel-opponent-move', {
+        detail: { nx: Number(msg.payload.nx), ny: Number(msg.payload.ny) },
+      }))
+      break
+    }
+
+    case 'duel.shoot': {
+      const canvas2 = document.querySelector('canvas[data-duel]')
+      canvas2?.dispatchEvent(new CustomEvent('duel-opponent-shoot', {
+        detail: { ntx: Number(msg.payload.ntx), nty: Number(msg.payload.nty) },
+      }))
+      break
+    }
+
+    case 'duel.hp_sync': {
+      // Opponent's actual HP (they were hit, broadcasting their current HP)
+      const canvas4 = document.querySelector('canvas[data-duel]')
+      canvas4?.dispatchEvent(new CustomEvent('duel-opponent-hp-sync', {
+        detail: { hp: Number(msg.payload.hp) },
+      }))
+      break
+    }
+
+    case 'duel.result': {
+      // Battle ended (other player submitted result) — force-end this client's scene
+      const myId = useGameStore.getState().userId
+      const won  = Number(msg.payload.winner_id) === myId
+      const canvas3 = document.querySelector('canvas[data-duel]')
+      if (canvas3) {
+        canvas3.dispatchEvent(new CustomEvent('duel-force-end', { detail: { won } }))
+      } else {
+        // Scene not mounted yet — navigate result directly via store
+        // (edge case: result arrived before battle screen mounted)
+        store.endDuel(won)
+      }
+      break
+    }
   }
 }
