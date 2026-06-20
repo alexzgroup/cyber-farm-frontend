@@ -7,14 +7,12 @@ export function setupMockTelegram() {
   const webApp = {
     initData: '',
     initDataUnsafe: {
-      user: {
-        id: 123456789,
-        first_name: 'Test',
-        last_name: 'User',
-        username: 'testuser',
-        language_code: 'ru',
-        is_premium: false,
-      },
+      user: (() => {
+        const urlId = Number(new URLSearchParams(window.location.search).get('dev_user_id') ?? '') || 0
+        return urlId
+          ? { id: urlId, first_name: `User${urlId}`, last_name: '', username: `dev_user_${urlId}`, language_code: 'ru', is_premium: false }
+          : { id: 123456789, first_name: 'Test', last_name: 'User', username: 'testuser', language_code: 'ru', is_premium: false }
+      })(),
       start_param: '',
       auth_date: Math.floor(Date.now() / 1000),
       hash: 'mockhash',

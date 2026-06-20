@@ -175,7 +175,7 @@ export function DuelScreen() {
                 {/* Avatar + name */}
                 <div style={s.cardLeft}>
                   <div style={{ ...s.avatarBox, borderColor: pTier.color + '80', background: pTier.color + '15' }}>
-                    🤖
+                    {pTier.label === 'ELITE' ? '💎' : pTier.label === 'ADVANCED' ? '⚡' : pTier.label === 'SKILLED' ? '🤖' : pTier.label === 'ROOKIE' ? '🔧' : '📟'}
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={s.playerName}>{p.first_name || p.username}</div>

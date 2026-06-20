@@ -2,8 +2,11 @@ import type { AuthResponse } from './types'
 
 const API_BASE      = import.meta.env.VITE_API_URL       ?? 'http://localhost:8080'
 const DEV_BOT_TOKEN = import.meta.env.VITE_DEV_BOT_TOKEN ?? ''
-const JWT_KEY       = 'cyberfarm_jwt'
-const JWT_EXP_KEY   = 'cyberfarm_jwt_exp'
+const _devUserId    = typeof window !== 'undefined'
+  ? (new URLSearchParams(window.location.search).get('dev_user_id') ?? '')
+  : ''
+const JWT_KEY       = _devUserId ? `cyberfarm_jwt_${_devUserId}` : 'cyberfarm_jwt'
+const JWT_EXP_KEY   = _devUserId ? `cyberfarm_jwt_exp_${_devUserId}` : 'cyberfarm_jwt_exp'
 
 // ── Dev-mode detection ─────────────────────────────────────────────────────
 // true when running in browser outside Telegram (initData is empty / missing)
@@ -33,12 +36,16 @@ function toHex(buf: ArrayBuffer): string {
 // Generates a valid HMAC-SHA256 signed initData string exactly as Telegram
 // would, so the backend's ValidateInitData passes in dev/test mode.
 // Requires VITE_DEV_BOT_TOKEN to be set in .env.local
+// Supports ?dev_user_id=N URL param to test multi-user scenarios.
 async function buildSignedInitData(): Promise<string> {
+  const urlUserId = typeof window !== 'undefined'
+    ? Number(new URLSearchParams(window.location.search).get('dev_user_id') ?? '') || 0
+    : 0
   const tgUser = {
-    id:            123456789,
-    first_name:    'Test',
-    last_name:     'User',
-    username:      'testuser',
+    id:            urlUserId || 123456789,
+    first_name:    urlUserId ? `User${urlUserId}` : 'Test',
+    last_name:     urlUserId ? '' : 'User',
+    username:      urlUserId ? `dev_user_${urlUserId}` : 'testuser',
     language_code: 'ru',
     is_premium:    false,
   }

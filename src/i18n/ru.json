@@ -37,7 +37,7 @@
     "heavy": "Тяжёлая"
   },
   "shop": {
-    "newTurret": "Новая башня",
+    "newTurret": "НОВАЯ БАШНЯ",
     "turretDefense": "Защита: {{n}}",
     "turretBought": "Башня добавлена на ферму",
     "hour": "час",
@@ -58,7 +58,7 @@
     "perHour": "/ час",
     "perClick": "+{{val}} за клик",
     "boostDrones": "Прокачка башен и дронов",
-    "stats": "{{hr}} / час · +{{tap}} за клик"
+    "stats": "⬡ {{hr}} / час · +{{tap}} за клик"
   },
   "raids": {
     "title": "PvP-рейды",

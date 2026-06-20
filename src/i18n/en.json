@@ -37,7 +37,7 @@
     "heavy": "Heavy"
   },
   "shop": {
-    "newTurret": "New Tower",
+    "newTurret": "NEW TOWER",
     "turretDefense": "Defense: {{n}}",
     "turretBought": "Tower added to farm",
     "hour": "hr",
@@ -58,7 +58,7 @@
     "perHour": "/ hr",
     "perClick": "+{{val}} per tap",
     "boostDrones": "Boost turrets & drones",
-    "stats": "{{hr}} / hr · +{{tap}} per tap"
+    "stats": "⬡ {{hr}} / hr · +{{tap}} per tap"
   },
   "raids": {
     "title": "PvP Raids",
@@ -105,6 +105,7 @@
     "upgrades_one": "{{count}} upgr.",
     "upgrades_few": "{{count}} upgr.",
     "upgrades_many": "{{count}} upgr.",
+    "upgrades_other": "{{count}} upgr.",
     "seller": "by {{name}}",
     "tabGold": "Gold",
     "tabTon": "TON",

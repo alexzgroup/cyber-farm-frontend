@@ -116,7 +116,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
 
       {upgradeCount > 0 && (
         <div className={styles.cardMeta}>
-          <span className={styles.upgBadge}>⬆ {upgradeCount} {t('equipment.upgrades')}</span>
+          <span className={styles.upgBadge}>⬆ {t('market.upgrades', { count: upgradeCount })}</span>
         </div>
       )}
 
