@@ -50,10 +50,15 @@ async function buildSignedInitData(): Promise<string> {
     is_premium:    false,
   }
 
+  const urlRef = typeof window !== 'undefined'
+    ? (new URLSearchParams(window.location.search).get('ref') ?? '')
+    : ''
+
   const fields: Record<string, string> = {
     auth_date: String(Math.floor(Date.now() / 1000)),
     query_id:  'AAHdF6IQAAAAAN0XohDhrOrc',
     user:      JSON.stringify(tgUser),
+    ...(urlRef ? { start_param: `ref_${urlRef}` } : {}),
   }
 
   const dataCheckString = Object.keys(fields)

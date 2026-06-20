@@ -452,7 +452,7 @@ export function ProfileScreen() {
                 <div className={styles.refT1}>{t('profile.friends')}</div>
                 <div className={styles.refT2} style={{ color: refStats && refStats.total > 0 ? '#22d3ee' : undefined }}>
                   {refStats
-                    ? t('profile.invitedCount', { n: refStats.total })
+                    ? t('profile.invitedCount', { count: refStats.total })
                     : t('profile.inviteDesc')}
                 </div>
               </div>
@@ -541,7 +541,7 @@ export function ProfileScreen() {
                   }}>
                     <div style={{ fontSize: 18, fontWeight: 800, color: '#22d3ee' }}>{count}</div>
                     <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
-                      {t('profile.level')} {level}
+                      {t('profile.levelN', { n: level })}
                     </div>
                   </div>
                 ))}
@@ -564,7 +564,7 @@ export function ProfileScreen() {
                           fontSize: 11, color: '#22d3ee', background: 'rgba(6,182,212,0.12)',
                           padding: '2px 7px', borderRadius: 6,
                         }}>
-                          {t('profile.level')} {r.level}
+                          {t('profile.levelN', { n: r.level })}
                         </span>
                         <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
                           {r.created_at.slice(0, 10)}
