@@ -8,7 +8,7 @@ export default defineConfig(({ command, mode }) => {
   const isTma = mode === 'tma'
 
   return {
-    base: command === 'build' ? '/cyber-farm-frontend/' : '/',
+    base: '/',
     plugins: isTma ? [react()] : [react(), basicSsl()],
     server: {
       port: isTma ? 5174 : 5173,
