@@ -20,6 +20,7 @@ import { ContestScreen } from './screens/ContestScreen'
 import { DuelScreen } from './screens/DuelScreen'
 import { DuelBattleScreen } from './screens/DuelBattleScreen'
 import { DuelHistoryScreen } from './screens/DuelHistoryScreen'
+import { ReferralsScreen } from './screens/ReferralsScreen'
 import { DuelChallengeModal } from './components/DuelChallengeModal'
 import { DuelWaitingModal } from './components/DuelWaitingModal'
 import { NAV_HEIGHT } from './layout'
@@ -110,6 +111,7 @@ export function App() {
         {screen === 'duel'         && <DuelScreen />}
         {screen === 'duel-battle'  && <DuelBattleScreen />}
         {screen === 'duel-history' && <DuelHistoryScreen />}
+        {screen === 'referrals'    && <ReferralsScreen />}
       </div>
       <BottomNav />
     </div>

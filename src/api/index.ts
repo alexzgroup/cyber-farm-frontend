@@ -170,14 +170,12 @@ export function getReferralLink(): Promise<{ link: string }> {
   return apiFetch('/api/referral/link')
 }
 
-export interface ReferralStats {
-  total: number
-  by_level: { level: number; count: number }[]
-  recent: { level: number; username: string; first_name: string; last_name: string; created_at: string }[]
+export function getReferralStats(): Promise<import('./types').ReferralStats> {
+  return apiFetch('/api/referral/stats')
 }
 
-export function getReferralStats(): Promise<ReferralStats> {
-  return apiFetch('/api/referral/stats')
+export function getReferralList(page = 1): Promise<import('./types').ReferralList> {
+  return apiFetch(`/api/referral/list?page=${page}`)
 }
 
 export function prepareReferralMessage(): Promise<{ id: string; expiration_date: number }> {

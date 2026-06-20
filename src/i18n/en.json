@@ -267,6 +267,12 @@
     "turretN": "Turret #{{n}}",
     "in_a_row": "in a row"
   },
+  "referrals": {
+    "title": "My Referrals",
+    "empty": "You haven't invited anyone yet",
+    "allBtn": "All referrals",
+    "tonEarned": "◈ {{amount}} TON earned"
+  },
   "settings": {
     "title": "Settings",
     "sound": "Sounds"

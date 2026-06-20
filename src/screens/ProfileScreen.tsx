@@ -530,9 +530,21 @@ export function ProfileScreen() {
               </div>
             )}
 
-            {/* Level breakdown */}
-            {refStats && refStats.by_level?.length > 0 && (
+            {/* TON earned + level breakdown */}
+            {refStats && refStats.total > 0 && (
               <div style={{ display: 'flex', gap: 8 }}>
+                {/* TON earned card */}
+                <div style={{
+                  flex: 1, background: 'rgba(56,189,248,0.08)', borderRadius: 10,
+                  padding: '8px 10px', border: '1px solid rgba(56,189,248,0.2)',
+                  display: 'flex', flexDirection: 'column', gap: 2,
+                }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#38bdf8' }}>
+                    ◈ {(refStats.ton_earned ?? 0).toFixed(4)}
+                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>TON заработано</div>
+                </div>
+                {/* Level counts */}
                 {refStats.by_level.map(({ level, count }) => (
                   <div key={level} style={{
                     flex: 1, background: 'rgba(6,182,212,0.08)', borderRadius: 10,
@@ -548,7 +560,7 @@ export function ProfileScreen() {
               </div>
             )}
 
-            {/* Recent invites */}
+            {/* Recent 5 invites */}
             {refStats && refStats.recent?.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {refStats.recent.slice(0, 5).map((r, i) => {
@@ -574,6 +586,21 @@ export function ProfileScreen() {
                   )
                 })}
               </div>
+            )}
+
+            {/* "All referrals" link */}
+            {refStats && refStats.total > 0 && (
+              <button
+                onClick={() => setScreen('referrals')}
+                style={{
+                  width: '100%', padding: '10px', borderRadius: 10,
+                  background: 'rgba(6,182,212,0.07)', border: '1px solid rgba(6,182,212,0.2)',
+                  color: '#22d3ee', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'monospace', letterSpacing: 0.3,
+                }}
+              >
+                {t('referrals.allBtn')} ({refStats.total}) →
+              </button>
             )}
           </section>
 

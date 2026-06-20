@@ -1,7 +1,24 @@
+export interface ReferralEntry {
+  level:      number
+  username:   string
+  first_name: string
+  last_name:  string
+  created_at: string
+}
+
 export interface ReferralStats {
+  total:      number
+  by_level:   { level: number; count: number }[]
+  recent:     ReferralEntry[]
+  ton_earned: number
+}
+
+export interface ReferralList {
+  items:    ReferralEntry[]
   total:    number
-  by_level: { level: number; count: number }[]
-  recent:   { level: number; username: string; first_name: string; last_name: string; created_at: string }[]
+  page:     number
+  per_page: number
+  pages:    number
 }
 
 export type DroneType         = 'scout' | 'combat' | 'stealth'

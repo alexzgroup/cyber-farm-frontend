@@ -268,6 +268,12 @@
     "turretN": "Башня #{{n}}",
     "in_a_row": "подряд"
   },
+  "referrals": {
+    "title": "Мои рефералы",
+    "empty": "Ещё никого не пригласили",
+    "allBtn": "Все рефералы",
+    "tonEarned": "◈ {{amount}} TON заработано"
+  },
   "settings": {
     "title": "Настройки",
     "sound": "Звуки"
