@@ -44,14 +44,15 @@ jobs:
 
       - name: Deploy via rsync
         run: |
-          rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT || 22 }} -o StrictHostKeyChecking=no" \
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT || 22 }} -o StrictHostKeyChecking=no" \
             dist/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.FRONTEND_DIST_PATH }}/
 
       - name: Reload nginx
         run: |
-          ssh -p ${{ secrets.SSH_PORT || 22 }} \
+          ssh -i ~/.ssh/id_rsa \
+            -p ${{ secrets.SSH_PORT || 22 }} \
             -o StrictHostKeyChecking=no \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "docker exec cyber_farm_frontend nginx -s reload || true"
