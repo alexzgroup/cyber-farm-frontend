@@ -36,22 +36,25 @@ jobs:
           # VITE_DEV_BOT_TOKEN намеренно не передаётся — в проде mock не нужен
 
       # ── Upload to server via rsync over SSH ───────────────────────────────────
-      - name: Setup SSH key
-        run: |
-          install -m 600 -D /dev/null ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.SSH_PORT || 22 }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-passphrase: ${{ secrets.SSH_PRIVATE_KEY_PASSPHRASE }}
+
+      - name: Add server to known hosts
+        run: ssh-keyscan -p ${{ secrets.SSH_PORT || 22 }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy via rsync
         run: |
           rsync -az --delete \
-            -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT || 22 }} -o StrictHostKeyChecking=no" \
+            -e "ssh -p ${{ secrets.SSH_PORT || 22 }} -o StrictHostKeyChecking=no" \
             dist/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.FRONTEND_DIST_PATH }}/
 
       - name: Reload nginx
         run: |
-          ssh -i ~/.ssh/id_rsa \
+          ssh \
             -p ${{ secrets.SSH_PORT || 22 }} \
             -o StrictHostKeyChecking=no \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
