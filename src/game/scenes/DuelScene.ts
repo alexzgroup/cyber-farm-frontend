@@ -584,7 +584,7 @@ export class DuelScene extends Phaser.Scene {
     for (const t of [1, 2, 3] as const) {
       const key = `duel_drone_${t}`
       if (!this.textures.exists(key)) {
-        const g = this.make.graphics({ x: 0, y: 0, add: false })
+        const g = this.make.graphics({ x: 0, y: 0 }, false)
         paintDrone(g, false, t); g.generateTexture(key, 128, 128); g.destroy()
       }
     }

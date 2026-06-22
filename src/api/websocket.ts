@@ -120,12 +120,13 @@ function dispatch(msg: WsMessage) {
 
     case 'duel.challenge': {
       const challenge: ApiDuelChallenge = {
-        duel_id:         Number(msg.payload.duel_id ?? 0),
-        challenger_id:   Number(msg.payload.challenger_id ?? 0),
-        challenger_name: String(msg.payload.challenger_name ?? '?'),
-        bet_amount:      Number(msg.payload.bet_amount ?? 0),
-        currency:        (msg.payload.currency as 'gold' | 'ton') ?? 'gold',
-        expires_at:      Number(msg.payload.expires_at ?? 0),
+        duel_id:          Number(msg.payload.duel_id ?? 0),
+        challenger_id:    Number(msg.payload.challenger_id ?? 0),
+        challenger_name:  String(msg.payload.challenger_name ?? '?'),
+        challenger_power: Number(msg.payload.challenger_power ?? 0),
+        bet_amount:       Number(msg.payload.bet_amount ?? 0),
+        currency:         (msg.payload.currency as 'gold' | 'ton') ?? 'gold',
+        expires_at:       Number(msg.payload.expires_at ?? 0),
       }
       store.setPendingDuelChallenge(challenge)
       break

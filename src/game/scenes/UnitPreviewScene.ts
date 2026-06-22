@@ -50,7 +50,7 @@ export class UnitPreviewScene extends Phaser.Scene {
     const texKey = kind === 'drone' ? `preview_drone_${droneType}` : `preview_turret_${turretLevel}`
 
     if (!this.textures.exists(texKey)) {
-      const g = this.make.graphics({ x: 0, y: 0, add: false })
+      const g = this.make.graphics({ x: 0, y: 0 }, false)
       if (kind === 'drone') {
         paintDrone(g, isBroken, droneType as 1 | 2 | 3)
       } else {

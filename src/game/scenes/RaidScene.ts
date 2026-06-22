@@ -562,7 +562,7 @@ export class RaidScene extends Phaser.Scene {
     for (const t of types) {
       const key = `raid_drone_${t}`
       if (!this.textures.exists(key)) {
-        const g = this.make.graphics({ x: 0, y: 0, add: false })
+        const g = this.make.graphics({ x: 0, y: 0 }, false)
         paintDrone(g, false, t)
         g.generateTexture(key, 128, 128)
         g.destroy()
@@ -574,7 +574,7 @@ export class RaidScene extends Phaser.Scene {
     for (const lv of levels) {
       const key = `raid_turret_${lv}`
       if (!this.textures.exists(key)) {
-        const g = this.make.graphics({ x: 0, y: 0, add: false })
+        const g = this.make.graphics({ x: 0, y: 0 }, false)
         this.buildTurretTexture(g, lv)
         g.generateTexture(key, 128, 128)
         g.destroy()

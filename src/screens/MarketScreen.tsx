@@ -103,7 +103,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
         <UnitCircle color={meta.color} size={46}>
           {isDrone
             ? <DroneIcon  color={meta.color} size={26} />
-            : <TurretIcon color={meta.color} level={item.turret?.level ?? 1} size={26} />}
+            : <TurretIcon color={meta.color} level={(item.turret?.level ?? 1) as 1 | 2 | 3} size={26} />}
         </UnitCircle>
         <div className={styles.cardTitles}>
           <div className={styles.cardName}>{t(meta.key)}</div>
