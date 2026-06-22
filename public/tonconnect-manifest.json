@@ -1,5 +1,5 @@
 {
-  "url": "https://localhost:5173",
-  "name": "CyberFarm",
-  "iconUrl": "http://localhost:5173/favicon.svg"
+  "url": "https://api.cyber-farm.online",
+  "name": "Cyber-Farm",
+  "iconUrl": "https://app.cyber-farm.online/favicon.svg"
 }
