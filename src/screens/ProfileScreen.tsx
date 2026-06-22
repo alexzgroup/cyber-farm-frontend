@@ -153,28 +153,46 @@ export function ProfileScreen() {
   const [shareState, setShareState] = useState<'idle' | 'loading' | 'error'>('idle')
 
   const canShare = !!(window as any).Telegram?.WebApp?.sendPreparedMessage
+  const tgWebApp = (window as any).Telegram?.WebApp
+
+  // Universal share fallback: opens Telegram chat picker via t.me/share
+  const shareViaLink = () => {
+    if (!refLink) { copyRefLink(); return }
+    const text = t('profile.inviteDesc')
+    if (tgWebApp?.openTelegramLink) {
+      tgWebApp.openTelegramLink(
+        `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`
+      )
+    } else {
+      copyRefLink()
+    }
+  }
 
   const handleShare = async () => {
-    // Fallback: if Telegram API unavailable, just copy the link
-    if (!canShare) {
-      copyRefLink()
-      return
+    if (!refLink) return
+
+    // Try rich share via sendPreparedMessage (Telegram 8.0+)
+    if (canShare) {
+      setShareState('loading')
+      try {
+        const prepared = await prepareReferralMessage()
+        tgWebApp.sendPreparedMessage(
+          { id: prepared.id },
+          (sent: boolean) => {
+            setShareState('idle')
+            if (!sent) console.warn('referral share cancelled')
+          },
+        )
+        setShareState('idle')
+        return
+      } catch {
+        // Fall through to universal fallback
+        setShareState('idle')
+      }
     }
-    setShareState('loading')
-    try {
-      const prepared = await prepareReferralMessage()
-      ;(window as any).Telegram.WebApp.sendPreparedMessage(
-        { id: prepared.id },
-        (sent: boolean) => {
-          setShareState('idle')
-          if (!sent) console.warn('referral share cancelled')
-        },
-      )
-      setShareState('idle')
-    } catch {
-      setShareState('error')
-      setTimeout(() => setShareState('idle'), 2000)
-    }
+
+    // Fallback: openTelegramLink share dialog (works in all Telegram versions)
+    shareViaLink()
   }
 
   const copyRefLink = () => {
