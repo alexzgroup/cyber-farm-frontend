@@ -6,7 +6,7 @@
     "dev": "vite",
     "dev:tma": "vite --mode tma",
     "build": "tsc && vite build",
-    "build:server": "tsc && vite build && cp -r dist ../backend/frontend-dist && echo '✓ Built and copied to backend/frontend-dist'",
+    "build:server": "rm -rf dist && tsc && vite build && rm -rf ../backend/frontend-dist && cp -r dist ../backend/frontend-dist && echo '✓ Built and copied to backend/frontend-dist'",
     "preview": "vite preview",
     "test": "vitest run",
     "test:ui": "vitest --ui",
