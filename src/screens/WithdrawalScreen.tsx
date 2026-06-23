@@ -163,8 +163,18 @@ export function WithdrawalScreen() {
             {submitting ? 'Отправка…' : 'Запросить вывод'}
           </button>
 
-          <div className={styles.hint}>
-            Вывод обрабатывается вручную администратором. Обычно в течение 24 часов.
+          <div className={styles.conditions}>
+            <div className={styles.condRow}>
+              <span>Комиссия</span>
+              <span>{Math.round(commission * 100)}%</span>
+            </div>
+            <div className={styles.condRow}>
+              <span>Минимальная сумма</span>
+              <span>◈ {minAmount} TON</span>
+            </div>
+            <div className={styles.condNote}>
+              Вывод обрабатывается вручную администратором. Обычно в течение 24 часов.
+            </div>
           </div>
         </div>
       )}

@@ -150,11 +150,32 @@
   cursor: not-allowed;
 }
 
-.hint {
-  margin-top: 10px;
+.conditions {
+  margin-top: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.condRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+}
+.condRow span:last-child {
+  font-weight: 700;
+  color: #94a3b8;
+}
+.condNote {
   font-size: 11px;
   color: #475569;
-  text-align: center;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #1e293b;
   line-height: 1.4;
 }
 
