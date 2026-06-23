@@ -61,6 +61,7 @@ export interface ApiUserPublic {
   first_name:     string
   balance:        number
   cooldown_until?: number   // unix timestamp; absent/null = can attack now
+  is_online?:     boolean
 }
 
 export interface ApiDroneUpgrade {
@@ -240,6 +241,7 @@ export interface ApiDuelPlayer {
   balance:     number
   ton_balance: number
   power:       number   // total battle power from all active drones + upgrades
+  is_online?:  boolean
 }
 
 export interface ApiDuelChallenge {

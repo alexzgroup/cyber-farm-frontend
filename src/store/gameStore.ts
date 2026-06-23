@@ -151,6 +151,7 @@ interface GameState {
   language:            string   // current UI language (ru/en), synced from API
   allowNotification:   boolean  // synced from API allow_notification
   allowDuel:           boolean  // synced from API allow_duel
+  onlineStatus:        Record<number, boolean>  // live updates from player.online/offline WS events
 
   // UI
   activeScreen:   Screen
@@ -237,6 +238,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   language:            'ru',
   allowNotification:   true,
   allowDuel:           true,
+  onlineStatus:        {},
   activeScreen:        'farm',
   selectedUnitId: null,
   soundEnabled:   true,

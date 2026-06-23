@@ -191,6 +191,17 @@ function dispatch(msg: WsMessage) {
       break
     }
 
+    case 'player.online': {
+      const uid = Number(msg.payload.user_id)
+      if (uid) useGameStore.setState((s) => ({ onlineStatus: { ...s.onlineStatus, [uid]: true } }))
+      break
+    }
+    case 'player.offline': {
+      const uid = Number(msg.payload.user_id)
+      if (uid) useGameStore.setState((s) => ({ onlineStatus: { ...s.onlineStatus, [uid]: false } }))
+      break
+    }
+
     case 'duel.result': {
       // Battle ended (other player submitted result) — force-end this client's scene
       const myId = useGameStore.getState().userId

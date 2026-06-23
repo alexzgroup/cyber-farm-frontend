@@ -13,6 +13,7 @@ export function DuelScreen() {
   const drones           = useGameStore((s) => s.drones)
   const unitUpgrades     = useGameStore((s) => s.unitUpgrades)
   const allowDuel        = useGameStore((s) => s.allowDuel)
+  const onlineStatus     = useGameStore((s) => s.onlineStatus)
   const updateDuelSettings = useGameStore((s) => s.updateDuelSettings)
   const startDuel        = useGameStore((s) => s.startDuelWithPlayer)
 
@@ -162,15 +163,17 @@ export function DuelScreen() {
             const isSelected = selectedId === p.id
             const powerPct   = ((p.power ?? 0) / maxPower) * 100
             const vs = (p.power ?? 0) - myPower
+            const isOnline   = p.id in onlineStatus ? onlineStatus[p.id] : p.is_online
+            const isOffline  = isOnline === false
             return (
               <div
                 key={p.id}
                 style={{
                   ...s.card,
                   ...(isSelected ? s.cardSelected : {}),
-                  ...(!canAfford ? s.cardDisabled : {}),
+                  ...(!canAfford || isOffline ? s.cardDisabled : {}),
                 }}
-                onClick={() => canAfford && setSelectedId(p.id === selectedId ? null : p.id)}
+                onClick={() => canAfford && !isOffline && setSelectedId(p.id === selectedId ? null : p.id)}
               >
                 {/* Avatar + name */}
                 <div style={s.cardLeft}>
@@ -178,7 +181,15 @@ export function DuelScreen() {
                     {pTier.label === 'ELITE' ? '💎' : pTier.label === 'ADVANCED' ? '⚡' : pTier.label === 'SKILLED' ? '🤖' : pTier.label === 'ROOKIE' ? '🔧' : '📟'}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={s.playerName}>{p.first_name || p.username}</div>
+                    <div style={s.playerName}>
+                      <span style={{
+                        display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+                        background: isOnline ? '#39ff14' : '#ef4444',
+                        marginRight: 5, flexShrink: 0, verticalAlign: 'middle',
+                        boxShadow: isOnline ? '0 0 4px #39ff14' : undefined,
+                      }} />
+                      {p.first_name || p.username}
+                    </div>
                     <div style={s.playerBalance}>⬡ {Math.floor(p.balance).toLocaleString()}</div>
                     {p.ton_balance > 0 && (
                       <div style={s.playerTon}>◈ {p.ton_balance.toFixed(2)} TON</div>

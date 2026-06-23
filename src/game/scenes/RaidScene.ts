@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import type { RaidResult, Drone } from '../../store/gameStore'
 import { paintDrone, paintFarmTurret } from '../utils/droneGraphics'
 import { soundManager } from '../utils/soundManager'
+import { fmtGold } from '../../utils/format'
 
 export interface RaidSceneData {
   result: RaidResult
@@ -452,7 +453,7 @@ export class RaidScene extends Phaser.Scene {
     this.tweens.add({ targets: title, alpha: 1, scaleX: 1, scaleY: 1, duration: 380, ease: 'Back.Out' })
 
     const sub = this.add.text(W / 2, cardY + 64,
-      result.won ? `+${result.amount} монет украдено` : 'Дрон повреждён',
+      result.won ? `+${fmtGold(result.amount)} монет украдено` : 'Дрон повреждён',
       { fontSize: '15px', fontFamily: 'monospace', color: result.won ? '#88ff88' : '#ff9999' }
     ).setOrigin(0.5).setAlpha(0).setDepth(17)
 

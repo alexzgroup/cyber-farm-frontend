@@ -19,8 +19,10 @@ function TargetCard({ player, attackerLevel, workingDrones, onAttack }: {
   onAttack:      (id: number) => void
 }) {
   const { t } = useTranslation()
+  const onlineStatus = useGameStore((s) => s.onlineStatus)
   const remaining = useCountdown(player.cooldown_until)
   const onCooldown = remaining > 0
+  const isOnline = player.id in onlineStatus ? onlineStatus[player.id] : player.is_online
 
   const winChance = Math.min(85, Math.max(20, Math.round((0.5 + attackerLevel * 0.2) * 100)))
   const reward    = Math.round(Number(player.balance) * 0.1)
@@ -30,6 +32,12 @@ function TargetCard({ player, attackerLevel, workingDrones, onAttack }: {
     <div className={styles.targetCard}>
       <div className={styles.targetInfo}>
         <p className={styles.targetName}>
+          <span style={{
+            display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+            background: isOnline ? '#39ff14' : '#ef4444',
+            marginRight: 6, flexShrink: 0, verticalAlign: 'middle',
+            boxShadow: isOnline ? '0 0 4px #39ff14' : undefined,
+          }} />
           {player.username || player.first_name || `Player #${player.id}`}
         </p>
         <div className={styles.targetStats}>
@@ -172,7 +180,7 @@ export function RaidsScreen() {
             <h2 className={styles.resultTitle}>{raidResult.won ? t('raids.victory') : t('raids.defeat')}</h2>
             <p className={styles.resultDesc}>
               {raidResult.won
-                ? t('raids.stolenCoins', {amount: raidResult.amount, name: raidResult.targetName})
+                ? t('raids.stolenCoins', {amount: fmtGold(raidResult.amount), name: raidResult.targetName})
                 : t('raids.droneHurt', {name: raidResult.targetName})}
             </p>
             <button className={styles.backBtn} onClick={() => { setView('targets'); setResult(null) }}>
