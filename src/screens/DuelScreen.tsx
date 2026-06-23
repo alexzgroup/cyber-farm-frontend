@@ -68,7 +68,6 @@ export function DuelScreen() {
     return (
       <div style={s.root}>
         <div style={s.header}>
-          <button style={s.backBtn} onClick={() => setScreen('raids')}>←</button>
           <span style={s.title}>{t('duel.title')}</span>
           <button style={s.historyBtn} onClick={() => setScreen('duel-history')}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -97,7 +96,6 @@ export function DuelScreen() {
     <div style={s.root}>
       {/* Header */}
       <div style={s.header}>
-        <button style={s.backBtn} onClick={() => setScreen('raids')}>←</button>
         <span style={s.title}>{t('duel.title')}</span>
         <button style={s.historyBtn} onClick={() => setScreen('duel-history')}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
