@@ -86,7 +86,14 @@
     "incomingDefended": "Отбито",
     "alertDefended": "{{name}} атаковал — защитили {{amount}} монет!",
     "alertLost": "💥 {{name}} украл {{amount}} монет",
-    "cooldownLabel": "Снова через"
+    "cooldownLabel": "Снова через",
+    "historyBtn": "История",
+    "historyTitle": "История рейдов",
+    "historyEmpty": "Рейдов ещё не было",
+    "tabAttack": "Атака",
+    "tabDefense": "Оборона",
+    "won": "Победа",
+    "lost": "Поражение"
   },
   "market": {
     "title": "P2P Рынок",
@@ -247,6 +254,7 @@
     "connectWallet": "Подключить",
     "connected": "Подключён",
     "requestWithdrawal": "Запросить вывод TON",
+    "withdraw": "Вывести",
     "disconnectWallet": "Отключить",
     "walletWithdrawOnly": "Нужен только для вывода TON",
     "topupTon": "Пополнить",

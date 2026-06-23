@@ -291,3 +291,123 @@
   min-width: 56px;
   text-align: center;
 }
+
+/* Top bar: mode tabs + history button */
+.topBar {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+.modeTabs { display: flex; flex: 1; }
+.modeTab {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #475569;
+  cursor: pointer;
+  font-family: monospace;
+  letter-spacing: 0.3px;
+}
+.modeTabActive { color: #00e5ff; border-bottom-color: #00e5ff; }
+
+.historyBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  color: #00e5ff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  flex-shrink: 0;
+  margin: 6px 0;
+}
+
+/* History view */
+.histHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
+}
+.histBack {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 6px;
+}
+.histTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 1px;
+}
+.histTabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px 0;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
+}
+.histTab {
+  flex: 1;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #475569;
+  cursor: pointer;
+  font-family: monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.histTabActive        { color: #00e5ff; border-bottom-color: #00e5ff; }
+.histTabActiveDefense { color: #f87171; border-bottom-color: #f87171; }
+
+.histList {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px 4px;
+  gap: 6px;
+}
+.histRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.histWin  { background: rgba(57,255,20,0.05);  border: 1px solid rgba(57,255,20,0.15); }
+.histLose { background: rgba(255,68,68,0.05);  border: 1px solid rgba(255,68,68,0.15); }
+
+.histIcon { font-size: 18px; flex-shrink: 0; }
+.histInfo { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.histName { font-size: 13px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.histDate { font-size: 10px; color: #475569; }
+
+.histResult  { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.histStatus  { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 1px 6px; }
+.histStatusWin  { background: rgba(57,255,20,0.12); color: #39ff14; }
+.histStatusLose { background: rgba(255,68,68,0.12); color: #ff6b6b; }
+.histCoins { font-size: 11px; color: #ffd700; }

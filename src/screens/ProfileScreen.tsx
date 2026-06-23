@@ -365,53 +365,53 @@ export function ProfileScreen() {
           </button>
 
           {/* ── Wallet CTA (withdrawal only) ── */}
-          <section className={`${styles.card} ${styles.wallet}`}>
-            <div className={styles.walletIc}>
-              <svg width="24" height="24" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10.5" fill={walletConnected ? '#22c55e' : '#36b3f6'}/>
-                <path d="M6.7 8.3h10.6c.5 0 .8.55.55.98l-5.3 9.05a.62.62 0 0 1-1.06 0L6.15 9.28a.62.62 0 0 1 .55-.98z" fill="#fff"/>
-                <path d="M12 8.8v9.2" stroke={walletConnected ? '#22c55e' : '#36b3f6'} strokeWidth="1.2"/>
-              </svg>
-            </div>
-            <div className={styles.walletTxt}>
-              <div className={styles.walletT1}>
-                <span className={styles.walletT1Name}>{t('profile.tonWallet')}</span>
-                <span className={styles.walletStat} style={{ color: walletConnected ? '#4ade80' : undefined }}>
-                  {walletConnected ? t('profile.connected') : t('profile.notConnected')}
-                </span>
+          <section className={`${styles.card} ${styles.wallet}`} style={{ flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className={styles.walletIc}>
+                <svg width="24" height="24" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10.5" fill={walletConnected ? '#22c55e' : '#36b3f6'}/>
+                  <path d="M6.7 8.3h10.6c.5 0 .8.55.55.98l-5.3 9.05a.62.62 0 0 1-1.06 0L6.15 9.28a.62.62 0 0 1 .55-.98z" fill="#fff"/>
+                  <path d="M12 8.8v9.2" stroke={walletConnected ? '#22c55e' : '#36b3f6'} strokeWidth="1.2"/>
+                </svg>
               </div>
-              {walletConnected && walletAddress ? (
-                <div className={styles.walletT2} style={{ fontFamily: 'monospace', fontSize: 11 }}>
-                  {walletAddress.slice(0, 8)}…{walletAddress.slice(-6)}
+              <div className={styles.walletTxt} style={{ flex: 1 }}>
+                <div className={styles.walletT1}>
+                  <span className={styles.walletT1Name}>{t('profile.tonWallet')}</span>
+                  <span className={styles.walletStat} style={{ color: walletConnected ? '#4ade80' : undefined }}>
+                    {walletConnected ? t('profile.connected') : t('profile.notConnected')}
+                  </span>
+                </div>
+                {!walletConnected && (
+                  <div className={styles.walletT2}>{t('profile.walletWithdrawOnly')}</div>
+                )}
+              </div>
+              {walletConnected ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5, flexShrink: 0 }}>
+                  <button
+                    className={styles.walletBtnSm}
+                    style={{ background: 'rgba(2,132,199,0.15)', color: '#38bdf8', borderColor: 'rgba(2,132,199,0.3)' }}
+                    onClick={() => setScreen('withdrawal')}
+                  >
+                    ↑ {t('profile.withdraw')}
+                  </button>
+                  <button
+                    className={styles.walletBtnSm}
+                    style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', borderColor: 'rgba(239,68,68,0.25)' }}
+                    onClick={() => tonConnectUI.disconnect()}
+                  >
+                    {t('profile.disconnectWallet')}
+                  </button>
                 </div>
               ) : (
-                <div className={styles.walletT2}>{t('profile.walletWithdrawOnly')}</div>
+                <button className={styles.walletBtn} onClick={() => tonConnectUI.openModal()}>
+                  {t('profile.connectWallet')}
+                </button>
               )}
             </div>
-            {walletConnected ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <button
-                  className={styles.walletBtn}
-                  style={{ background: 'rgba(2,132,199,0.15)', color: '#38bdf8', borderColor: 'rgba(2,132,199,0.3)' }}
-                  onClick={() => setScreen('withdrawal')}
-                >
-                  {t('profile.requestWithdrawal')}
-                </button>
-                <button
-                  className={styles.walletBtn}
-                  style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)' }}
-                  onClick={() => tonConnectUI.disconnect()}
-                >
-                  {t('profile.disconnectWallet')}
-                </button>
+            {walletConnected && walletAddress && (
+              <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#64748b', paddingLeft: 2, wordBreak: 'break-all' }}>
+                {walletAddress.slice(0, 10)}…{walletAddress.slice(-8)}
               </div>
-            ) : (
-              <button
-                className={styles.walletBtn}
-                onClick={() => tonConnectUI.openModal()}
-              >
-                {t('profile.connectWallet')}
-              </button>
             )}
           </section>
 

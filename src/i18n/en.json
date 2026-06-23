@@ -86,7 +86,14 @@
     "incomingDefended": "Defended",
     "alertDefended": "{{name}} attacked — saved {{amount}} coins!",
     "alertLost": "💥 {{name}} stole {{amount}} coins",
-    "cooldownLabel": "Again in"
+    "cooldownLabel": "Again in",
+    "historyBtn": "History",
+    "historyTitle": "Raid History",
+    "historyEmpty": "No raids yet",
+    "tabAttack": "Attack",
+    "tabDefense": "Defense",
+    "won": "Victory",
+    "lost": "Defeat"
   },
   "market": {
     "title": "P2P Market",
@@ -246,6 +253,7 @@
     "connectWallet": "Connect",
     "connected": "Connected",
     "requestWithdrawal": "Request TON Withdrawal",
+    "withdraw": "Withdraw",
     "disconnectWallet": "Disconnect",
     "walletWithdrawOnly": "Required for withdrawals only",
     "topupTon": "Top up",
