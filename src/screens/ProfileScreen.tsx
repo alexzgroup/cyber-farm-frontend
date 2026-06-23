@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTonWallet, useTonConnectUI } from '@tonconnect/ui-react'
-import { postEvent } from '@telegram-apps/sdk'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
 import { getWalletInvoice, connectWallet, disconnectWallet, getRaidHistory, prepareReferralMessage, getReferralStats } from '../api'
@@ -174,7 +173,16 @@ export function ProfileScreen() {
     setShareState('loading')
     try {
       const prepared = await prepareReferralMessage()
-      postEvent('web_app_send_prepared_message', { id: prepared.id })
+      const tg = (window as any).Telegram?.WebApp
+      if (tg?.sendPreparedMessage) {
+        tg.sendPreparedMessage({ id: prepared.id })
+      } else {
+        // fallback: raw postEvent via TelegramWebviewProxy
+        ;(window as any).TelegramWebviewProxy?.postEvent(
+          'web_app_send_prepared_message',
+          JSON.stringify({ id: prepared.id }),
+        )
+      }
       setShareState('idle')
     } catch {
       setShareState('idle')
