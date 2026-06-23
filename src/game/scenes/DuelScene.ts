@@ -36,12 +36,12 @@ function calcStats(upgrades: Record<string, number>): DroneStats {
   const nav     = upgrades['ai']      ?? 0
   const stealth = upgrades['stealth'] ?? 0
   return {
-    hp:       100 + armor   * 25,
-    maxHp:    100 + armor   * 25,
-    damage:   10  + cargo   * 3,
-    fireRate: 1   + energy  * 0.3,
-    speed:    150 + nav     * 40,
-    dodge:    stealth * 0.1,
+    hp:       200 + armor   * 8,    // base 200, max 280 at lv10
+    maxHp:    200 + armor   * 8,
+    damage:   8   + cargo   * 1,    // base 8,   max 18  at lv10
+    fireRate: 0.8 + energy  * 0.1,  // base 0.8, max 1.8 at lv10
+    speed:    150 + nav     * 12,   // base 150, max 270 at lv10
+    dodge:    stealth * 0.03,       // max 0.30 at lv10
   }
 }
 
@@ -286,17 +286,30 @@ export class DuelScene extends Phaser.Scene {
   private setupInput(W: number, H: number) {
     const canvas = this.sys.canvas
 
+    // Desktop: follow mouse cursor
     this.docMouseMove = (e: MouseEvent) => {
-      // RESIZE mode: canvas pixel = screen pixel, no conversion needed.
       const rect = canvas.getBoundingClientRect()
       this.mouseX = Phaser.Math.Clamp(e.clientX - rect.left, 4, W - 4)
       this.mouseY = Phaser.Math.Clamp(e.clientY - rect.top,  4, H - 4)
     }
     document.addEventListener('mousemove', this.docMouseMove)
 
-    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+    // Mobile: follow touch drag
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (p.isDown) {
+        this.mouseX = Phaser.Math.Clamp(p.x, 4, W - 4)
+        this.mouseY = Phaser.Math.Clamp(p.y, 4, H - 4)
+      }
+    })
+
+    // Shoot on tap (pointerup with minimal movement = tap, not drag)
+    this.input.on('pointerup', (p: Phaser.Input.Pointer) => {
       if (p.rightButtonDown()) return
-      this.playerShoot()
+      const dx = p.x - p.downX
+      const dy = p.y - p.downY
+      if (Math.sqrt(dx * dx + dy * dy) < 15) {
+        this.playerShoot()
+      }
     })
 
     // Opponent position from WS — denormalise from 0–1 to local pixels
@@ -365,7 +378,7 @@ export class DuelScene extends Phaser.Scene {
   }
 
   private spawnBullet(fx: number, fy: number, tx: number, ty: number, fromPlayer: boolean, color: number) {
-    const speed = 500
+    const speed = 320
     const dx = tx - fx, dy = ty - fy
     const len = Math.sqrt(dx * dx + dy * dy) || 1
     const vx = (dx / len) * speed, vy = (dy / len) * speed
@@ -444,7 +457,7 @@ export class DuelScene extends Phaser.Scene {
   // ─── Opponent movement (WS position interpolation) ──────────────────────────
 
   private updateOpponent(delta: number) {
-    const speed = 280 * (delta / 1000)
+    const speed = 200 * (delta / 1000)
     const dx = this.opponentTargetX - this.opponentSprite.x
     const dy = this.opponentTargetY - this.opponentSprite.y
     const dist = Math.sqrt(dx * dx + dy * dy)

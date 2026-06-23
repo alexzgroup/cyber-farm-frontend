@@ -3,20 +3,22 @@ export interface UpgradeTemplate {
   name: string
   icon: string
   description: string
-  maxLevel: 3
-  costs: [number, number, number]
+  maxLevel: number
+  costs: number[]
   bonusPerLevel: string
   category: 'drone' | 'turret'
 }
 
+// 10-level exponential cost curve (~×1.28 per step).
+// Mirrors backend handler/equipment.go price tables exactly.
 export const DRONE_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
   {
     id: 'cargo',
     name: 'Грузовой отсек',
     icon: '📦',
     description: 'Расширяет вместимость — больший пассивный доход',
-    maxLevel: 3,
-    costs: [100, 280, 600],
+    maxLevel: 10,
+    costs: [100, 130, 165, 210, 270, 345, 440, 565, 720, 925],
     bonusPerLevel: '+15% дохода/ч',
     category: 'drone',
   },
@@ -25,8 +27,8 @@ export const DRONE_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
     name: 'Стелс-модуль',
     icon: '👁',
     description: 'Снижает шанс обнаружения в рейдах',
-    maxLevel: 3,
-    costs: [150, 380, 800],
+    maxLevel: 10,
+    costs: [150, 190, 245, 315, 405, 515, 660, 845, 1080, 1385],
     bonusPerLevel: '-10% шанс поломки',
     category: 'drone',
   },
@@ -35,8 +37,8 @@ export const DRONE_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
     name: 'Энергоячейка',
     icon: '⚡',
     description: 'Усиленные аккумуляторы — больший бонус тапа',
-    maxLevel: 3,
-    costs: [120, 300, 650],
+    maxLevel: 10,
+    costs: [120, 155, 200, 255, 325, 415, 530, 675, 865, 1105],
     bonusPerLevel: '+0.1 за тап',
     category: 'drone',
   },
@@ -45,8 +47,8 @@ export const DRONE_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
     name: 'ИИ-навигация',
     icon: '🤖',
     description: 'Оптимизация маршрутов, дополнительная энергия',
-    maxLevel: 3,
-    costs: [80, 220, 500],
+    maxLevel: 10,
+    costs: [80, 100, 130, 170, 215, 275, 350, 450, 575, 740],
     bonusPerLevel: '+1 макс. энергии',
     category: 'drone',
   },
@@ -55,8 +57,8 @@ export const DRONE_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
     name: 'Силовая броня',
     icon: '🛡',
     description: 'Усиленный корпус — выше прочность в боях',
-    maxLevel: 3,
-    costs: [200, 480, 1000],
+    maxLevel: 10,
+    costs: [200, 255, 330, 420, 540, 690, 880, 1125, 1445, 1845],
     bonusPerLevel: '+20% защита',
     category: 'drone',
   },
@@ -68,8 +70,8 @@ export const TURRET_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
     name: 'Прицел',
     icon: '🎯',
     description: 'Точная наводка — попадания по всем целям',
-    maxLevel: 3,
-    costs: [120, 300, 650],
+    maxLevel: 10,
+    costs: [120, 155, 200, 255, 325, 415, 530, 675, 865, 1105],
     bonusPerLevel: '+25% к точности',
     category: 'turret',
   },
@@ -78,8 +80,8 @@ export const TURRET_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
     name: 'Огневая мощь',
     icon: '💥',
     description: 'Усиленный заряд — больший урон атакующим',
-    maxLevel: 3,
-    costs: [150, 380, 800],
+    maxLevel: 10,
+    costs: [150, 190, 245, 315, 405, 515, 660, 845, 1080, 1385],
     bonusPerLevel: '+30% к урону',
     category: 'turret',
   },
@@ -88,8 +90,8 @@ export const TURRET_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
     name: 'Дальнобойность',
     icon: '📡',
     description: 'Расширенный радиус обнаружения и поражения',
-    maxLevel: 3,
-    costs: [100, 260, 550],
+    maxLevel: 10,
+    costs: [100, 130, 165, 210, 270, 345, 440, 565, 720, 925],
     bonusPerLevel: '+15% радиус',
     category: 'turret',
   },
@@ -98,8 +100,8 @@ export const TURRET_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
     name: 'Перезарядка',
     icon: '⚙',
     description: 'Ускорение механизма подачи снарядов',
-    maxLevel: 3,
-    costs: [130, 330, 700],
+    maxLevel: 10,
+    costs: [130, 165, 215, 275, 350, 445, 570, 730, 935, 1195],
     bonusPerLevel: '+20% скорость огня',
     category: 'turret',
   },
@@ -108,8 +110,8 @@ export const TURRET_UPGRADE_TEMPLATES: UpgradeTemplate[] = [
     name: 'Энергощит',
     icon: '🔮',
     description: 'Защитное силовое поле вокруг базы',
-    maxLevel: 3,
-    costs: [200, 500, 1100],
+    maxLevel: 10,
+    costs: [200, 255, 330, 420, 540, 690, 880, 1125, 1445, 1845],
     bonusPerLevel: '+15% защита базы',
     category: 'turret',
   },
