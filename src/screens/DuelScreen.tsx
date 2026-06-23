@@ -208,8 +208,8 @@ export function DuelScreen() {
       <div style={s.notice}>{t('duel.commission')}</div>
 
       <button
-        style={{ ...s.challengeBtn, ...(!selectedPlayer || !betAmount || challenging ? s.challengeBtnDisabled : {}) }}
-        disabled={!selectedPlayer || !betAmount || challenging}
+        style={{ ...s.challengeBtn, ...(!selectedPlayer || !betAmount || !canAfford || challenging ? s.challengeBtnDisabled : {}) }}
+        disabled={!selectedPlayer || !betAmount || !canAfford || challenging}
         onClick={handleChallenge}
       >
         {challenging
