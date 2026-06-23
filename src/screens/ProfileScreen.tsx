@@ -170,12 +170,10 @@ export function ProfileScreen() {
 
   const handleShare = async () => {
     if (!refLink) return
-
-    // Try rich share via sendPreparedMessage (Telegram 8.0+)
-    if (canShare) {
-      setShareState('loading')
-      try {
-        const prepared = await prepareReferralMessage()
+    setShareState('loading')
+    try {
+      const prepared = await prepareReferralMessage()
+      if (tgWebApp?.sendPreparedMessage) {
         tgWebApp.sendPreparedMessage(
           { id: prepared.id },
           (sent: boolean) => {
@@ -183,16 +181,14 @@ export function ProfileScreen() {
             if (!sent) console.warn('referral share cancelled')
           },
         )
-        setShareState('idle')
-        return
-      } catch {
-        // Fall through to universal fallback
-        setShareState('idle')
+      } else {
+        shareViaLink()
       }
+      setShareState('idle')
+    } catch {
+      setShareState('idle')
+      shareViaLink()
     }
-
-    // Fallback: openTelegramLink share dialog (works in all Telegram versions)
-    shareViaLink()
   }
 
   const copyRefLink = () => {
