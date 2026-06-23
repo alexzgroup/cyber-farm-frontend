@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore, type RaidResult, type Drone } from '../store/gameStore'
+import { PvPHeader } from '../components/PvPHeader'
 import { getRaidTargets, getRaidHistory, getIncomingRaids } from '../api'
 import type { ApiUserPublic, ApiRaid } from '../api/types'
 import { RaidGame } from '../game/RaidGame'
@@ -272,22 +273,7 @@ export function RaidsScreen() {
       {/* ── Targets view ── */}
       {view === 'targets' && (
         <>
-          {/* Header: title + history button (same layout as DuelScreen) */}
-          <div className={styles.header}>
-            <span className={styles.headerTitle}>{t('raids.title')}</span>
-            <button className={styles.historyBtn} onClick={() => setView('history')}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              {t('raids.historyBtn')}
-            </button>
-          </div>
-
-          {/* PvP mode switcher */}
-          <div className={styles.modeTabs}>
-            <button className={styles.modeTab} onClick={() => setScreen('duel')}>⚔️ {t('nav.duel')}</button>
-            <button className={`${styles.modeTab} ${styles.modeTabActive}`}>💥 {t('raids.title')}</button>
-          </div>
+          <PvPHeader activeTab="raids" onHistory={() => setView('history')} />
 
           {workingDrones.length === 0 && (
             <div className={styles.warning}>{t('raids.allBroken')}</div>

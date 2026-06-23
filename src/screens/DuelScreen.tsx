@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
+import { PvPHeader } from '../components/PvPHeader'
 import { totalPower, powerTier } from '../utils/duelPower'
 import * as api from '../api'
 import type { ApiDuelPlayer } from '../api/types'
@@ -67,19 +68,7 @@ export function DuelScreen() {
   if (!allowDuel) {
     return (
       <div style={s.root}>
-        <div style={s.header}>
-          <span style={s.title}>{t('duel.title')}</span>
-          <button style={s.historyBtn} onClick={() => setScreen('duel-history')}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-            {t('duel.historyBtn')}
-          </button>
-        </div>
-        <div style={s.modeTabs}>
-          <button style={{ ...s.modeTab, ...s.modeTabActive }}>⚔️ {t('duel.title')}</button>
-          <button style={s.modeTab} onClick={() => setScreen('raids')}>💥 {t('nav.raids')}</button>
-        </div>
+        <PvPHeader activeTab="duel" onHistory={() => setScreen('duel-history')} />
         <div style={s.stub}>
           <div style={s.stubIcon}>🔕</div>
           <div style={s.stubTitle}>{t('duel.disabledTitle')}</div>
@@ -94,26 +83,7 @@ export function DuelScreen() {
 
   return (
     <div style={s.root}>
-      {/* Header */}
-      <div style={s.header}>
-        <span style={s.title}>{t('duel.title')}</span>
-        <button style={s.historyBtn} onClick={() => setScreen('duel-history')}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-          {t('duel.historyBtn')}
-        </button>
-      </div>
-
-      {/* PvP mode switcher */}
-      <div style={s.modeTabs}>
-        <button style={{ ...s.modeTab, ...s.modeTabActive }}>
-          ⚔️ {t('duel.title')}
-        </button>
-        <button style={s.modeTab} onClick={() => setScreen('raids')}>
-          💥 {t('nav.raids')}
-        </button>
-      </div>
+      <PvPHeader activeTab="duel" onHistory={() => setScreen('duel-history')} />
 
       {/* MY POWER panel */}
       <div style={s.myPowerBox}>
@@ -233,25 +203,6 @@ export function DuelScreen() {
 
 const s: Record<string, React.CSSProperties> = {
   root:  { display: 'flex', flexDirection: 'column', height: '100%', background: '#090c12', color: '#e0e0e0', fontFamily: 'monospace', overflow: 'hidden' },
-  header: { display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px 10px', borderBottom: '1px solid #1e293b', flexShrink: 0 },
-  backBtn: { background: 'none', border: 'none', color: '#94a3b8', fontSize: 18, cursor: 'pointer', padding: '0 6px' },
-  title:   { fontSize: 17, fontWeight: 700, color: '#e2e8f0', letterSpacing: 1, flex: 1 },
-  historyBtn: { display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', color: '#00e5ff', fontSize: 12, fontWeight: 700, flexShrink: 0 },
-
-  // Mode switcher tabs
-  modeTabs: {
-    display: 'flex', gap: 0, padding: '8px 12px 0',
-    borderBottom: '1px solid #1e293b', flexShrink: 0,
-  },
-  modeTab: {
-    flex: 1, padding: '8px 0', fontSize: 13, fontWeight: 600,
-    background: 'none', border: 'none', borderBottom: '2px solid transparent',
-    color: '#475569', cursor: 'pointer', fontFamily: 'monospace',
-    letterSpacing: 0.3, transition: 'color 0.15s, border-color 0.15s',
-  },
-  modeTabActive: {
-    color: '#00e5ff', borderBottomColor: '#00e5ff',
-  },
 
   // My power panel
   myPowerBox: {
