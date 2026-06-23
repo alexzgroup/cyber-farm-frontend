@@ -292,29 +292,23 @@
   text-align: center;
 }
 
-/* Top bar: mode tabs + history button */
-.topBar {
+/* Header row: title + history button */
+.header {
   display: flex;
   align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
   border-bottom: 1px solid #1e293b;
   flex-shrink: 0;
-  padding: 0 4px;
 }
-.modeTabs { display: flex; flex: 1; }
-.modeTab {
+.headerTitle {
   flex: 1;
-  padding: 10px 0;
-  font-size: 13px;
-  font-weight: 600;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: #475569;
-  cursor: pointer;
+  font-size: 17px;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 1px;
   font-family: monospace;
-  letter-spacing: 0.3px;
 }
-.modeTabActive { color: #00e5ff; border-bottom-color: #00e5ff; }
 
 .historyBtn {
   display: flex;
@@ -330,8 +324,29 @@
   font-weight: 700;
   font-family: monospace;
   flex-shrink: 0;
-  margin: 6px 0;
 }
+
+/* Mode tabs */
+.modeTabs {
+  display: flex;
+  padding: 8px 12px 0;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
+}
+.modeTab {
+  flex: 1;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #475569;
+  cursor: pointer;
+  font-family: monospace;
+  letter-spacing: 0.3px;
+}
+.modeTabActive { color: #00e5ff; border-bottom-color: #00e5ff; }
 
 /* History view */
 .histHeader {

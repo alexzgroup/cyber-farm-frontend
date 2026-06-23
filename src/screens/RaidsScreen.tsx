@@ -272,12 +272,9 @@ export function RaidsScreen() {
       {/* ── Targets view ── */}
       {view === 'targets' && (
         <>
-          {/* PvP mode switcher + history btn */}
-          <div className={styles.topBar}>
-            <div className={styles.modeTabs}>
-              <button className={styles.modeTab} onClick={() => setScreen('duel')}>⚔️ {t('nav.duel')}</button>
-              <button className={`${styles.modeTab} ${styles.modeTabActive}`}>💥 {t('raids.title')}</button>
-            </div>
+          {/* Header: title + history button (same layout as DuelScreen) */}
+          <div className={styles.header}>
+            <span className={styles.headerTitle}>{t('raids.title')}</span>
             <button className={styles.historyBtn} onClick={() => setView('history')}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -286,7 +283,11 @@ export function RaidsScreen() {
             </button>
           </div>
 
-          <h2 className={styles.title}>{t('raids.title')}</h2>
+          {/* PvP mode switcher */}
+          <div className={styles.modeTabs}>
+            <button className={styles.modeTab} onClick={() => setScreen('duel')}>⚔️ {t('nav.duel')}</button>
+            <button className={`${styles.modeTab} ${styles.modeTabActive}`}>💥 {t('raids.title')}</button>
+          </div>
 
           {workingDrones.length === 0 && (
             <div className={styles.warning}>{t('raids.allBroken')}</div>
