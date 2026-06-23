@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTonWallet, useTonConnectUI } from '@tonconnect/ui-react'
+import { postEvent } from '@telegram-apps/sdk'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
 import { getWalletInvoice, connectWallet, disconnectWallet, getRaidHistory, prepareReferralMessage, getReferralStats } from '../api'
@@ -173,17 +174,7 @@ export function ProfileScreen() {
     setShareState('loading')
     try {
       const prepared = await prepareReferralMessage()
-      if (tgWebApp?.sendPreparedMessage) {
-        tgWebApp.sendPreparedMessage(
-          { id: prepared.id },
-          (sent: boolean) => {
-            setShareState('idle')
-            if (!sent) console.warn('referral share cancelled')
-          },
-        )
-      } else {
-        shareViaLink()
-      }
+      postEvent('web_app_send_prepared_message', { id: prepared.id })
       setShareState('idle')
     } catch {
       setShareState('idle')
