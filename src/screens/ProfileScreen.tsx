@@ -152,7 +152,6 @@ export function ProfileScreen() {
   const [refCopied,  setRefCopied]  = useState(false)
   const [shareState, setShareState] = useState<'idle' | 'loading' | 'error'>('idle')
 
-  const canShare = !!(window as any).Telegram?.WebApp?.sendPreparedMessage
   const tgWebApp = (window as any).Telegram?.WebApp
 
   // Universal share fallback: opens Telegram chat picker via t.me/share
