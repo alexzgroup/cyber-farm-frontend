@@ -112,10 +112,12 @@ async function authenticate(): Promise<void> {
     ? await buildSignedInitData()
     : (_tgInitData ?? '')
 
+  const urlStartParam = new URLSearchParams(window.location.search).get('startapp') ?? ''
+
   const res = await fetch(`${API_BASE}/api/auth/telegram`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ init_data: initData }),
+    body:    JSON.stringify({ init_data: initData, ...(urlStartParam ? { start_param: urlStartParam } : {}) }),
   })
 
   if (!res.ok) throw new Error(`[CyberFarm] Auth failed: ${res.status}`)
