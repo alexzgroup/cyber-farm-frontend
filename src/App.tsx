@@ -21,6 +21,7 @@ import { DuelScreen } from './screens/DuelScreen'
 import { DuelBattleScreen } from './screens/DuelBattleScreen'
 import { DuelHistoryScreen } from './screens/DuelHistoryScreen'
 import { ReferralsScreen } from './screens/ReferralsScreen'
+import { WithdrawalScreen } from './screens/WithdrawalScreen'
 import { DuelChallengeModal } from './components/DuelChallengeModal'
 import { DuelWaitingModal } from './components/DuelWaitingModal'
 import { NAV_HEIGHT } from './layout'
@@ -108,6 +109,7 @@ export function App() {
         {screen === 'profile'     && <ProfileScreen />}
         {screen === 'purchases'   && <PurchaseHistoryScreen />}
         {screen === 'topup'       && <TopUpScreen />}
+        {screen === 'withdrawal'  && <WithdrawalScreen />}
         {screen === 'duel'         && <DuelScreen />}
         {screen === 'duel-battle'  && <DuelBattleScreen />}
         {screen === 'duel-history' && <DuelHistoryScreen />}

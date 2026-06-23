@@ -246,6 +246,7 @@
     "notConnected": "Не подключён",
     "connectWallet": "Подключить",
     "connected": "Подключён",
+    "requestWithdrawal": "Запросить вывод TON",
     "disconnectWallet": "Отключить",
     "walletWithdrawOnly": "Нужен только для вывода TON",
     "topupTon": "Пополнить",

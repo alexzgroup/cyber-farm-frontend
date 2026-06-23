@@ -389,13 +389,22 @@ export function ProfileScreen() {
               )}
             </div>
             {walletConnected ? (
-              <button
-                className={styles.walletBtn}
-                style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)' }}
-                onClick={() => tonConnectUI.disconnect()}
-              >
-                {t('profile.disconnectWallet')}
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button
+                  className={styles.walletBtn}
+                  style={{ background: 'rgba(2,132,199,0.15)', color: '#38bdf8', borderColor: 'rgba(2,132,199,0.3)' }}
+                  onClick={() => setScreen('withdrawal')}
+                >
+                  {t('profile.requestWithdrawal')}
+                </button>
+                <button
+                  className={styles.walletBtn}
+                  style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)' }}
+                  onClick={() => tonConnectUI.disconnect()}
+                >
+                  {t('profile.disconnectWallet')}
+                </button>
+              </div>
             ) : (
               <button
                 className={styles.walletBtn}

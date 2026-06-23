@@ -229,6 +229,27 @@ export interface AuthResponse {
   user:       ApiUser
 }
 
+// ── Withdrawal ────────────────────────────────────────────────────────────────
+
+export type WithdrawalStatus = 'pending' | 'completed' | 'rejected' | 'failed' | 'pending_sign'
+
+export interface ApiWithdrawal {
+  id:         number
+  amount:     number
+  fee:        number
+  payout:     number
+  to_wallet:  string
+  status:     WithdrawalStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface ApiWithdrawalsResponse {
+  withdrawals: ApiWithdrawal[]
+  commission:  number
+  min_amount:  number
+}
+
 // ── Duel ──────────────────────────────────────────────────────────────────────
 
 export type DuelCurrency = 'gold' | 'ton'

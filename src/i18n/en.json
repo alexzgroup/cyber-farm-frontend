@@ -245,6 +245,7 @@
     "notConnected": "Not connected",
     "connectWallet": "Connect",
     "connected": "Connected",
+    "requestWithdrawal": "Request TON Withdrawal",
     "disconnectWallet": "Disconnect",
     "walletWithdrawOnly": "Required for withdrawals only",
     "topupTon": "Top up",

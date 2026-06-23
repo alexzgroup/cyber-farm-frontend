@@ -155,6 +155,16 @@ export function getWalletInvoice(): Promise<import('./types').ApiWalletInvoice> 
   return apiFetch('/api/wallet/invoice')
 }
 
+export function getWithdrawals(): Promise<import('./types').ApiWithdrawalsResponse> {
+  return apiFetch('/api/wallet/withdrawals')
+}
+
+export function requestWithdrawal(amount: number): Promise<{
+  id: number; amount: number; fee: number; payout: number; commission: number; to_wallet: string; status: string
+}> {
+  return apiFetch('/api/wallet/withdraw', { method: 'POST', body: JSON.stringify({ amount }) })
+}
+
 export function connectWallet(walletAddress: string): Promise<{ ok: boolean; wallet_address: string }> {
   return apiFetch('/api/wallet/address', {
     method: 'PATCH',
