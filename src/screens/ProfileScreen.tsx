@@ -364,6 +364,35 @@ export function ProfileScreen() {
             <span style={{ color: '#7c3aed', fontSize: 18 }}>→</span>
           </button>
 
+          {/* ── Channel banner ── */}
+          <button
+            onClick={() => {
+              const url = 'https://t.me/cyber_farm_chanel'
+              if (tgWebApp?.openTelegramLink) tgWebApp.openTelegramLink(url)
+              else window.open(url, '_blank')
+            }}
+            style={{
+              width: '100%', padding: '14px 18px', borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(0,136,204,0.15), rgba(0,80,180,0.22))',
+              border: '1px solid rgba(41,182,246,0.4)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+            }}
+          >
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="13" fill="rgba(41,182,246,0.18)" stroke="rgba(41,182,246,0.5)" strokeWidth="1.2"/>
+              <path d="M6.5 13.8l12.1-4.7c.6-.2 1.1.1 1 .8l-2 9.4c-.1.6-.5.7-.9.5l-2.6-1.9-1.2 1.2c-.2.2-.3.3-.6.3l.2-2.8 4.8-4.3c.2-.2 0-.3-.3-.1L9.8 16.2 7.2 15c-.5-.2-.5-.6-.7-.8-.1-.2.2-.3.5-.4z" fill="#29b6f6"/>
+            </svg>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, color: '#e0e0e0' }}>
+                {t('profile.channelTitle', 'Не пропусти новости')}
+              </div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>
+                {t('profile.channelSub', 'Розыгрыши, обновления и события')}
+              </div>
+            </div>
+            <span style={{ color: '#29b6f6', fontSize: 18 }}>→</span>
+          </button>
+
           {/* ── Wallet CTA (withdrawal only) ── */}
           <section className={`${styles.card} ${styles.wallet}`} style={{ flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
