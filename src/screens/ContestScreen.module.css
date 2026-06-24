@@ -50,7 +50,7 @@
   background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,165,0,0.06));
   border: 1px solid rgba(255, 215, 0, 0.3);
   border-radius: 18px;
-  padding: 20px 18px;
+  padding: clamp(12px, 4vw, 20px) clamp(14px, 4vw, 18px);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -72,33 +72,38 @@
   letter-spacing: 0.1em;
   color: rgba(255,215,0,0.6);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .poolAmount {
-  font-size: 38px;
+  font-size: clamp(28px, 9vw, 42px);
   font-weight: 800;
   color: #ffd700;
-  line-height: 1;
+  line-height: 1.1;
   filter: drop-shadow(0 0 12px rgba(255,215,0,0.4));
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px;
 }
 
 .poolCoin {
-  font-size: 28px;
-  margin-right: 4px;
+  font-size: clamp(22px, 7vw, 32px);
+  margin-right: 2px;
 }
 
 .poolUnit {
-  font-size: 22px;
+  font-size: clamp(14px, 4.5vw, 22px);
   font-weight: 600;
   color: rgba(255, 215, 0, 0.7);
-  margin-left: 4px;
+  margin-left: 2px;
 }
 
 .poolHint {
   font-size: 11px;
   color: rgba(255,255,255,0.3);
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 /* ── Countdown ── */
