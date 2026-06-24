@@ -2,12 +2,16 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore, DRONE_UPGRADES, REPAIR_COSTS } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
+import { DroneIcon, TurretIcon, UnitCircle, WrenchIcon } from '../components/UnitIcons'
 import styles from './ShopScreen.module.css'
 
-const TURRET_CONFIGS: Array<{ level: 1 | 2 | 3; icon: string; price: number; defense: number; nameKey: string }> = [
-  { level: 1, icon: '🗼', price: 500,  defense: 25, nameKey: 'turret.light'  },
-  { level: 2, icon: '🏰', price: 1500, defense: 55, nameKey: 'turret.medium' },
-  { level: 3, icon: '⚔️', price: 3500, defense: 95, nameKey: 'turret.heavy'  },
+const DRONE_COLORS: Record<number, string> = { 1: '#00ccee', 2: '#ff4400', 3: '#9900ff' }
+const TURRET_COLORS: Record<1 | 2 | 3, string> = { 1: '#00cc44', 2: '#ffaa00', 3: '#ff4400' }
+
+const TURRET_CONFIGS: Array<{ level: 1 | 2 | 3; price: number; defense: number; nameKey: string }> = [
+  { level: 1, price: 500,  defense: 25, nameKey: 'turret.light'  },
+  { level: 2, price: 1500, defense: 55, nameKey: 'turret.medium' },
+  { level: 3, price: 3500, defense: 95, nameKey: 'turret.heavy'  },
 ]
 
 export function ShopScreen() {
@@ -52,7 +56,9 @@ export function ShopScreen() {
               const info      = DRONE_UPGRADES[drone.level - 1]
               return (
                 <div key={drone.id} className={`${styles.card} ${styles.cardBroken}`}>
-                  <div className={styles.droneIcon}>💀</div>
+                  <div className={styles.droneIcon}>
+                    <UnitCircle color="#888" size={48}><DroneIcon color="#888" size={26}/></UnitCircle>
+                  </div>
                   <div className={styles.cardInfo}>
                     <p className={styles.droneName}>{t('drone.level' + drone.level) || info.name}</p>
                     <p className={styles.droneStats}>{Math.round(info.tapBonus * 36000) / 100} / час · {t('shop.brokenLabel')}</p>
@@ -86,7 +92,10 @@ export function ShopScreen() {
             return (
               <div key={drone.id} className={`${styles.card} ${drone.isBroken ? styles.cardBroken : ''}`}>
                 <div className={styles.droneIcon}>
-                  {drone.isBroken ? '💀' : drone.level === 1 ? '🤖' : drone.level === 2 ? '⚡' : '💎'}
+                  {drone.isBroken
+                    ? <UnitCircle color="#888" size={48}><DroneIcon color="#888" size={26}/></UnitCircle>
+                    : <UnitCircle color={DRONE_COLORS[drone.droneType]} size={48}><DroneIcon color={DRONE_COLORS[drone.droneType]} size={26}/></UnitCircle>
+                  }
                 </div>
                 <div className={styles.cardInfo}>
                   <p className={styles.droneName}>{current.name}</p>
@@ -117,14 +126,15 @@ export function ShopScreen() {
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>{t('shop.upgradeEquip')}</h3>
         <div className={styles.card} style={{ cursor: 'pointer' }} onClick={() => setScreen('equipment')}>
-          <div className={styles.droneIcon}>⚙️</div>
+          <div className={styles.droneIcon}>
+            <UnitCircle color="#ffaa00" size={52}><WrenchIcon color="#ffaa00" size={30}/></UnitCircle>
+          </div>
           <div className={styles.cardInfo}>
             <p className={styles.droneName}>{t('shop.boostDrones')}</p>
             <p className={styles.droneStats}>{t('shop.upgradeEquipSub')}</p>
           </div>
           <button className={`${styles.btn} ${styles.btnActive}`} onClick={() => setScreen('equipment')}>
             <span className={styles.btnLevel}>{t('shop.open')}</span>
-            <span className={styles.btnPrice}>→</span>
           </button>
         </div>
       </section>
@@ -133,7 +143,9 @@ export function ShopScreen() {
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>{t('shop.newDrone')}</h3>
         <div className={styles.card}>
-          <div className={styles.droneIcon}>🤖</div>
+          <div className={styles.droneIcon}>
+            <UnitCircle color="#00ccee" size={48}><DroneIcon color="#00ccee" size={26}/></UnitCircle>
+          </div>
           <div className={styles.cardInfo}>
             <p className={styles.droneName}>{t('drone.basic')}</p>
             <p className={styles.droneStats}>{t('shop.stats', {hr: 10, tap: 0.1})}</p>
@@ -158,12 +170,14 @@ export function ShopScreen() {
           </div>
         )}
         <div className={styles.cards}>
-          {TURRET_CONFIGS.map(({ level, icon, price, defense, nameKey }) => {
+          {TURRET_CONFIGS.map(({ level, price, defense, nameKey }) => {
             const canAfford = balance >= price
             const loading   = buyingTurret === level
             return (
               <div key={level} className={styles.card}>
-                <div className={styles.droneIcon}>{icon}</div>
+                <div className={styles.droneIcon}>
+                  <UnitCircle color={TURRET_COLORS[level]} size={48}><TurretIcon color={TURRET_COLORS[level]} level={level} size={26}/></UnitCircle>
+                </div>
                 <div className={styles.cardInfo}>
                   <p className={styles.droneName}>{t(nameKey)}</p>
                   <p className={styles.droneStats}>{t('shop.turretDefense', { n: defense })}</p>

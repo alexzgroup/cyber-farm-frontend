@@ -84,6 +84,30 @@ export function TurretIcon({ color, level, size = 28 }: TurretIconProps) {
   )
 }
 
+// ─── Wrench (equipment / upgrades) ───────────────────────────────────────────
+export function WrenchIcon({ color, size = 28 }: IconProps) {
+  const shadow = 'rgba(0,0,0,0.5)'
+  return (
+    <svg viewBox="0 0 32 32" width={size} height={size} fill="none" overflow="visible">
+      {/* Upright wrench rotated 45° CW: jaw opens upper-right, handle goes lower-left */}
+      <g transform="rotate(45, 16, 16)">
+        {/* Left jaw cheek */}
+        <rect x="7"  y="4" width="7"  height="14" rx="3"  fill={color} fillOpacity="0.9"/>
+        {/* Right jaw cheek */}
+        <rect x="18" y="4" width="7"  height="14" rx="3"  fill={color} fillOpacity="0.9"/>
+        {/* Solid body fill: seals the bottom so it looks like ONE head with a top notch, not a fork */}
+        <rect x="7"  y="11" width="18" height="7"         fill={color} fillOpacity="0.9"/>
+        {/* Handle */}
+        <rect x="12" y="16" width="8"  height="14" rx="4" fill={color} fillOpacity="0.9"/>
+        {/* Handle end cap */}
+        <circle cx="16" cy="29" r="2.5" fill={shadow}/>
+        {/* Shine */}
+        <rect x="9" y="6" width="2" height="6" rx="1" fill="white" fillOpacity="0.2"/>
+      </g>
+    </svg>
+  )
+}
+
 // ─── Circle wrapper ───────────────────────────────────────────────────────────
 interface UnitCircleProps {
   color: string
