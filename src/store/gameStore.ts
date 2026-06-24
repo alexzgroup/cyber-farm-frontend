@@ -251,7 +251,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (energy <= 0) return
     const maxLevel = Math.max(1, ...drones.map((d) => d.level)) as DroneLevel
     const bonus = DRONE_UPGRADES[maxLevel - 1]?.tapBonus ?? 0.1
-    set({ balance: balance + bonus, energy: energy - 1 })
+    const newBalance = balance + bonus
+    // Also update balanceBase + balanceUpdatedAt so tickBalance doesn't overwrite the tap bonus
+    set({ balance: newBalance, balanceBase: newBalance, balanceUpdatedAt: Date.now(), energy: energy - 1 })
   },
 
   // ── Load all game state from API ───────────────────────────────────────
