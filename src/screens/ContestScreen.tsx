@@ -135,7 +135,8 @@ export function ContestScreen() {
             <div className={styles.poolLabel}>{t('contest.pool')}</div>
             <div className={styles.poolAmount}>
               <span className={styles.poolCoin}>◈</span>
-              {parseFloat((current?.pool_ton ?? 0).toFixed(4))}
+              {(current?.pool_ton ?? 0).toFixed(3)}
+              <span className={styles.poolUnit}> TON</span>
             </div>
             <div className={styles.poolHint}>{t('contest.contribution')}</div>
           </div>

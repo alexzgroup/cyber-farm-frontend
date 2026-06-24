@@ -88,6 +88,13 @@
   margin-right: 4px;
 }
 
+.poolUnit {
+  font-size: 22px;
+  font-weight: 600;
+  color: rgba(255, 215, 0, 0.7);
+  margin-left: 4px;
+}
+
 .poolHint {
   font-size: 11px;
   color: rgba(255,255,255,0.3);
