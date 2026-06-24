@@ -705,7 +705,11 @@ export function ProfileScreen() {
             </div>
 
             {/* Support */}
-            <div className={styles.setRow}>
+            <div className={styles.setRow} style={{ cursor: 'pointer' }} onClick={() => {
+              const url = 'https://t.me/cyber_farm_chanel?direct'
+              if (tgWebApp?.openTelegramLink) tgWebApp.openTelegramLink(url)
+              else window.open(url, '_blank')
+            }}>
               <span className={styles.setIc}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="9"/>
