@@ -21,7 +21,7 @@ function getStartParam(): string | null {
 }
 
 export function MobileGuard({ children }: { children: React.ReactNode }) {
-  if (import.meta.env.DEV || isMobilePlatform() || isAdmin()) {
+  if (isMobilePlatform() || isAdmin()) {
     return <>{children}</>
   }
 
@@ -47,7 +47,7 @@ export function MobileGuard({ children }: { children: React.ReactNode }) {
         maxWidth: 360,
         textAlign: 'center',
       }}>
-        <div style={{ fontSize: 56 }}>🤖</div>
+        <img src="/favicon.svg" width={80} height={80} style={{ borderRadius: 18 }} alt="CyberFarm" />
 
         <div>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: 1 }}>

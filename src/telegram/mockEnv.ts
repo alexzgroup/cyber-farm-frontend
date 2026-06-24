@@ -18,7 +18,7 @@ export function setupMockTelegram() {
       hash: 'mockhash',
     },
     version: '7.0',
-    platform: 'unknown',
+    platform: 'android',
     colorScheme,
     themeParams: {
       bg_color: '#0d1117',
