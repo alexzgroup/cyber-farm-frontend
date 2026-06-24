@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { DRONE_UPGRADE_TEMPLATES, TURRET_UPGRADE_TEMPLATES } from '../data/unitUpgrades'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
 import { SellModal } from '../components/SellModal'
+import { getMarket, cancelListing } from '../api'
+import type { ApiMarketListing } from '../api/types'
 import styles from './EquipmentScreen.module.css'
 
 const DRONE_TYPE_COLORS: Record<number, string> = {
@@ -41,6 +43,25 @@ export function EquipmentScreen() {
   const [sellTarget, setSellTarget] = useState<{
     id: number; type: 'drone' | 'turret'; name: string
   } | null>(null)
+  const [myListings, setMyListings] = useState<ApiMarketListing[]>([])
+
+  const fetchMyListings = useCallback(async () => {
+    try { setMyListings(await getMarket({ mine: true })) } catch { /* ignore */ }
+  }, [])
+
+  useEffect(() => { fetchMyListings() }, [fetchMyListings])
+
+  // Maps: unit DB id → listing id (for cancel)
+  const listedDrones  = new Map(myListings.filter(l => l.drone_id).map(l => [l.drone_id!, l.id]))
+  const listedTurrets = new Map(myListings.filter(l => l.turret_id).map(l => [l.turret_id!, l.id]))
+
+  const handleCancelListing = async (e: React.MouseEvent, listingId: number) => {
+    e.stopPropagation()
+    try {
+      await cancelListing(listingId)
+      fetchMyListings()
+    } catch { /* ignore */ }
+  }
 
   const handleSelectDrone = (id: string) => {
     selectUnit(id)
@@ -96,14 +117,18 @@ export function EquipmentScreen() {
             const totalUpgrades = countUpgrades(drone.id, DRONE_UPGRADE_TEMPLATES)
             const maxUpgrades   = DRONE_UPGRADE_TEMPLATES.length * 3
 
+            const droneListingId = listedDrones.get(Number(drone.id))
+            const isListed = droneListingId !== undefined
+
             return (
               <button
                 key={drone.id}
-                className={`${styles.card} ${drone.isBroken ? styles.broken : ''}`}
+                className={`${styles.card} ${drone.isBroken ? styles.broken : ''} ${isListed ? styles.listed : ''}`}
                 style={{ '--unit-color': color } as React.CSSProperties}
                 onClick={() => handleSelectDrone(drone.id)}
               >
                 <div className={styles.cardGlow} />
+                {isListed && <div className={styles.forSaleBadge}>{t('sell.forSale')}</div>}
                 <UnitCircle color={color} size={46}>
                   {drone.isBroken
                     ? <span style={{ fontSize: 20 }}>⚠</span>
@@ -124,20 +149,30 @@ export function EquipmentScreen() {
                 <div className={styles.upgradeCount} style={{ color }}>
                   {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
                 </div>
-                <div
-                  role="button"
-                  className={styles.sellBtn}
-                  onClick={e => {
-                    e.stopPropagation()
-                    setSellTarget({
-                      id: Number(drone.id),
-                      type: 'drone',
-                      name: `${t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #${idx + 1} LVL${drone.level}`,
-                    })
-                  }}
-                >
-                  📤 {t('sell.sellBtn')}
-                </div>
+                {isListed ? (
+                  <div
+                    role="button"
+                    className={styles.cancelBtn}
+                    onClick={e => handleCancelListing(e, droneListingId)}
+                  >
+                    ✕ {t('sell.cancelListing')}
+                  </div>
+                ) : (
+                  <div
+                    role="button"
+                    className={styles.sellBtn}
+                    onClick={e => {
+                      e.stopPropagation()
+                      setSellTarget({
+                        id: Number(drone.id),
+                        type: 'drone',
+                        name: `${t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #${idx + 1} LVL${drone.level}`,
+                      })
+                    }}
+                  >
+                    📤 {t('sell.sellBtn')}
+                  </div>
+                )}
               </button>
             )
           })}
@@ -153,14 +188,18 @@ export function EquipmentScreen() {
             const totalUpgrades = countUpgrades(turret.id, TURRET_UPGRADE_TEMPLATES)
             const maxUpgrades   = TURRET_UPGRADE_TEMPLATES.length * 3
 
+            const turretListingId = listedTurrets.get(Number(turret.id))
+            const isListed = turretListingId !== undefined
+
             return (
               <button
                 key={turret.id}
-                className={styles.card}
+                className={`${styles.card} ${isListed ? styles.listed : ''}`}
                 style={{ '--unit-color': color } as React.CSSProperties}
                 onClick={() => handleSelectTurret(turret.id)}
               >
                 <div className={styles.cardGlow} />
+                {isListed && <div className={styles.forSaleBadge}>{t('sell.forSale')}</div>}
                 <UnitCircle color={color} size={46}>
                   <TurretIcon color={color} level={turret.level} size={26} />
                 </UnitCircle>
@@ -179,20 +218,30 @@ export function EquipmentScreen() {
                 <div className={styles.upgradeCount} style={{ color }}>
                   {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
                 </div>
-                <div
-                  role="button"
-                  className={styles.sellBtn}
-                  onClick={e => {
-                    e.stopPropagation()
-                    setSellTarget({
-                      id: Number(turret.id),
-                      type: 'turret',
-                      name: `${t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #${idx + 1} DEF LV${turret.level}`,
-                    })
-                  }}
-                >
-                  📤 {t('sell.sellBtn')}
-                </div>
+                {isListed ? (
+                  <div
+                    role="button"
+                    className={styles.cancelBtn}
+                    onClick={e => handleCancelListing(e, turretListingId)}
+                  >
+                    ✕ {t('sell.cancelListing')}
+                  </div>
+                ) : (
+                  <div
+                    role="button"
+                    className={styles.sellBtn}
+                    onClick={e => {
+                      e.stopPropagation()
+                      setSellTarget({
+                        id: Number(turret.id),
+                        type: 'turret',
+                        name: `${t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #${idx + 1} DEF LV${turret.level}`,
+                      })
+                    }}
+                  >
+                    📤 {t('sell.sellBtn')}
+                  </div>
+                )}
               </button>
             )
           })}
