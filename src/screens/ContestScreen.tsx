@@ -81,7 +81,7 @@ function Podium({ last }: { last: ContestLast }) {
   return (
     <div className={styles.podium}>
       {ordered.map((w, i) => {
-        const name = w.username ? `@${w.username}` : w.first_name || `#${w.user_id}`
+        const name = w.username ? `@${w.username}` : w.first_name || 'Игрок'
         return (
           <div key={w.rank} className={`${styles.podiumItem} ${orderClass[i]}`}>
             <span className={styles.podiumMedal}>{orderMedal[i]}</span>
@@ -169,7 +169,7 @@ export function ContestScreen() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               {current.leaderboard.map((entry) => {
                 const isMe = entry.user_id === telegramId
-                const name = entry.username ? `@${entry.username}` : entry.first_name || `#${entry.user_id}`
+                const name = entry.username ? `@${entry.username}` : entry.first_name || 'Игрок'
                 const isTop = entry.rank <= 3
                 return (
                   <div key={entry.rank} className={`${styles.lbRow} ${isMe ? styles.myRow : ''}`}>

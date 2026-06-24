@@ -22,7 +22,7 @@ function DuelRow({ duel, myId }: { duel: ApiDuel; myId: number }) {
   const iWon     = duel.winner_id === myId
   const iWasChal = duel.challenger_id === myId
   const opponent = iWasChal ? duel.defender : duel.challenger
-  const opponentName = opponent?.first_name || opponent?.username || `#${iWasChal ? duel.defender_id : duel.challenger_id}`
+  const opponentName = opponent?.first_name || opponent?.username || 'Игрок'
 
   const prize   = iWon
     ? `+${duel.currency === 'ton' ? '◈' : '⬡'} ${(duel.bet_amount * 2 * 0.95).toFixed(duel.currency === 'ton' ? 2 : 0)}`

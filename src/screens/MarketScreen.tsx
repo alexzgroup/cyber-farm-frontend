@@ -121,7 +121,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
       )}
 
       <div className={styles.cardSeller}>
-        {t('market.seller', { name: item.seller?.username || item.seller?.first_name || `#${item.seller_id}` })}
+        {t('market.seller', { name: item.seller?.username || item.seller?.first_name || 'Игрок' })}
       </div>
 
       <div className={styles.cardFooter}>

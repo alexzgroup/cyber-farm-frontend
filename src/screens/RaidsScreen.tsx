@@ -157,8 +157,8 @@ function HistoryView({ onBack }: { onBack: () => void }) {
             const isAttack = r.attacker_id === myId
             const won      = isAttack ? r.result === 'victory' : r.result !== 'victory'
             const opponent = isAttack
-              ? (r.defender?.username || r.defender?.first_name || `#${r.defender_id}`)
-              : (r.attacker?.username || r.attacker?.first_name || `#${r.attacker_id}`)
+              ? (r.defender?.username || r.defender?.first_name || 'Игрок')
+              : (r.attacker?.username || r.attacker?.first_name || 'Игрок')
             return (
               <div key={r.id} className={`${styles.histRow} ${won ? styles.histWin : styles.histLose}`}>
                 <span className={styles.histIcon}>{won ? (isAttack ? '⚔️' : '🛡') : (isAttack ? '💥' : '😱')}</span>
