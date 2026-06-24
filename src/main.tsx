@@ -5,6 +5,7 @@ import { setupMockTelegram } from './telegram/mockEnv'
 import { initTelegramApp } from './telegram/webApp'
 import './i18n'   // initialise i18next before rendering
 import { App } from './App'
+import { MobileGuard } from './components/MobileGuard'
 
 if (import.meta.env.DEV) {
   setupMockTelegram()
@@ -24,7 +25,9 @@ const manifestUrl =
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <TonConnectUIProvider manifestUrl={manifestUrl}>
-      <App />
+      <MobileGuard>
+        <App />
+      </MobileGuard>
     </TonConnectUIProvider>
   </StrictMode>
 )
