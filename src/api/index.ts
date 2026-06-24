@@ -21,6 +21,13 @@ export function getMe(): Promise<ApiUser> {
   return apiFetch('/api/user/me')
 }
 
+export function flushTapBonus(bonus: number): Promise<{ balance: number }> {
+  return apiFetch('/api/user/tap', {
+    method: 'POST',
+    body:   JSON.stringify({ bonus }),
+  })
+}
+
 export function updateUserLanguage(language: 'ru' | 'en'): Promise<{ language: string }> {
   return apiFetch('/api/user/language', {
     method: 'PATCH',

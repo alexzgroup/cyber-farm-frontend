@@ -59,6 +59,25 @@ export function App() {
     return () => clearInterval(id)
   }, [])
 
+  // Flush accumulated tap bonus to backend every 3 seconds
+  useEffect(() => {
+    const id = setInterval(() => {
+      useGameStore.getState().flushTaps()
+    }, 3000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Also flush immediately when tab is hidden (user switches away or closes)
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') {
+        useGameStore.getState().flushTaps()
+      }
+    }
+    document.addEventListener('visibilitychange', onHide)
+    return () => document.removeEventListener('visibilitychange', onHide)
+  }, [])
+
   if (!isLoaded) {
     return (
       <div style={{

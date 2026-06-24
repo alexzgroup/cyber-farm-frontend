@@ -130,6 +130,7 @@ interface GameState {
   balanceBase:      number   // last committed balance from server
   balanceUpdatedAt: number   // ms timestamp of last server commit
   incomeRateTotal:  number   // coins/second — sum of active drone income_rate
+  pendingTapBonus:  number   // accumulated tap bonus not yet flushed to backend
   tonBalance:       number   // real TON crypto balance
   tonWallet:        string   // connected TON wallet address (empty = not connected)
   // Telegram user profile
@@ -167,6 +168,7 @@ interface GameState {
   updateNotifications:  (enabled: boolean) => Promise<void>
   updateDuelSettings:   (enabled: boolean) => Promise<void>
   tap:                () => void           // FarmScene tap mechanic
+  flushTaps:          () => Promise<void>  // send pendingTapBonus to backend
   buyDrone:           (droneType?: import('../api/types').DroneType) => Promise<boolean>
   upgradeDrone:       (droneId: string) => Promise<boolean>
   repairDrone:        (droneId: string) => Promise<boolean>
@@ -218,6 +220,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   balanceBase:      0,
   balanceUpdatedAt: 0,
   incomeRateTotal:  0,
+  pendingTapBonus:  0,
   tonBalance:       0,
   tonWallet:        '',
   userId:           0,
@@ -247,13 +250,32 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // ── Tap mechanic (FarmScene) ───────────────────────────────────────────
   tap: () => {
-    const { energy, balance, drones } = get()
+    const { energy, balance, drones, pendingTapBonus } = get()
     if (energy <= 0) return
     const maxLevel = Math.max(1, ...drones.map((d) => d.level)) as DroneLevel
     const bonus = DRONE_UPGRADES[maxLevel - 1]?.tapBonus ?? 0.1
     const newBalance = balance + bonus
-    // Also update balanceBase + balanceUpdatedAt so tickBalance doesn't overwrite the tap bonus
-    set({ balance: newBalance, balanceBase: newBalance, balanceUpdatedAt: Date.now(), energy: energy - 1 })
+    set({
+      balance:          newBalance,
+      balanceBase:      newBalance,
+      balanceUpdatedAt: Date.now(),
+      pendingTapBonus:  pendingTapBonus + bonus,
+      energy:           energy - 1,
+    })
+  },
+
+  flushTaps: async () => {
+    const { pendingTapBonus } = get()
+    if (pendingTapBonus <= 0) return
+    const toFlush = pendingTapBonus
+    set({ pendingTapBonus: 0 })
+    try {
+      const res = await api.flushTapBonus(toFlush)
+      set({ balanceBase: res.balance, balanceUpdatedAt: Date.now() })
+    } catch {
+      // Restore on error so it retries on next flush
+      set((s) => ({ pendingTapBonus: s.pendingTapBonus + toFlush }))
+    }
   },
 
   // ── Load all game state from API ───────────────────────────────────────
