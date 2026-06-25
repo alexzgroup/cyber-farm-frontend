@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from './store/gameStore'
 import { connectWebSocket, disconnectWebSocket } from './api/websocket'
+import { syncEnergy } from './api'
 import { BottomNav } from './components/BottomNav'
 import { RaidAlert } from './components/RaidAlert'
 import { TonDepositToast } from './components/TonDepositToast'
@@ -75,6 +76,9 @@ export function App() {
     const onHide = () => {
       if (document.visibilityState === 'hidden') {
         useGameStore.getState().flushTaps()
+        // Save energy so it survives page refresh
+        const { energy, isLoaded } = useGameStore.getState()
+        if (isLoaded) syncEnergy(energy).catch(() => {})
       }
     }
     document.addEventListener('visibilitychange', onHide)
