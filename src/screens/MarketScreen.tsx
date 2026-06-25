@@ -79,6 +79,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
     : (item.turret?.upgrades?.length ?? 0)
 
   const isTon = item.currency === 'ton'
+  const isOwnListing = currentUserId != null && item.seller_id === currentUserId
 
   // Determine if this listing is reserved by someone else
   const nowSec = Math.floor(Date.now() / 1000)
@@ -148,8 +149,8 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
         {/* Price row */}
         <PriceTag price={item.price} currency={item.currency} starsPerTon={starsPerTon} />
 
-        {/* Buttons row — always second line */}
-        {isTon ? (
+        {/* Buttons row — hidden for own listings */}
+        {isOwnListing ? null : isTon ? (
           <>
             <div className={styles.buyLabel}>КУПИТЬ</div>
             <div className={styles.cardBtns}>
