@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useTonWallet, useTonConnectUI } from '@tonconnect/ui-react'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
-import { getWalletInvoice, connectWallet, disconnectWallet, getRaidStats, prepareReferralMessage, getReferralStats } from '../api'
-import type { ApiWalletInvoice, ReferralStats, RaidStats } from '../api/types'
+import { getWalletInvoice, connectWallet, disconnectWallet, getRaidStats, getRaidHistory, getIncomingRaids, prepareReferralMessage, getReferralStats } from '../api'
+import type { ApiWalletInvoice, ApiRaid, ReferralStats, RaidStats } from '../api/types'
 import styles from './ProfileScreen.module.css'
 
 
@@ -96,9 +96,31 @@ export function ProfileScreen() {
   const [refStats, setRefStats] = useState<ReferralStats | null>(null)
 
   useEffect(() => {
+    // Try fast stats endpoint; fall back to history merge if not available (older backend)
     getRaidStats()
       .then(s => { setRaidStats(s); setStatsLoaded(true) })
-      .catch(() => setStatsLoaded(true))
+      .catch(() => {
+        // Fallback: compute stats from history
+        Promise.all([getRaidHistory(), getIncomingRaids()])
+          .then(([hist, inc]) => {
+            const map = new Map<number, ApiRaid>()
+            ;[...hist, ...inc].forEach(r => map.set(r.id, r))
+            const all = Array.from(map.values())
+            const wins = all.filter(r =>
+              (r.attacker_id === userId && r.result === 'victory') ||
+              (r.defender_id === userId && r.result === 'defeat')
+            ).length
+            const total = all.length
+            let streak = 0
+            for (const r of all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())) {
+              const won = (r.attacker_id === userId && r.result === 'victory') || (r.defender_id === userId && r.result === 'defeat')
+              if (won) streak++; else break
+            }
+            setRaidStats({ total, wins, losses: total - wins, streak })
+          })
+          .catch(() => {})
+          .finally(() => setStatsLoaded(true))
+      })
     getReferralStats()
       .then(setRefStats)
       .catch(() => {})
