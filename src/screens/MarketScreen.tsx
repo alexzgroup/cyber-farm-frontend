@@ -149,8 +149,26 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
         {/* Price row */}
         <PriceTag price={item.price} currency={item.currency} starsPerTon={starsPerTon} />
 
-        {/* Buttons row — hidden for own listings */}
-        {isOwnListing ? null : isTon ? (
+        {/* Buttons row — own listing shows info plate instead */}
+        {isOwnListing ? (
+          <>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginBottom: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ваше объявление</div>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '7px 12px', borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.04)',
+              fontSize: 11, color: 'rgba(255,255,255,0.4)',
+              letterSpacing: '0.02em', userSelect: 'none',
+            }}>
+              {(() => {
+                const d = new Date(item.created_at)
+                const pad = (n: number) => String(n).padStart(2, '0')
+                return `Создано: ${d.getDate()}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+              })()}
+            </div>
+          </>
+        ) : isTon ? (
           <>
             <div className={styles.buyLabel}>КУПИТЬ</div>
             <div className={styles.cardBtns}>
