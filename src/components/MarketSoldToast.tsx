@@ -6,7 +6,7 @@ import styles from './TonDepositToast.module.css'
 export function MarketSoldToast() {
   const toast    = useGameStore((s) => s.marketSoldToast)
   const setToast = useGameStore((s) => s.setMarketSoldToast)
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (!toast) return
@@ -16,16 +16,15 @@ export function MarketSoldToast() {
 
   if (!toast) return null
 
-  const isTon    = toast.currency === 'ton'
-  const payout   = toast.payout ?? toast.price
+  const isTon     = toast.currency === 'ton'
+  const payout    = toast.payout ?? toast.price
   const payoutStr = isTon
     ? `◈ ${payout.toFixed(4)} TON`
     : `⬡ ${Math.floor(payout).toLocaleString()}`
 
-  const isEn = i18n.language === 'en'
   const unitLabel = toast.unitType === 'drone'
-    ? (isEn ? '🚁 Drone' : '🚁 Дрон')
-    : (isEn ? '🗼 Turret' : '🗼 Башня')
+    ? t('market.soldUnitDrone')
+    : t('market.soldUnitTurret')
 
   return (
     <div
@@ -40,17 +39,17 @@ export function MarketSoldToast() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 22 }}>🎉</span>
         <span style={{ fontWeight: 800, fontSize: 15, color: '#4ade80' }}>
-          {isEn ? 'Listing sold!' : 'Лот продан!'}
+          {t('market.soldTitle')}
         </span>
       </div>
       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', paddingLeft: 30, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <span>{unitLabel}</span>
+        <span>{t('market.soldUnit')}: {unitLabel}</span>
         <span style={{ color: '#4ade80', fontWeight: 700 }}>
-          {isEn ? 'You receive: ' : 'Получено: '}{payoutStr}
+          {t('market.soldReceived')}: {payoutStr}
         </span>
         {toast.buyerName && (
           <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11 }}>
-            {isEn ? 'Buyer: ' : 'Покупатель: '}{toast.buyerName}
+            {t('market.soldBuyer')}: {toast.buyerName}
           </span>
         )}
       </div>

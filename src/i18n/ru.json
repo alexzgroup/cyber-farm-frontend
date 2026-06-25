@@ -137,7 +137,13 @@
     "unitDroneScout": "Разведчик",
     "unitDroneCombat": "Боевой",
     "unitDroneStealth": "Невидимка",
-    "unitTurret": "Башня"
+    "unitTurret": "Башня",
+    "soldTitle": "Лот продан!",
+    "soldUnit": "Юнит",
+    "soldReceived": "Получено",
+    "soldBuyer": "Покупатель",
+    "soldUnitDrone": "🚁 Дрон",
+    "soldUnitTurret": "🗼 Башня"
   },
   "equipment": {
     "title": "Оборудование",

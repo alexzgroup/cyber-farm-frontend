@@ -138,7 +138,13 @@
     "unitDroneScout": "Scout",
     "unitDroneCombat": "Combat",
     "unitDroneStealth": "Stealth",
-    "unitTurret": "Turret"
+    "unitTurret": "Turret",
+    "soldTitle": "Listing sold!",
+    "soldUnit": "Unit",
+    "soldReceived": "You receive",
+    "soldBuyer": "Buyer",
+    "soldUnitDrone": "🚁 Drone",
+    "soldUnitTurret": "🗼 Turret"
   },
   "equipment": {
     "title": "Equipment",
