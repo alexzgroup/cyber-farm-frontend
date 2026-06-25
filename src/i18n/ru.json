@@ -87,6 +87,8 @@
     "alertDefended": "{{name}} атаковал — защитили {{amount}} монет!",
     "alertLost": "💥 {{name}} украл {{amount}} монет",
     "cooldownLabel": "Снова через",
+    "ownListing": "Ваше объявление",
+    "createdAt": "Создано: {{date}}",
     "historyBtn": "История",
     "historyTitle": "История рейдов",
     "historyEmpty": "Рейдов ещё не было",

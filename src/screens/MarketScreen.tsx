@@ -152,7 +152,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
         {/* Buttons row — own listing shows info plate instead */}
         {isOwnListing ? (
           <>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginBottom: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ваше объявление</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginBottom: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('market.ownListing')}</div>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '7px 12px', borderRadius: 8,
@@ -164,7 +164,8 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
               {(() => {
                 const d = new Date(item.created_at)
                 const pad = (n: number) => String(n).padStart(2, '0')
-                return `Создано: ${d.getDate()}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+                const date = `${d.getDate()}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+                return t('market.createdAt', { date })
               })()}
             </div>
           </>

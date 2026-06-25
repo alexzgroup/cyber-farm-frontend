@@ -87,6 +87,8 @@
     "alertDefended": "{{name}} attacked — saved {{amount}} coins!",
     "alertLost": "💥 {{name}} stole {{amount}} coins",
     "cooldownLabel": "Again in",
+    "ownListing": "Your listing",
+    "createdAt": "Created: {{date}}",
     "historyBtn": "History",
     "historyTitle": "Raid History",
     "historyEmpty": "No raids yet",
