@@ -194,10 +194,48 @@ export class FarmScene extends Phaser.Scene {
     }
     canvas.addEventListener('farm-reset-view', onReset)
 
+    // Reset all unit positions to default grid layout
+    const onResetPositions = () => {
+      const { drones, turrets } = useGameStore.getState()
+
+      // Move drones back to default grid (drone zone)
+      drones.forEach((drone, i) => {
+        const sprite = this.droneSprites.get(drone.id)
+        if (!sprite) return
+        const pos = this.defaultDronePos(i, drones.length)
+        this.tweens.killTweensOf(sprite)
+        sprite.setPosition(pos.x, pos.y)
+        this.tweens.add({
+          targets: sprite, y: pos.y - 14,
+          duration: 1400 + i * 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+        })
+        this.levelLabels.get(drone.id)?.setPosition(pos.x, pos.y + 48)
+        const bl = this.brokenLabels.get(drone.id)
+        if (bl) bl.setPosition(pos.x, pos.y - 52)
+      })
+
+      // Move turrets back to default grid (defense zone)
+      turrets.forEach((turret, i) => {
+        const sprite = this.turretSprites.get(turret.id)
+        if (!sprite) return
+        const pos = this.defaultTurretPos(i, turrets.length, drones.length)
+        sprite.setPosition(pos.x, pos.y)
+        this.levelLabels.get(turret.id)?.setPosition(pos.x, pos.y + 48)
+      })
+
+      // Reset camera view and save
+      setZoom(1.0)
+      cam.scrollX = 0
+      cam.scrollY = 0
+      this.savePositions()
+    }
+    canvas.addEventListener('farm-reset-positions', onResetPositions)
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       canvas.removeEventListener('wheel', onWheel)
       canvas.removeEventListener('farm-zoom', onZoom)
       canvas.removeEventListener('farm-reset-view', onReset)
+      canvas.removeEventListener('farm-reset-positions', onResetPositions)
     })
   }
 

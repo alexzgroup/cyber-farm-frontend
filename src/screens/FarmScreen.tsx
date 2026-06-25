@@ -17,6 +17,11 @@ function fireReset() {
     ?.dispatchEvent(new CustomEvent('farm-reset-view'))
 }
 
+function fireResetPositions() {
+  document.querySelector('canvas')
+    ?.dispatchEvent(new CustomEvent('farm-reset-positions'))
+}
+
 export function FarmScreen() {
   const { t } = useTranslation()
   const setScreen = useGameStore((s) => s.setScreen)
@@ -53,6 +58,11 @@ export function FarmScreen() {
           <span className={styles.zoomIcon}>⊙</span>
         </button>
         <button className={styles.zoomBtn} onClick={() => fireZoom(-ZOOM_STEP)} {...{title: t('farm.zoomOut')}}>−</button>
+        <button
+          className={styles.resetPosBtn}
+          onClick={fireResetPositions}
+          title="Сбросить позиции юнитов"
+        >⌂</button>
       </div>
 
       <PhaserGame />
