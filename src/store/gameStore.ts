@@ -185,6 +185,8 @@ interface GameState {
   setTonDepositToast:        (n: { amount: number } | null) => void
   marketSoldToast:           { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null
   setMarketSoldToast:        (n: { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null) => void
+  cancelledListings:         Set<number>
+  markListingCancelled:      (id: number) => void
   showConfetti:              boolean
   triggerConfetti:           () => void
   hideConfetti:              () => void
@@ -520,6 +522,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setTonDepositToast: (n) => set({ tonDepositToast: n }),
   marketSoldToast:    null,
   setMarketSoldToast: (n) => set({ marketSoldToast: n }),
+  cancelledListings:  new Set<number>(),
+  markListingCancelled: (id) => set((s) => ({ cancelledListings: new Set([...s.cancelledListings, id]) })),
   showConfetti:       false,
   triggerConfetti:    () => set({ showConfetti: true }),
   hideConfetti:       () => set({ showConfetti: false }),

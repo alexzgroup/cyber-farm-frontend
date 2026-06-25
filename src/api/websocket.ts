@@ -121,6 +121,9 @@ function dispatch(msg: WsMessage) {
         // We just bought a unit — refresh equipment + confetti
         store.loadGameState()
         store.triggerConfetti()
+      } else if (msg.payload?.type === 'listing_cancelled') {
+        const id = Number(msg.payload.listing_id)
+        if (id) store.markListingCancelled(id)
       }
       break
 

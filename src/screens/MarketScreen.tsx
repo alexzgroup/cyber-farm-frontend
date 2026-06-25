@@ -59,9 +59,9 @@ function PriceTag({ price, currency, starsPerTon }: {
   return <span style={{ color: '#ffd700', fontWeight: 700 }}>⬡ {price.toLocaleString()}</span>
 }
 
-function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, currentUserId }: {
+function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, currentUserId, isCancelled }: {
   item: ApiMarketListing; onBuy: () => void; onBuyStars?: () => void
-  canBuy: boolean; starsPerTon?: number; sellerRate?: number; currentUserId?: number
+  canBuy: boolean; starsPerTon?: number; sellerRate?: number; currentUserId?: number; isCancelled?: boolean
 }) {
   const { t } = useTranslation()
 
@@ -94,12 +94,22 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
       className={styles.card}
       style={{
         '--accent': meta.color,
-        borderColor: isTon ? '#5b9cf6' : undefined,
-        opacity: isReservedByOther ? 0.4 : 1,
+        borderColor: isCancelled ? 'rgba(255,60,60,0.3)' : isTon ? '#5b9cf6' : undefined,
+        opacity: isReservedByOther || isCancelled ? 0.4 : 1,
         position: 'relative',
       } as React.CSSProperties}
     >
-      {isTon && !isReservedByOther && (
+      {isCancelled && (
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.5)', borderRadius: 'inherit', zIndex: 2,
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 900, color: '#ff4444', letterSpacing: 2, textTransform: 'uppercase' }}>
+            DELETED
+          </span>
+        </div>
+      )}
+      {isTon && !isReservedByOther && !isCancelled && (
         <div style={{
           position: 'absolute', top: 6, right: 6,
           background: '#1e3a5f', color: '#5b9cf6',
@@ -149,8 +159,8 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
         {/* Price row */}
         <PriceTag price={item.price} currency={item.currency} starsPerTon={starsPerTon} />
 
-        {/* Buttons row — own listing shows info plate instead */}
-        {isOwnListing ? (
+        {/* Buttons row — hidden for cancelled or own listings */}
+        {(isCancelled || isOwnListing) ? (
           <>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginBottom: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('market.ownListing')}</div>
             <div style={{
@@ -215,7 +225,8 @@ export function MarketScreen() {
   const loadGameState   = useGameStore((s) => s.loadGameState)
   const setScreen       = useGameStore((s) => s.setScreen)
 
-  const userID = useGameStore((s) => s.userId)
+  const userID           = useGameStore((s) => s.userId)
+  const cancelledListings = useGameStore((s) => s.cancelledListings)
 
   const [currencyTab,      setCurrencyTab]      = useState<CurrencyTab>('gold')
   const [filterType,       setFilterType]       = useState<FilterType>('all')
@@ -531,6 +542,7 @@ export function MarketScreen() {
               starsPerTon={starsPerTon}
               sellerRate={sellerRate}
               currentUserId={userID}
+              isCancelled={cancelledListings.has(item.id)}
             />
           ))}
         </div>
