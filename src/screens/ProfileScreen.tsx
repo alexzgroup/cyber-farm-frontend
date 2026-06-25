@@ -475,8 +475,8 @@ export function ProfileScreen() {
               </div>
             </div>
             <div className={styles.splitBar}>
-              <div className={styles.splitWin}  style={{ width: `${winPct}%` }} />
-              <div className={styles.splitLoss} style={{ width: `${lossPct}%` }} />
+              <div className={styles.splitWin}  style={{ flex: winPct }} />
+              <div className={styles.splitLoss} style={{ flex: lossPct }} />
             </div>
             <div className={styles.battleFoot}>
               <div className={styles.mini}>
