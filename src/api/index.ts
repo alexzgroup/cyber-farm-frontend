@@ -131,6 +131,10 @@ export function getIncomingRaids(): Promise<ApiRaid[]> {
   return apiFetch('/api/raids/incoming')
 }
 
+export function getRaidStats(): Promise<import('./types').RaidStats> {
+  return apiFetch('/api/raids/stats')
+}
+
 // ── Equipment upgrades ─────────────────────────────────────────────────────
 
 export function buyDroneEquipment(droneId: number, upgradeKey: string): Promise<ApiTurretUpgrade> {

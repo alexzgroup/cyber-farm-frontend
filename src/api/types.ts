@@ -116,6 +116,13 @@ export interface ApiRaid {
   defender_turret_levels?: number[]
 }
 
+export interface RaidStats {
+  total:   number
+  wins:    number
+  losses:  number
+  streak:  number
+}
+
 export type MarketCurrency = 'gold' | 'ton'
 
 export interface ApiMarketListing {

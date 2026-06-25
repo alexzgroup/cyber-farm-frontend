@@ -3,20 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { useTonWallet, useTonConnectUI } from '@tonconnect/ui-react'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
-import { getWalletInvoice, connectWallet, disconnectWallet, getRaidHistory, prepareReferralMessage, getReferralStats } from '../api'
-import type { ApiWalletInvoice, ApiRaid, ReferralStats } from '../api/types'
+import { getWalletInvoice, connectWallet, disconnectWallet, getRaidStats, prepareReferralMessage, getReferralStats } from '../api'
+import type { ApiWalletInvoice, ReferralStats, RaidStats } from '../api/types'
 import styles from './ProfileScreen.module.css'
 
-function calcStreak(raids: ApiRaid[], userId: number): number {
-  let s = 0
-  for (const r of raids) {
-    const won = (r.attacker_id === userId && r.result === 'victory') ||
-                (r.defender_id === userId && r.result === 'defeat')
-    if (won) s++
-    else break
-  }
-  return s
-}
 
 function getInitials(firstName: string, lastName: string): string {
   const f = firstName.trim()
@@ -98,17 +88,17 @@ export function ProfileScreen() {
   const { t, i18n }     = useTranslation()
   const settingsRef     = useRef<HTMLDivElement>(null)
 
-  // Full raid history for stats
-  const [allRaids,    setAllRaids]    = useState<ApiRaid[]>([])
+  // Raid stats from dedicated endpoint (no limit, counts all raids)
+  const [raidStats,   setRaidStats]   = useState<RaidStats | null>(null)
   const [statsLoaded, setStatsLoaded] = useState(false)
 
   // Referral stats
   const [refStats, setRefStats] = useState<ReferralStats | null>(null)
 
   useEffect(() => {
-    getRaidHistory()
-      .then(raids => { setAllRaids(raids); setStatsLoaded(true) })
-      .catch(()  => setStatsLoaded(true))
+    getRaidStats()
+      .then(s => { setRaidStats(s); setStatsLoaded(true) })
+      .catch(() => setStatsLoaded(true))
     getReferralStats()
       .then(setRefStats)
       .catch(() => {})
@@ -219,17 +209,11 @@ export function ProfileScreen() {
     })
   }
 
-  // Battle stats: win = attacked and won OR defended successfully
-  // successful = (attacker won) + (defender repelled attack)
-  const wins = statsLoaded
-    ? allRaids.filter(r =>
-        (r.attacker_id === userId && r.result === 'victory') ||
-        (r.defender_id === userId && r.result === 'defeat')
-      ).length
-    : raidLog.filter(r => r.won).length
-  const total  = statsLoaded ? allRaids.length : raidLog.length
-  const losses = total - wins
-  const streak = statsLoaded ? calcStreak(allRaids, userId) : 0
+  // Battle stats from /api/raids/stats (no limit, all raids counted)
+  const wins   = raidStats?.wins   ?? raidLog.filter(r => r.won).length
+  const losses = raidStats?.losses ?? raidLog.filter(r => !r.won).length
+  const total  = raidStats?.total  ?? (wins + losses)
+  const streak = raidStats?.streak ?? 0
 
   // Level: 1 level per 10 raids, starts at 1
   const level     = Math.max(1, Math.floor(total / 10) + 1)
