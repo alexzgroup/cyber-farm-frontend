@@ -169,18 +169,21 @@
 }
 
 .cancelBtn {
-  margin-top: 8px;
+  margin-top: 6px;
   width: 100%;
-  padding: 5px 0;
-  background: rgba(255, 60, 60, 0.1);
-  border: 1px solid rgba(255, 60, 60, 0.35);
-  border-radius: 7px;
-  color: #ff6060;
-  font-size: 10px;
+  padding: 3px 0;
+  background: transparent;
+  border: 1px solid rgba(255, 60, 60, 0.25);
+  border-radius: 5px;
+  color: rgba(255, 96, 96, 0.7);
+  font-size: 9px;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .cancelBtn:hover {
-  background: rgba(255, 60, 60, 0.2);
-  border-color: rgba(255, 60, 60, 0.6);
+  background: rgba(255, 60, 60, 0.12);
+  border-color: rgba(255, 60, 60, 0.5);
+  color: #ff6060;
 }

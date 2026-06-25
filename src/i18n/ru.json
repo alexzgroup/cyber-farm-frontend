@@ -173,7 +173,7 @@
     "errorFailed": "Ошибка. Попробуйте снова.",
     "sellBtn": "Продать",
     "forSale": "Продаётся",
-    "cancelListing": "Снять с продажи",
+    "cancelListing": "Удалить с P2P",
     "alreadyListed": "Уже выставлен на продажу",
     "reserved": "Зарезервировано",
     "reservedSec": "ещё {{n}} сек",

@@ -174,7 +174,7 @@
     "errorFailed": "Error. Please try again.",
     "sellBtn": "Sell",
     "forSale": "For Sale",
-    "cancelListing": "Cancel listing",
+    "cancelListing": "Remove from P2P",
     "alreadyListed": "Already listed for sale",
     "reserved": "Reserved",
     "reservedSec": "{{n}}s left",
