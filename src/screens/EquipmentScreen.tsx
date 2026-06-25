@@ -169,7 +169,7 @@ export function EquipmentScreen() {
                       name: `${t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #${idx + 1} LVL${drone.level}`,
                     })}
                   >
-                    📤 {t('sell.sellBtn')}
+                    <span style={{ opacity: 0.8 }}>◈</span>{t('sell.sellBtn')}
                   </div>
                 )}
               </div>
@@ -237,7 +237,7 @@ export function EquipmentScreen() {
                       name: `${t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #${idx + 1} DEF LV${turret.level}`,
                     })}
                   >
-                    📤 {t('sell.sellBtn')}
+                    <span style={{ opacity: 0.8 }}>◈</span>{t('sell.sellBtn')}
                   </div>
                 )}
               </div>
