@@ -199,8 +199,23 @@ export function prepareReferralMessage(): Promise<{ id: string; expiration_date:
   return apiFetch('/api/referral/prepare', { method: 'POST' })
 }
 
-export function buyListingWithStars(listingId: number): Promise<{ invoice_url: string; stars_amount: number; ton_price: number }> {
+export function buyListingWithStars(listingId: number): Promise<{
+  invoice_url: string
+  stars: number
+  reserved_until: number
+  seller_receives: number
+}> {
   return apiFetch(`/api/market/${listingId}/buy-stars`, { method: 'POST' })
+}
+
+export interface MarketFees {
+  contest_rate:        number
+  platform_commission: number
+  seller_rate:         number
+}
+
+export function getMarketFees(): Promise<MarketFees> {
+  return apiFetch('/api/market/fees')
 }
 
 // ── Market ─────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
-import { getMarket, reserveListing, buyListing, getWalletRate, buyListingWithStars } from '../api'
+import { getMarket, reserveListing, buyListing, getWalletRate, buyListingWithStars, getMarketFees } from '../api'
 import type { ApiMarketListing } from '../api/types'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
 import styles from './MarketScreen.module.css'
@@ -59,9 +59,9 @@ function PriceTag({ price, currency, starsPerTon }: {
   return <span style={{ color: '#ffd700', fontWeight: 700 }}>⬡ {price.toLocaleString()}</span>
 }
 
-function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
+function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, currentUserId }: {
   item: ApiMarketListing; onBuy: () => void; onBuyStars?: () => void
-  canBuy: boolean; starsPerTon?: number
+  canBuy: boolean; starsPerTon?: number; sellerRate?: number; currentUserId?: number
 }) {
   const { t } = useTranslation()
 
@@ -80,15 +80,25 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
 
   const isTon = item.currency === 'ton'
 
+  // Determine if this listing is reserved by someone else
+  const nowSec = Math.floor(Date.now() / 1000)
+  const isReservedByOther =
+    item.reserved_until != null &&
+    item.reserved_until > nowSec &&
+    item.reserved_by != null &&
+    item.reserved_by !== currentUserId
+
   return (
     <div
       className={styles.card}
       style={{
         '--accent': meta.color,
         borderColor: isTon ? '#5b9cf6' : undefined,
+        opacity: isReservedByOther ? 0.4 : 1,
+        position: 'relative',
       } as React.CSSProperties}
     >
-      {isTon && (
+      {isTon && !isReservedByOther && (
         <div style={{
           position: 'absolute', top: 6, right: 6,
           background: '#1e3a5f', color: '#5b9cf6',
@@ -96,6 +106,16 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
           letterSpacing: '0.05em',
         }}>
           TON
+        </div>
+      )}
+      {isReservedByOther && (
+        <div style={{
+          position: 'absolute', top: 6, right: 6,
+          background: '#2d1b1b', color: '#f87171',
+          fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+          letterSpacing: '0.04em',
+        }}>
+          Зарезервирован
         </div>
       )}
       <div className={styles.cardGlow} />
@@ -128,6 +148,13 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
         {/* Price row */}
         <PriceTag price={item.price} currency={item.currency} starsPerTon={starsPerTon} />
 
+        {/* Seller receives (TON listings only) */}
+        {isTon && sellerRate != null && sellerRate > 0 && (
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
+            Продавец получит: ◈ {(item.price * sellerRate).toFixed(4)} TON
+          </div>
+        )}
+
         {/* Buttons row — always second line */}
         {isTon ? (
           <>
@@ -135,7 +162,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
             <div className={styles.cardBtns}>
               <button
                 className={`${styles.buyBtn} ${styles.buyTon}`}
-                disabled={!canBuy}
+                disabled={!canBuy || isReservedByOther}
                 onClick={onBuy}
               >
                 ◈ TON
@@ -143,6 +170,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon }: {
               {onBuyStars && (
                 <button
                   className={`${styles.buyBtn} ${styles.buyStars}`}
+                  disabled={isReservedByOther}
                   onClick={onBuyStars}
                 >
                   ⭐ Stars
@@ -175,6 +203,8 @@ export function MarketScreen() {
   const loadGameState   = useGameStore((s) => s.loadGameState)
   const setScreen       = useGameStore((s) => s.setScreen)
 
+  const userID = useGameStore((s) => s.userId)
+
   const [currencyTab,      setCurrencyTab]      = useState<CurrencyTab>('gold')
   const [filterType,       setFilterType]       = useState<FilterType>('all')
   const [sortBy,           setSortBy]           = useState<SortKey>('newest')
@@ -186,10 +216,12 @@ export function MarketScreen() {
   const [insufficientItem,    setInsufficientItem]    = useState<ApiMarketListing | null>(null)
   const [insufficientTonItem, setInsufficientTonItem] = useState<ApiMarketListing | null>(null)
   const [starsPerTon,     setStarsPerTon]     = useState(0)
+  const [sellerRate,      setSellerRate]      = useState<number | undefined>(undefined)
 
-  // Fetch Stars/TON rate once
+  // Fetch Stars/TON rate and market fees once
   useEffect(() => {
     getWalletRate().then(r => setStarsPerTon(r.stars_per_ton ?? 0)).catch(() => {})
+    getMarketFees().then(f => setSellerRate(f.seller_rate)).catch(() => {})
   }, [])
 
   // Load listings from real API
@@ -204,10 +236,10 @@ export function MarketScreen() {
 
   const handleBuyStars = async (item: ApiMarketListing) => {
     try {
-      const { invoice_url } = await buyListingWithStars(item.id)
+      const res = await buyListingWithStars(item.id)
       const tgWebApp = window.Telegram?.WebApp
       if (tgWebApp?.openInvoice) {
-        tgWebApp.openInvoice(invoice_url, (status) => {
+        tgWebApp.openInvoice(res.invoice_url, (status) => {
           if (status === 'paid') {
             setBoughtIds(s => new Set(s).add(item.id))
             showToast('⭐ Куплено за Stars!')
@@ -217,10 +249,15 @@ export function MarketScreen() {
           }
         })
       } else {
-        showToast('Dev mode: ' + invoice_url)
+        showToast('Dev mode: ' + res.invoice_url)
       }
-    } catch {
-      showToast(t('market.purchaseFailed'))
+    } catch (e: any) {
+      if (e?.status === 409) {
+        const remaining = e?.data?.remaining ?? 0
+        showToast(`Лот зарезервирован, подождите ${remaining} сек`)
+      } else {
+        showToast(t('market.purchaseFailed'))
+      }
     }
   }
 
@@ -477,6 +514,8 @@ export function MarketScreen() {
               onBuy={() => handleBuy(item)}
               onBuyStars={item.currency === 'ton' ? () => handleBuyStars(item) : undefined}
               starsPerTon={starsPerTon}
+              sellerRate={sellerRate}
+              currentUserId={userID}
             />
           ))}
         </div>
