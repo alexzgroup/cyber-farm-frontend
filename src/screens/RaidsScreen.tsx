@@ -25,7 +25,10 @@ function TargetCard({ player, attackerLevel, workingDrones, onAttack }: {
   const onCooldown   = remaining > 0
   const isOnline     = player.id in onlineStatus ? onlineStatus[player.id] : player.is_online
 
-  const winChance = Math.min(85, Math.max(20, Math.round((0.5 + attackerLevel * 0.2) * 100)))
+  const attackPower  = workingDrones.reduce((s, d) => s + d.level * 10, 0)
+  const defensePower = player.defense_power ?? 0
+  const rawChance    = defensePower === 0 ? 95 : Math.round((attackPower / (attackPower + defensePower)) * 100)
+  const winChance    = Math.min(95, Math.max(5, rawChance))
   const reward    = Math.round(Number(player.balance) * 0.1)
   const disabled  = workingDrones.length === 0 || onCooldown
 

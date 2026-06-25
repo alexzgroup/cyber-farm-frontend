@@ -62,6 +62,7 @@ export interface ApiUserPublic {
   balance:        number
   cooldown_until?: number   // unix timestamp; absent/null = can attack now
   is_online?:     boolean
+  defense_power?: number
 }
 
 export interface ApiDroneUpgrade {
