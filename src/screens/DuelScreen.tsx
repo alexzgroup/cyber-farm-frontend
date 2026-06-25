@@ -18,6 +18,8 @@ export function DuelScreen() {
   const updateDuelSettings = useGameStore((s) => s.updateDuelSettings)
   const startDuel        = useGameStore((s) => s.startDuelWithPlayer)
 
+  const PLAYERS_PER_PAGE = 8
+
   const [players, setPlayers]         = useState<ApiDuelPlayer[]>([])
   const [loading, setLoading]         = useState(true)
   const [selectedId, setSelectedId]   = useState<number | null>(null)
@@ -25,6 +27,7 @@ export function DuelScreen() {
   const [currency, setCurrency]       = useState<'gold' | 'ton'>('gold')
   const [challenging, setChallenging] = useState(false)
   const [error, setError]             = useState('')
+  const [page, setPage]               = useState(0)
 
   // Can the current user afford to challenge anyone?
   const amount     = Number(betAmount) || 0
@@ -42,6 +45,8 @@ export function DuelScreen() {
       .finally(() => setLoading(false))
   }, [])
 
+  const pagedPlayers   = players.slice(page * PLAYERS_PER_PAGE, (page + 1) * PLAYERS_PER_PAGE)
+  const totalPages     = Math.ceil(players.length / PLAYERS_PER_PAGE)
   const selectedPlayer = players.find((p) => p.id === selectedId)
 
   const handleChallenge = async () => {
@@ -126,7 +131,7 @@ export function DuelScreen() {
         <div style={s.loading}>{t('duel.loading')}</div>
       ) : (
         <div style={s.list}>
-          {players.map((p) => {
+          {pagedPlayers.map((p) => {
             const pTier   = powerTier(p.power ?? 0)
             const isSelected = selectedId === p.id
             const powerPct   = ((p.power ?? 0) / maxPower) * 100
@@ -181,6 +186,14 @@ export function DuelScreen() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div style={s.pagination}>
+          <button style={{ ...s.pageBtn, ...(page === 0 ? s.pageBtnDisabled : {}) }} disabled={page === 0} onClick={() => setPage(p => p - 1)}>←</button>
+          <span style={s.pageInfo}>{page + 1} / {totalPages}</span>
+          <button style={{ ...s.pageBtn, ...(page >= totalPages - 1 ? s.pageBtnDisabled : {}) }} disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>→</button>
         </div>
       )}
 
@@ -255,6 +268,11 @@ const s: Record<string, React.CSSProperties> = {
   vsDiff:     { fontSize: 11, fontWeight: 900 },
   tonBadge:   { fontSize: 10, color: '#38bdf8' },
   selected:   { fontSize: 16, color: '#00e5ff' },
+
+  pagination:      { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '6px 16px', flexShrink: 0 },
+  pageBtn:         { background: '#1e293b', border: '1px solid #334155', borderRadius: 6, color: '#94a3b8', fontSize: 14, padding: '4px 12px', cursor: 'pointer' },
+  pageBtnDisabled: { opacity: 0.3, cursor: 'not-allowed' },
+  pageInfo:        { fontSize: 12, color: '#64748b' },
 
   notice: { padding: '6px 16px', fontSize: 10, color: '#334155', textAlign: 'center', flexShrink: 0 },
   challengeBtn: { margin: '8px 16px 16px', padding: '14px', borderRadius: 12, background: 'linear-gradient(135deg, #dc2626, #b91c1c)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', letterSpacing: 0.5, flexShrink: 0 },
