@@ -21,7 +21,8 @@
     "noEnergy": "No energy!",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "resetView": "Reset view"
+    "resetView": "Reset view",
+    "repair": "Repair"
   },
   "drone": {
     "scout": "Scout",

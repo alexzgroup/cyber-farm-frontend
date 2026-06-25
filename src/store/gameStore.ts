@@ -463,9 +463,17 @@ export const useGameStore = create<GameState>((set, get) => ({
         lastRaidResult: result,
       }))
 
-      // Refresh balance and drone health after raid
+      // Mark broken drone immediately in local state (before API refresh)
+      if (raid.broken_drone_id) {
+        const brokenId = String(raid.broken_drone_id)
+        set((s) => ({
+          drones: s.drones.map((d) => d.id === brokenId ? { ...d, isBroken: true } : d),
+        }))
+      }
+
+      // Refresh balance and drone state after raid
       const [user, drones] = await Promise.all([api.getMe(), api.getDrones()])
-      set({ balance: Number(user.balance), drones: drones.map(mapDrone) })
+      set({ balance: Number(user.balance), incomeRateTotal: user.income_rate_total ?? 0, drones: drones.map(mapDrone) })
 
       return result
     } catch {

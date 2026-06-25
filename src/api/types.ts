@@ -115,6 +115,7 @@ export interface ApiRaid {
   defender:         ApiUserPublic
   created_at:       string
   defender_turret_levels?: number[]
+  broken_drone_id?: number
 }
 
 export interface RaidStats {

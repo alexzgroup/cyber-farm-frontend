@@ -20,6 +20,7 @@ export class FarmScene extends Phaser.Scene {
   private levelLabels:    Map<string, Phaser.GameObjects.Text>  = new Map()
   private turretLabels:   Map<string, Phaser.GameObjects.Text>  = new Map()
   private hoverTweens:    Map<string, Phaser.Tweens.Tween>      = new Map()
+  private smokeTimers:    Map<string, Phaser.Time.TimerEvent>   = new Map()
   private floatingTexts:  FloatingText[] = []
   private emitter!:       Phaser.GameObjects.Particles.ParticleEmitter
   private unsubscribeStore?: () => void
@@ -58,6 +59,8 @@ export class FarmScene extends Phaser.Scene {
     const cleanup = () => {
       this.isAlive = false
       this.unsubscribeStore?.()
+      this.smokeTimers.forEach((t) => t.destroy())
+      this.smokeTimers.clear()
     }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup)
     this.events.once(Phaser.Scenes.Events.DESTROY, cleanup)
@@ -292,11 +295,43 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private addBrokenLabel(id: string, sprite: Phaser.GameObjects.Image) {
-    const label = this.add.text(sprite.x, sprite.y - 52, i18n.t('common.broken'), {
-      fontSize: '12px', fontFamily: 'monospace', color: '#ff6666',
+    const label = this.add.text(sprite.x, sprite.y - 52, `🔧 ${i18n.t('farm.repair')}`, {
+      fontSize: '12px', fontFamily: 'monospace', color: '#ffaa44',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(6)
     this.brokenLabels.set(id, label)
+    this.startSmoke(id, sprite)
+  }
+
+  private startSmoke(id: string, sprite: Phaser.GameObjects.Image) {
+    if (this.smokeTimers.has(id)) return
+    const timer = this.time.addEvent({
+      delay: 400,
+      loop: true,
+      callback: () => {
+        if (!sprite.scene) return
+        const ox = (Math.random() - 0.5) * 20
+        const puff = this.add.graphics().setDepth(7)
+        const r = 5 + Math.random() * 5
+        puff.fillStyle(0x888888, 0.55)
+        puff.fillCircle(sprite.x + ox, sprite.y - 24, r)
+        this.tweens.add({
+          targets: puff,
+          y: puff.y - 28,
+          alpha: 0,
+          scaleX: 2, scaleY: 2,
+          duration: 900 + Math.random() * 300,
+          ease: 'Power1.Out',
+          onComplete: () => puff.destroy(),
+        })
+      },
+    })
+    this.smokeTimers.set(id, timer)
+  }
+
+  private stopSmoke(id: string) {
+    const timer = this.smokeTimers.get(id)
+    if (timer) { timer.destroy(); this.smokeTimers.delete(id) }
   }
 
   // ─── Spawn turrets ─────────────────────────────────────────────────────────
@@ -389,8 +424,13 @@ export class FarmScene extends Phaser.Scene {
   }
 
   // ─── Tap ─────────────────────────────────────────────────────────────────
-  private onDroneTap(sprite: Phaser.GameObjects.Image, _id: string, wx: number, wy: number) {
+  private onDroneTap(sprite: Phaser.GameObjects.Image, id: string, wx: number, wy: number) {
     const store = useGameStore.getState()
+    const drone = store.drones.find((d) => d.id === id)
+    if (drone?.isBroken) {
+      store.setScreen('shop')
+      return
+    }
     if (store.energy <= 0) {
       this.spawnFloatingText(wx, wy, i18n.t('farm.noEnergy'), '#ff6666')
       return
@@ -447,6 +487,7 @@ export class FarmScene extends Phaser.Scene {
       } else if (!drone.isBroken && hasLabel) {
         this.brokenLabels.get(drone.id)?.destroy()
         this.brokenLabels.delete(drone.id)
+        this.stopSmoke(drone.id)
       }
 
       const lvlLabel = this.levelLabels.get(drone.id)
