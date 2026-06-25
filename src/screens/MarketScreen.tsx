@@ -291,6 +291,7 @@ export function MarketScreen() {
         setBoughtIds((s) => new Set(s).add(item.id))
         showToast('◈ ' + t('market.bought'))
         loadGameState()
+        useGameStore.getState().triggerConfetti()
       } catch (e: any) {
         if (e?.status === 409) showToast(t('market.reserved'))
         else if (e?.status === 402) setInsufficientTonItem(item)
@@ -315,6 +316,7 @@ export function MarketScreen() {
         : t(TURRET_COLORS[item.turret?.level ?? 1]?.key ?? 'turret.light')
       showToast(`${name} — ${t('market.buy').toLowerCase()}!`)
       loadGameState()
+      useGameStore.getState().triggerConfetti()
     } catch (e: any) {
       if (e?.status === 409) {
         showToast(t('market.reserved'))

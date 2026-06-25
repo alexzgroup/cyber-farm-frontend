@@ -6,6 +6,7 @@ import { BottomNav } from './components/BottomNav'
 import { RaidAlert } from './components/RaidAlert'
 import { TonDepositToast } from './components/TonDepositToast'
 import { MarketSoldToast } from './components/MarketSoldToast'
+import { Confetti } from './components/Confetti'
 import { FarmScreen } from './screens/FarmScreen'
 import { ShopScreen } from './screens/ShopScreen'
 import { RaidsScreen } from './screens/RaidsScreen'
@@ -31,6 +32,8 @@ export function App() {
   const screen        = useGameStore((s) => s.activeScreen)
   const isLoaded      = useGameStore((s) => s.isLoaded)
   const loadError     = useGameStore((s) => s.loadError)
+  const showConfetti  = useGameStore((s) => s.showConfetti)
+  const hideConfetti  = useGameStore((s) => s.hideConfetti)
   const loadGameState = useGameStore((s) => s.loadGameState)
   const language      = useGameStore((s) => s.language)
 
@@ -114,6 +117,7 @@ export function App() {
       <RaidAlert />
       <TonDepositToast />
       <MarketSoldToast />
+      {showConfetti && <Confetti onDone={hideConfetti} />}
       <DuelChallengeModal />
       <DuelWaitingModal />
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: NAV_HEIGHT, overflow: 'hidden' }}>

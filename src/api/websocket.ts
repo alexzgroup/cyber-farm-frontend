@@ -111,13 +111,16 @@ function dispatch(msg: WsMessage) {
         // Our listing was bought — refresh state and show toast
         store.loadGameState()
         store.setMarketSoldToast({
-          price:    Number(msg.payload.price ?? 0),
-          currency: String(msg.payload.currency ?? 'gold'),
-          unitType: String(msg.payload.unit_type ?? ''),
+          price:     Number(msg.payload.price ?? 0),
+          payout:    msg.payload.payout != null ? Number(msg.payload.payout) : undefined,
+          currency:  String(msg.payload.currency ?? 'gold'),
+          unitType:  String(msg.payload.unit_type ?? ''),
+          buyerName: msg.payload.buyer_name ? String(msg.payload.buyer_name) : undefined,
         })
       } else if (msg.payload?.type === 'unit_received') {
-        // We just bought a unit — refresh equipment immediately
+        // We just bought a unit — refresh equipment + confetti
         store.loadGameState()
+        store.triggerConfetti()
       }
       break
 

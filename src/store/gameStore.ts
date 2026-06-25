@@ -183,8 +183,11 @@ interface GameState {
   setTonBalance:             (amount: number) => void
   tonDepositToast:           { amount: number } | null
   setTonDepositToast:        (n: { amount: number } | null) => void
-  marketSoldToast:           { price: number; currency: string; unitType: string } | null
-  setMarketSoldToast:        (n: { price: number; currency: string; unitType: string } | null) => void
+  marketSoldToast:           { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null
+  setMarketSoldToast:        (n: { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null) => void
+  showConfetti:              boolean
+  triggerConfetti:           () => void
+  hideConfetti:              () => void
   setTonWallet:              (address: string) => void
 
   // Duel
@@ -517,6 +520,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   setTonDepositToast: (n) => set({ tonDepositToast: n }),
   marketSoldToast:    null,
   setMarketSoldToast: (n) => set({ marketSoldToast: n }),
+  showConfetti:       false,
+  triggerConfetti:    () => set({ showConfetti: true }),
+  hideConfetti:       () => set({ showConfetti: false }),
   setTonWallet:  (address) => set({ tonWallet: address }),
 
   // ── Duel ───────────────────────────────────────────────────────────────────
