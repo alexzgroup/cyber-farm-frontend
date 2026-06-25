@@ -308,31 +308,33 @@ export class FarmScene extends Phaser.Scene {
   private startSmoke(id: string, sprite: Phaser.GameObjects.Image) {
     if (this.smokeTimers.has(id)) return
 
-    // ── Smoke puffs ──────────────────────────────────────────────────────
+    // ── Smoke puffs — rise upward in a column ────────────────────────────
     const smokeTick = this.time.addEvent({
-      delay: 220,
+      delay: 260,
       loop: true,
       callback: () => {
         if (!sprite.scene) return
-        const ox = (Math.random() - 0.5) * 18
-        const g = this.add.graphics().setDepth(8)
-        const r1 = 7 + Math.random() * 5
-        const r2 = 5 + Math.random() * 4
-        const r3 = 4 + Math.random() * 3
-        const bx = sprite.x + ox, by = sprite.y - 20
-        // Three overlapping circles = fluffy cloud
-        g.fillStyle(0xaaaaaa, 0.45); g.fillCircle(bx,      by,      r1)
-        g.fillStyle(0xbbbbbb, 0.35); g.fillCircle(bx + r1 * 0.5, by - 3, r2)
-        g.fillStyle(0x999999, 0.30); g.fillCircle(bx - r1 * 0.4, by - 2, r3)
-        // Dark core
-        g.fillStyle(0x555555, 0.20); g.fillCircle(bx, by + 2, r1 * 0.55)
-        const driftX = (Math.random() - 0.5) * 24
+        const r1 = 8 + Math.random() * 6
+        const r2 = 6 + Math.random() * 5
+        const r3 = 5 + Math.random() * 4
+        const ox = (Math.random() - 0.5) * 10
+        // Position the Graphics object at sprite position, draw at local (0,0)
+        const g = this.add.graphics()
+          .setPosition(sprite.x + ox, sprite.y - 18)
+          .setDepth(8)
+        // Fluffy cloud: three overlapping circles
+        g.fillStyle(0x777777, 0.55); g.fillCircle(0,           0,      r1)
+        g.fillStyle(0x999999, 0.40); g.fillCircle(r1 * 0.55,  -3,      r2)
+        g.fillStyle(0x666666, 0.35); g.fillCircle(-r1 * 0.45, -2,      r3)
+        g.fillStyle(0x444444, 0.25); g.fillCircle(0,           3,  r1 * 0.5)
         this.tweens.add({
           targets: g,
-          x: driftX, y: -(38 + Math.random() * 22),
-          alpha: 0, scaleX: 2.2, scaleY: 2.2,
-          duration: 1100 + Math.random() * 400,
-          ease: 'Sine.easeOut',
+          y:      sprite.y - 18 - (55 + Math.random() * 35), // rise up
+          x:      sprite.x + ox + (Math.random() - 0.5) * 16,
+          scaleX: 2.6, scaleY: 2.6,
+          alpha:  0,
+          duration: 1800 + Math.random() * 600,
+          ease:   'Sine.easeOut',
           onComplete: () => g.destroy(),
         })
       },
