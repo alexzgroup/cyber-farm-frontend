@@ -162,7 +162,7 @@ export function ShopScreen() {
           </div>
           <div className={styles.cardInfo}>
             <p className={styles.droneName}>{t('drone.basic')}</p>
-            <p className={styles.droneStats}>{t('shop.stats', {hr: 10, tap: 0.1})}</p>
+            <p className={styles.droneStats}>{t('shop.stats', {hr: 4.32, tap: 0.1})}</p>
           </div>
           <button
             className={`${styles.btn} ${balance >= newDronePrice && !buyingDrone ? styles.btnActive : styles.btnDisabled}`}

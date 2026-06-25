@@ -312,20 +312,21 @@ export class DuelScene extends Phaser.Scene {
       }
     })
 
-    // Opponent position from WS — denormalise from 0–1 to local pixels
+    // Opponent position from WS — denormalise and mirror: arenas are symmetric,
+    // so opponent's (nx, ny) maps to (1-nx, 1-ny) on our screen.
     this.onOpponentMove = (e: Event) => {
       const { nx, ny } = (e as CustomEvent<{ nx: number; ny: number }>).detail
-      this.opponentTargetX = nx * this.W
-      this.opponentTargetY = ny * this.H
+      this.opponentTargetX = (1 - nx) * this.W
+      this.opponentTargetY = (1 - ny) * this.H
     }
     canvas.addEventListener('duel-opponent-move', this.onOpponentMove)
 
-    // Opponent shot — denormalise target coords
+    // Opponent shot — mirror target coords same as position
     this.onOpponentShoot = (e: Event) => {
       const { ntx, nty } = (e as CustomEvent<{ ntx: number; nty: number }>).detail
       this.spawnBullet(
         this.opponentSprite.x, this.opponentSprite.y,
-        ntx * this.W, nty * this.H, false, 0xff4444,
+        (1 - ntx) * this.W, (1 - nty) * this.H, false, 0xff4444,
       )
       soundManager.laser()
     }

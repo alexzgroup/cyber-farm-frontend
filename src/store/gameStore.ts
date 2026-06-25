@@ -340,7 +340,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         firstName:        user.first_name ?? '',
         lastName:         user.last_name  ?? '',
         username:         user.username   ?? '',
-        energy:           user.energy,
+        energy:           get().isLoaded ? get().energy : user.energy,
         maxEnergy:        user.max_energy,
         drones:           drones.map(mapDrone),
         turrets:          turrets.map(mapTurret),
@@ -442,6 +442,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   executeRaid: async (defenderId) => {
     try {
+      // Save current energy to backend before raid so reloads return the real value
+      try { await api.syncEnergy(get().energy) } catch { /* non-blocking */ }
       const raid = await api.startRaid(defenderId)
       const won    = raid.result === 'victory'
       const amount = Number(raid.coins_stolen)

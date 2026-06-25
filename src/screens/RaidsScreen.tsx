@@ -199,9 +199,10 @@ export function RaidsScreen() {
   const { t }       = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const drones      = useGameStore((s) => s.drones)
-  const executeRaid = useGameStore((s) => s.executeRaid)
-  const setScreen   = useGameStore((s) => s.setScreen)
+  const drones       = useGameStore((s) => s.drones)
+  const executeRaid  = useGameStore((s) => s.executeRaid)
+  const setScreen    = useGameStore((s) => s.setScreen)
+  const onlineStatus = useGameStore((s) => s.onlineStatus)
 
   const workingDrones = drones.filter((d) => !d.isBroken)
   const attackerLevel = workingDrones.length > 0
@@ -227,7 +228,17 @@ export function RaidsScreen() {
     setView('battle')
   }
 
-  const pagedTargets = targets.slice(
+  const sortedTargets = [...targets].sort((a, b) => {
+    const now = Date.now() / 1000
+    const aOnline    = a.id in onlineStatus ? onlineStatus[a.id] : a.is_online
+    const bOnline    = b.id in onlineStatus ? onlineStatus[b.id] : b.is_online
+    const aCanAttack = !a.cooldown_until || a.cooldown_until < now
+    const bCanAttack = !b.cooldown_until || b.cooldown_until < now
+    const aScore = (aOnline ? 2 : 0) + (aCanAttack ? 1 : 0)
+    const bScore = (bOnline ? 2 : 0) + (bCanAttack ? 1 : 0)
+    return bScore - aScore
+  })
+  const pagedTargets = sortedTargets.slice(
     targetsPage * TARGETS_PER_PAGE,
     (targetsPage + 1) * TARGETS_PER_PAGE
   )

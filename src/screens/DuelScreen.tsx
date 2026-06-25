@@ -45,7 +45,12 @@ export function DuelScreen() {
       .finally(() => setLoading(false))
   }, [])
 
-  const pagedPlayers   = players.slice(page * PLAYERS_PER_PAGE, (page + 1) * PLAYERS_PER_PAGE)
+  const sortedPlayers  = [...players].sort((a, b) => {
+    const aOnline = a.id in onlineStatus ? onlineStatus[a.id] : a.is_online
+    const bOnline = b.id in onlineStatus ? onlineStatus[b.id] : b.is_online
+    return (bOnline ? 1 : 0) - (aOnline ? 1 : 0)
+  })
+  const pagedPlayers   = sortedPlayers.slice(page * PLAYERS_PER_PAGE, (page + 1) * PLAYERS_PER_PAGE)
   const totalPages     = Math.ceil(players.length / PLAYERS_PER_PAGE)
   const selectedPlayer = players.find((p) => p.id === selectedId)
 

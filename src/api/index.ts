@@ -49,6 +49,13 @@ export function updateUserDuelSettings(enabled: boolean): Promise<{ allow_duel: 
   })
 }
 
+export function syncEnergy(energy: number): Promise<{ energy: number }> {
+  return apiFetch('/api/user/energy', {
+    method: 'PATCH',
+    body:   JSON.stringify({ energy }),
+  })
+}
+
 export function syncPositions(
   drones:  UnitPosition[],
   turrets: UnitPosition[],

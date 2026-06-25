@@ -110,7 +110,7 @@ export function ProfileScreen() {
     getReferralStats()
       .then(setRefStats)
       .catch(() => {})
-  }, [])
+  }, [raidLog.length])
 
   const displayName = [firstName, lastName].filter(Boolean).join(' ') || username || `#${telegramId}`
   const initials    = getInitials(firstName, lastName)
