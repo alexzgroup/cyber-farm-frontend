@@ -121,8 +121,10 @@ export function EquipmentScreen() {
             const isListed = droneListingId !== undefined
 
             return (
-              <button
+              <div
                 key={drone.id}
+                role="button"
+                tabIndex={0}
                 className={`${styles.card} ${drone.isBroken ? styles.broken : ''} ${isListed ? styles.listed : ''}`}
                 style={{ '--unit-color': color } as React.CSSProperties}
                 onClick={() => handleSelectDrone(drone.id)}
@@ -173,7 +175,7 @@ export function EquipmentScreen() {
                     📤 {t('sell.sellBtn')}
                   </div>
                 )}
-              </button>
+              </div>
             )
           })}
         </div>
@@ -192,8 +194,10 @@ export function EquipmentScreen() {
             const isListed = turretListingId !== undefined
 
             return (
-              <button
+              <div
                 key={turret.id}
+                role="button"
+                tabIndex={0}
                 className={`${styles.card} ${isListed ? styles.listed : ''}`}
                 style={{ '--unit-color': color } as React.CSSProperties}
                 onClick={() => handleSelectTurret(turret.id)}
@@ -242,7 +246,7 @@ export function EquipmentScreen() {
                     📤 {t('sell.sellBtn')}
                   </div>
                 )}
-              </button>
+              </div>
             )
           })}
         </div>
