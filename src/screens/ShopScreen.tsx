@@ -26,6 +26,8 @@ export function ShopScreen() {
 
   const [buyingTurret, setBuyingTurret] = useState<number | null>(null)
   const [turretToast,  setTurretToast]  = useState('')
+  const [buyingDrone,  setBuyingDrone]  = useState(false)
+  const [upgradingId,  setUpgradingId]  = useState<string | null>(null)
 
   const brokenDrones   = drones.filter((d) => d.isBroken)
   const newDronePrice  = 300 + drones.length * 200
@@ -38,6 +40,18 @@ export function ShopScreen() {
       setTurretToast(t('shop.turretBought'))
       setTimeout(() => setTurretToast(''), 2500)
     }
+  }
+
+  const handleBuyDrone = async () => {
+    if (buyingDrone) return
+    setBuyingDrone(true)
+    try { await buyDrone() } finally { setBuyingDrone(false) }
+  }
+
+  const handleUpgradeDrone = async (id: string) => {
+    if (upgradingId) return
+    setUpgradingId(id)
+    try { await upgradeDrone(id) } finally { setUpgradingId(null) }
   }
 
   return (
@@ -106,11 +120,11 @@ export function ShopScreen() {
                 </div>
                 {!drone.isBroken && next ? (
                   <button
-                    className={`${styles.btn} ${canAfford ? styles.btnActive : styles.btnDisabled}`}
-                    onClick={() => upgradeDrone(drone.id)}
-                    disabled={!canAfford}
+                    className={`${styles.btn} ${canAfford && upgradingId !== drone.id ? styles.btnActive : styles.btnDisabled}`}
+                    onClick={() => handleUpgradeDrone(drone.id)}
+                    disabled={!canAfford || upgradingId !== null}
                   >
-                    <span className={styles.btnLevel}>{t('shop.upgrade', { n: next.level })}</span>
+                    <span className={styles.btnLevel}>{upgradingId === drone.id ? '...' : t('shop.upgrade', { n: next.level })}</span>
                     <span className={styles.btnPrice}>⬡ {next.price}</span>
                   </button>
                 ) : !drone.isBroken ? (
@@ -151,11 +165,11 @@ export function ShopScreen() {
             <p className={styles.droneStats}>{t('shop.stats', {hr: 10, tap: 0.1})}</p>
           </div>
           <button
-            className={`${styles.btn} ${balance >= newDronePrice ? styles.btnActive : styles.btnDisabled}`}
-            onClick={() => buyDrone()}
-            disabled={balance < newDronePrice}
+            className={`${styles.btn} ${balance >= newDronePrice && !buyingDrone ? styles.btnActive : styles.btnDisabled}`}
+            onClick={handleBuyDrone}
+            disabled={balance < newDronePrice || buyingDrone}
           >
-            <span className={styles.btnLevel}>{t('shop.buy')}</span>
+            <span className={styles.btnLevel}>{buyingDrone ? '...' : t('shop.buy')}</span>
             <span className={styles.btnPrice}>⬡ {newDronePrice}</span>
           </button>
         </div>
