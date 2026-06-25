@@ -115,6 +115,9 @@ function dispatch(msg: WsMessage) {
           currency: String(msg.payload.currency ?? 'gold'),
           unitType: String(msg.payload.unit_type ?? ''),
         })
+      } else if (msg.payload?.type === 'unit_received') {
+        // We just bought a unit — refresh equipment immediately
+        store.loadGameState()
       }
       break
 
