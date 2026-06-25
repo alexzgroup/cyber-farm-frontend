@@ -7,6 +7,7 @@ const _devUserId    = typeof window !== 'undefined'
   : ''
 const JWT_KEY       = _devUserId ? `cyberfarm_jwt_${_devUserId}` : 'cyberfarm_jwt'
 const JWT_EXP_KEY   = _devUserId ? `cyberfarm_jwt_exp_${_devUserId}` : 'cyberfarm_jwt_exp'
+const TG_UID_KEY    = 'cyberfarm_tg_uid'
 
 // ── Dev-mode detection ─────────────────────────────────────────────────────
 // true when running in browser outside Telegram (initData is empty / missing)
@@ -73,12 +74,28 @@ async function buildSignedInitData(): Promise<string> {
   return new URLSearchParams({ ...fields, hash }).toString()
 }
 
+// ── Telegram user ID (known before auth, from initDataUnsafe) ─────────────
+function getCurrentTgId(): number {
+  if (devMode) return _devUserId ? Number(_devUserId) : 123456789
+  return (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id ?? 0
+}
+
 // ── JWT storage ────────────────────────────────────────────────────────────
 let _jwt: string | null = null
 let _jwtExp: number     = 0
 
 function loadJwtFromStorage() {
   if (typeof window === 'undefined') return
+  // If a different Telegram account opened the app on this device — wipe the old token
+  const storedTgId  = Number(localStorage.getItem(TG_UID_KEY) ?? 0)
+  const currentTgId = getCurrentTgId()
+  if (storedTgId && currentTgId && storedTgId !== currentTgId) {
+    localStorage.removeItem(JWT_KEY)
+    localStorage.removeItem(JWT_EXP_KEY)
+    localStorage.removeItem(TG_UID_KEY)
+    console.log('[CyberFarm] Telegram account changed — cleared stored token')
+    return
+  }
   _jwt    = localStorage.getItem(JWT_KEY)
   _jwtExp = Number(localStorage.getItem(JWT_EXP_KEY) ?? 0)
 }
@@ -88,6 +105,7 @@ function saveJwt(token: string, expiresIn: number) {
   _jwtExp = Date.now() + expiresIn * 1000
   localStorage.setItem(JWT_KEY,     token)
   localStorage.setItem(JWT_EXP_KEY, String(_jwtExp))
+  localStorage.setItem(TG_UID_KEY,  String(getCurrentTgId()))
 }
 
 function clearJwt() {
@@ -95,6 +113,7 @@ function clearJwt() {
   _jwtExp = 0
   localStorage.removeItem(JWT_KEY)
   localStorage.removeItem(JWT_EXP_KEY)
+  localStorage.removeItem(TG_UID_KEY)
 }
 
 function isJwtFresh(): boolean {
