@@ -121,12 +121,11 @@ export function EquipmentScreen() {
             const isListed = droneListingId !== undefined
 
             return (
-              <div key={drone.id} className={styles.cardWrapper}>
+              <div key={drone.id} className={styles.cardWrapper} style={{ '--unit-color': color } as React.CSSProperties}>
                 <div
                   role="button"
                   tabIndex={0}
                   className={`${styles.card} ${drone.isBroken ? styles.broken : ''} ${isListed ? styles.listed : ''}`}
-                  style={{ '--unit-color': color } as React.CSSProperties}
                   onClick={() => handleSelectDrone(drone.id)}
                 >
                   <div className={styles.cardGlow} />
@@ -192,12 +191,11 @@ export function EquipmentScreen() {
             const isListed = turretListingId !== undefined
 
             return (
-              <div key={turret.id} className={styles.cardWrapper}>
+              <div key={turret.id} className={styles.cardWrapper} style={{ '--unit-color': color } as React.CSSProperties}>
                 <div
                   role="button"
                   tabIndex={0}
                   className={`${styles.card} ${isListed ? styles.listed : ''}`}
-                  style={{ '--unit-color': color } as React.CSSProperties}
                   onClick={() => handleSelectTurret(turret.id)}
                 >
                   <div className={styles.cardGlow} />
