@@ -223,7 +223,12 @@ export function RaidsScreen() {
       p.id === targetId ? { ...p, cooldown_until: Math.floor(Date.now() / 1000) + 3600 } : p
     ))
     setAttackerDrones([...workingDrones])
-    setTargetTurrets([{ level: 1 }])
+    const turretLevels = result.defenderTurretLevels ?? []
+    setTargetTurrets(
+      turretLevels.length > 0
+        ? turretLevels.map((lvl) => ({ level: Math.min(3, Math.max(1, lvl)) as 1 | 2 | 3 }))
+        : [{ level: 1 as const }]
+    )
     setResult(result)
     setView('battle')
   }

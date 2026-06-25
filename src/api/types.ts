@@ -113,6 +113,7 @@ export interface ApiRaid {
   attacker:         ApiUserPublic
   defender:         ApiUserPublic
   created_at:       string
+  defender_turret_levels?: number[]
 }
 
 export type MarketCurrency = 'gold' | 'ton'

@@ -54,6 +54,7 @@ export interface RaidResult {
   won: boolean
   amount: number
   targetName: string
+  defenderTurretLevels?: number[]
 }
 
 export interface IncomingRaidEntry {
@@ -455,7 +456,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         amount,
         timestamp:  Date.now(),
       }
-      const result: RaidResult = { won, amount, targetName: entry.targetName }
+      const result: RaidResult = { won, amount, targetName: entry.targetName, defenderTurretLevels: raid.defender_turret_levels }
 
       set((s) => ({
         raidLog:       [entry, ...s.raidLog].slice(0, 20),
