@@ -7,11 +7,12 @@ import { getWalletInvoice, connectWallet, disconnectWallet, getRaidHistory, prep
 import type { ApiWalletInvoice, ApiRaid, ReferralStats } from '../api/types'
 import styles from './ProfileScreen.module.css'
 
-function calcStreak(raids: ApiRaid[]): number {
-  // API returns newest first; count consecutive victories from the top
+function calcStreak(raids: ApiRaid[], userId: number): number {
   let s = 0
   for (const r of raids) {
-    if (r.result === 'victory') s++
+    const won = (r.attacker_id === userId && r.result === 'victory') ||
+                (r.defender_id === userId && r.result === 'defeat')
+    if (won) s++
     else break
   }
   return s
@@ -89,6 +90,7 @@ export function ProfileScreen() {
   const drones              = useGameStore((s) => s.drones)
   const turrets          = useGameStore((s) => s.turrets)
   const incomeRateTotal  = useGameStore((s) => s.incomeRateTotal)
+  const userId           = useGameStore((s) => s.userId)
   const firstName        = useGameStore((s) => s.firstName)
   const lastName         = useGameStore((s) => s.lastName)
   const username         = useGameStore((s) => s.username)
@@ -217,13 +219,17 @@ export function ProfileScreen() {
     })
   }
 
-  // Battle stats from full history (falls back to session raidLog while loading)
-  const wins   = statsLoaded ? allRaids.filter(r => r.result === 'victory').length
-                             : raidLog.filter(r => r.won).length
-  const losses = statsLoaded ? allRaids.filter(r => r.result === 'defeat').length
-                             : raidLog.filter(r => !r.won).length
-  const total  = wins + losses
-  const streak = statsLoaded ? calcStreak(allRaids) : 0
+  // Battle stats: win = attacked and won OR defended successfully
+  // successful = (attacker won) + (defender repelled attack)
+  const wins = statsLoaded
+    ? allRaids.filter(r =>
+        (r.attacker_id === userId && r.result === 'victory') ||
+        (r.defender_id === userId && r.result === 'defeat')
+      ).length
+    : raidLog.filter(r => r.won).length
+  const total  = statsLoaded ? allRaids.length : raidLog.length
+  const losses = total - wins
+  const streak = statsLoaded ? calcStreak(allRaids, userId) : 0
 
   // Level: 1 level per 10 raids, starts at 1
   const level     = Math.max(1, Math.floor(total / 10) + 1)
