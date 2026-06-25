@@ -164,7 +164,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
               {(() => {
                 const d = new Date(item.created_at)
                 const pad = (n: number) => String(n).padStart(2, '0')
-                return `${d.getDate()}.${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+                return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
               })()}
             </div>
           </>
@@ -313,7 +313,7 @@ export function MarketScreen() {
       const name = item.drone
         ? t(DRONE_COLORS[item.drone.drone_type]?.key ?? 'drone.scout')
         : t(TURRET_COLORS[item.turret?.level ?? 1]?.key ?? 'turret.light')
-      showToast(`${name} — ${t('market.buy').toLowerCase()}!`)
+      showToast(`${name} — ${t('market.bought')}`)
       loadGameState()
       useGameStore.getState().triggerConfetti()
     } catch (e: any) {
