@@ -143,7 +143,9 @@
     "soldReceived": "You receive",
     "soldBuyer": "Buyer",
     "soldUnitDrone": "🚁 Drone",
-    "soldUnitTurret": "🗼 Turret"
+    "soldUnitTurret": "🗼 Turret",
+    "boughtStars": "⭐ Purchased with Stars!",
+    "reservedWait": "Lot is reserved, please wait {{sec}}s"
   },
   "equipment": {
     "title": "Equipment",

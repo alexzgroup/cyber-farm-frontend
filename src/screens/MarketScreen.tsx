@@ -254,7 +254,8 @@ export function MarketScreen() {
         tgWebApp.openInvoice(res.invoice_url, (status) => {
           if (status === 'paid') {
             setBoughtIds(s => new Set(s).add(item.id))
-            showToast('⭐ Куплено за Stars!')
+            showToast(t('market.boughtStars'))
+            useGameStore.getState().triggerConfetti()
             loadGameState()
           } else if (status !== 'cancelled') {
             showToast(t('market.purchaseFailed'))
@@ -266,7 +267,7 @@ export function MarketScreen() {
     } catch (e: any) {
       if (e?.status === 409) {
         const remaining = e?.data?.remaining ?? 0
-        showToast(`Лот зарезервирован, подождите ${remaining} сек`)
+        showToast(t('market.reservedWait', { sec: remaining }))
       } else {
         showToast(t('market.purchaseFailed'))
       }

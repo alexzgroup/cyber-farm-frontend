@@ -142,7 +142,9 @@
     "soldReceived": "Получено",
     "soldBuyer": "Покупатель",
     "soldUnitDrone": "🚁 Дрон",
-    "soldUnitTurret": "🗼 Башня"
+    "soldUnitTurret": "🗼 Башня",
+    "boughtStars": "⭐ Куплено за Stars!",
+    "reservedWait": "Лот зарезервирован, подождите {{sec}} сек"
   },
   "equipment": {
     "title": "Оборудование",
