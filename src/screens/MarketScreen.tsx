@@ -148,13 +148,6 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
         {/* Price row */}
         <PriceTag price={item.price} currency={item.currency} starsPerTon={starsPerTon} />
 
-        {/* Seller receives (TON listings only) */}
-        {isTon && sellerRate != null && sellerRate > 0 && (
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
-            Продавец получит: ◈ {(item.price * sellerRate).toFixed(4)} TON
-          </div>
-        )}
-
         {/* Buttons row — always second line */}
         {isTon ? (
           <>
