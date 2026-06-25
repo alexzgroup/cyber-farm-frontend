@@ -121,41 +121,42 @@ export function EquipmentScreen() {
             const isListed = droneListingId !== undefined
 
             return (
-              <div
-                key={drone.id}
-                role="button"
-                tabIndex={0}
-                className={`${styles.card} ${drone.isBroken ? styles.broken : ''} ${isListed ? styles.listed : ''}`}
-                style={{ '--unit-color': color } as React.CSSProperties}
-                onClick={() => handleSelectDrone(drone.id)}
-              >
-                <div className={styles.cardGlow} />
-                {isListed && <div className={styles.forSaleBadge}>{t('sell.forSale')}</div>}
-                <UnitCircle color={color} size={46}>
-                  {drone.isBroken
-                    ? <span style={{ fontSize: 20 }}>⚠</span>
-                    : <DroneIcon color={color} size={26} />}
-                </UnitCircle>
-                <div className={styles.cardName}>
-                  {t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #{idx + 1}
-                </div>
-                <div className={styles.cardLevel} style={{ color }}>
-                  LVL {drone.level}{drone.isBroken ? ' ⚠' : ''}
-                </div>
-                <div className={styles.upgradeBar}>
-                  <div
-                    className={styles.upgradeBarFill}
-                    style={{ width: `${(totalUpgrades / maxUpgrades) * 100}%`, background: color }}
-                  />
-                </div>
-                <div className={styles.upgradeCount} style={{ color }}>
-                  {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
+              <div key={drone.id} className={styles.cardWrapper}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={`${styles.card} ${drone.isBroken ? styles.broken : ''} ${isListed ? styles.listed : ''}`}
+                  style={{ '--unit-color': color } as React.CSSProperties}
+                  onClick={() => handleSelectDrone(drone.id)}
+                >
+                  <div className={styles.cardGlow} />
+                  {isListed && <div className={styles.forSaleBadge}>{t('sell.forSale')}</div>}
+                  <UnitCircle color={color} size={46}>
+                    {drone.isBroken
+                      ? <span style={{ fontSize: 20 }}>⚠</span>
+                      : <DroneIcon color={color} size={26} />}
+                  </UnitCircle>
+                  <div className={styles.cardName}>
+                    {t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #{idx + 1}
+                  </div>
+                  <div className={styles.cardLevel} style={{ color }}>
+                    LVL {drone.level}{drone.isBroken ? ' ⚠' : ''}
+                  </div>
+                  <div className={styles.upgradeBar}>
+                    <div
+                      className={styles.upgradeBarFill}
+                      style={{ width: `${(totalUpgrades / maxUpgrades) * 100}%`, background: color }}
+                    />
+                  </div>
+                  <div className={styles.upgradeCount} style={{ color }}>
+                    {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
+                  </div>
                 </div>
                 {isListed ? (
                   <div
                     role="button"
                     className={styles.cancelBtn}
-                    onClick={e => handleCancelListing(e, droneListingId)}
+                    onClick={e => { e.stopPropagation(); handleCancelListing(e, droneListingId) }}
                   >
                     ✕ {t('sell.cancelListing')}
                   </div>
@@ -163,14 +164,11 @@ export function EquipmentScreen() {
                   <div
                     role="button"
                     className={styles.sellBtn}
-                    onClick={e => {
-                      e.stopPropagation()
-                      setSellTarget({
-                        id: Number(drone.id),
-                        type: 'drone',
-                        name: `${t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #${idx + 1} LVL${drone.level}`,
-                      })
-                    }}
+                    onClick={() => setSellTarget({
+                      id: Number(drone.id),
+                      type: 'drone',
+                      name: `${t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #${idx + 1} LVL${drone.level}`,
+                    })}
                   >
                     📤 {t('sell.sellBtn')}
                   </div>
@@ -194,39 +192,40 @@ export function EquipmentScreen() {
             const isListed = turretListingId !== undefined
 
             return (
-              <div
-                key={turret.id}
-                role="button"
-                tabIndex={0}
-                className={`${styles.card} ${isListed ? styles.listed : ''}`}
-                style={{ '--unit-color': color } as React.CSSProperties}
-                onClick={() => handleSelectTurret(turret.id)}
-              >
-                <div className={styles.cardGlow} />
-                {isListed && <div className={styles.forSaleBadge}>{t('sell.forSale')}</div>}
-                <UnitCircle color={color} size={46}>
-                  <TurretIcon color={color} level={turret.level} size={26} />
-                </UnitCircle>
-                <div className={styles.cardName}>
-                  {t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #{idx + 1}
-                </div>
-                <div className={styles.cardLevel} style={{ color }}>
-                  DEF LV{turret.level}
-                </div>
-                <div className={styles.upgradeBar}>
-                  <div
-                    className={styles.upgradeBarFill}
-                    style={{ width: `${(totalUpgrades / maxUpgrades) * 100}%`, background: color }}
-                  />
-                </div>
-                <div className={styles.upgradeCount} style={{ color }}>
-                  {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
+              <div key={turret.id} className={styles.cardWrapper}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={`${styles.card} ${isListed ? styles.listed : ''}`}
+                  style={{ '--unit-color': color } as React.CSSProperties}
+                  onClick={() => handleSelectTurret(turret.id)}
+                >
+                  <div className={styles.cardGlow} />
+                  {isListed && <div className={styles.forSaleBadge}>{t('sell.forSale')}</div>}
+                  <UnitCircle color={color} size={46}>
+                    <TurretIcon color={color} level={turret.level} size={26} />
+                  </UnitCircle>
+                  <div className={styles.cardName}>
+                    {t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #{idx + 1}
+                  </div>
+                  <div className={styles.cardLevel} style={{ color }}>
+                    DEF LV{turret.level}
+                  </div>
+                  <div className={styles.upgradeBar}>
+                    <div
+                      className={styles.upgradeBarFill}
+                      style={{ width: `${(totalUpgrades / maxUpgrades) * 100}%`, background: color }}
+                    />
+                  </div>
+                  <div className={styles.upgradeCount} style={{ color }}>
+                    {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
+                  </div>
                 </div>
                 {isListed ? (
                   <div
                     role="button"
                     className={styles.cancelBtn}
-                    onClick={e => handleCancelListing(e, turretListingId)}
+                    onClick={e => { e.stopPropagation(); handleCancelListing(e, turretListingId) }}
                   >
                     ✕ {t('sell.cancelListing')}
                   </div>
@@ -234,14 +233,11 @@ export function EquipmentScreen() {
                   <div
                     role="button"
                     className={styles.sellBtn}
-                    onClick={e => {
-                      e.stopPropagation()
-                      setSellTarget({
-                        id: Number(turret.id),
-                        type: 'turret',
-                        name: `${t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #${idx + 1} DEF LV${turret.level}`,
-                      })
-                    }}
+                    onClick={() => setSellTarget({
+                      id: Number(turret.id),
+                      type: 'turret',
+                      name: `${t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #${idx + 1} DEF LV${turret.level}`,
+                    })}
                   >
                     📤 {t('sell.sellBtn')}
                   </div>
