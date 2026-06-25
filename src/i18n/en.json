@@ -127,7 +127,6 @@
     "insufficientTonDesc": "Your balance is {{have}} TON. Required: {{need}} TON.",
     "topupTon": "Top up TON balance",
     "ownListing": "Your listing",
-    "createdAt": "Created: {{date}}",
     "historyBtn": "History",
     "historyTitle": "P2P History",
     "historyEmpty": "No transactions yet",

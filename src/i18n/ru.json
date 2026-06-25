@@ -126,7 +126,6 @@
     "insufficientTonDesc": "На балансе {{have}} TON. Нужно {{need}} TON.",
     "topupTon": "Пополнить TON баланс",
     "ownListing": "Ваше объявление",
-    "createdAt": "Создано: {{date}}",
     "historyBtn": "История",
     "historyTitle": "История P2P",
     "historyEmpty": "Сделок пока нет",

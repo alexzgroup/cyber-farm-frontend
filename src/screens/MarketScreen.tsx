@@ -164,8 +164,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
               {(() => {
                 const d = new Date(item.created_at)
                 const pad = (n: number) => String(n).padStart(2, '0')
-                const date = `${d.getDate()}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-                return t('market.createdAt', { date })
+                return `${d.getDate()}.${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
               })()}
             </div>
           </>
