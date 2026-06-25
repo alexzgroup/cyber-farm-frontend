@@ -61,6 +61,8 @@ export class FarmScene extends Phaser.Scene {
       this.unsubscribeStore?.()
       this.smokeTimers.forEach((t) => t.destroy())
       this.smokeTimers.clear()
+      // Restore sprite alphas
+      this.droneSprites.forEach((s) => { if (s.scene) s.setAlpha(1) })
     }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup)
     this.events.once(Phaser.Scenes.Events.DESTROY, cleanup)
@@ -305,33 +307,94 @@ export class FarmScene extends Phaser.Scene {
 
   private startSmoke(id: string, sprite: Phaser.GameObjects.Image) {
     if (this.smokeTimers.has(id)) return
-    const timer = this.time.addEvent({
-      delay: 400,
+
+    // ── Smoke puffs ──────────────────────────────────────────────────────
+    const smokeTick = this.time.addEvent({
+      delay: 220,
       loop: true,
       callback: () => {
         if (!sprite.scene) return
-        const ox = (Math.random() - 0.5) * 20
-        const puff = this.add.graphics().setDepth(7)
-        const r = 5 + Math.random() * 5
-        puff.fillStyle(0x888888, 0.55)
-        puff.fillCircle(sprite.x + ox, sprite.y - 24, r)
+        const ox = (Math.random() - 0.5) * 18
+        const g = this.add.graphics().setDepth(8)
+        const r1 = 7 + Math.random() * 5
+        const r2 = 5 + Math.random() * 4
+        const r3 = 4 + Math.random() * 3
+        const bx = sprite.x + ox, by = sprite.y - 20
+        // Three overlapping circles = fluffy cloud
+        g.fillStyle(0xaaaaaa, 0.45); g.fillCircle(bx,      by,      r1)
+        g.fillStyle(0xbbbbbb, 0.35); g.fillCircle(bx + r1 * 0.5, by - 3, r2)
+        g.fillStyle(0x999999, 0.30); g.fillCircle(bx - r1 * 0.4, by - 2, r3)
+        // Dark core
+        g.fillStyle(0x555555, 0.20); g.fillCircle(bx, by + 2, r1 * 0.55)
+        const driftX = (Math.random() - 0.5) * 24
         this.tweens.add({
-          targets: puff,
-          y: puff.y - 28,
-          alpha: 0,
-          scaleX: 2, scaleY: 2,
-          duration: 900 + Math.random() * 300,
-          ease: 'Power1.Out',
-          onComplete: () => puff.destroy(),
+          targets: g,
+          x: driftX, y: -(38 + Math.random() * 22),
+          alpha: 0, scaleX: 2.2, scaleY: 2.2,
+          duration: 1100 + Math.random() * 400,
+          ease: 'Sine.easeOut',
+          onComplete: () => g.destroy(),
         })
       },
     })
-    this.smokeTimers.set(id, timer)
+
+    // ── Electric sparks (short-circuit) ─────────────────────────────────
+    const sparkTick = this.time.addEvent({
+      delay: 160,
+      loop: true,
+      callback: () => {
+        if (!sprite.scene) return
+        const bolt = this.add.graphics().setDepth(9)
+        const cx = sprite.x, cy = sprite.y
+        // Draw 2–3 random zigzag segments
+        const segs = 2 + Math.floor(Math.random() * 2)
+        const angle = Math.random() * Math.PI * 2
+        const len = 14 + Math.random() * 10
+        bolt.lineStyle(1.5, 0xffee22, 0.9)
+        bolt.beginPath()
+        bolt.moveTo(cx, cy)
+        for (let i = 1; i <= segs; i++) {
+          const t = i / segs
+          const jx = (Math.random() - 0.5) * 10
+          const jy = (Math.random() - 0.5) * 10
+          bolt.lineTo(
+            cx + Math.cos(angle) * len * t + jx,
+            cy + Math.sin(angle) * len * t + jy,
+          )
+        }
+        bolt.strokePath()
+        // Bright tip
+        bolt.fillStyle(0xffffff, 1)
+        bolt.fillCircle(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len, 2)
+        this.tweens.add({
+          targets: bolt, alpha: 0,
+          duration: 120,
+          onComplete: () => bolt.destroy(),
+        })
+
+        // Occasional full-body flicker of the sprite
+        if (Math.random() < 0.3) {
+          this.tweens.add({
+            targets: sprite, alpha: 0.35,
+            duration: 55, yoyo: true, ease: 'Linear',
+          })
+        }
+      },
+    })
+
+    // Store both timers under the same id using a composite key
+    this.smokeTimers.set(id, smokeTick)
+    this.smokeTimers.set(id + '_spark', sparkTick)
   }
 
   private stopSmoke(id: string) {
-    const timer = this.smokeTimers.get(id)
-    if (timer) { timer.destroy(); this.smokeTimers.delete(id) }
+    this.smokeTimers.get(id)?.destroy()
+    this.smokeTimers.delete(id)
+    this.smokeTimers.get(id + '_spark')?.destroy()
+    this.smokeTimers.delete(id + '_spark')
+    // Restore sprite alpha in case it was mid-flicker
+    const sprite = this.droneSprites.get(id)
+    if (sprite?.scene) sprite.setAlpha(1)
   }
 
   // ─── Spawn turrets ─────────────────────────────────────────────────────────
