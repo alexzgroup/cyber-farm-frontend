@@ -41,6 +41,24 @@ export function App() {
 
   useEffect(() => { loadGameState() }, [loadGameState])
 
+  // Deep-link from Telegram inline buttons / share URL: ?startapp=screen_<name>
+  // Whitelisted to a fixed set of Screen values to avoid arbitrary state injection.
+  useEffect(() => {
+    if (!isLoaded) return
+    const param = new URLSearchParams(window.location.search).get('startapp')
+                ?? (window as any).Telegram?.WebApp?.initDataUnsafe?.start_param
+                ?? ''
+    if (!param.startsWith('screen_')) return
+    const target = param.slice('screen_'.length)
+    const allowed: ReadonlyArray<string> = [
+      'raids', 'duel', 'market', 'shop', 'profile', 'contest',
+      'referrals', 'favorites', 'topup', 'equipment',
+    ]
+    if (allowed.includes(target)) {
+      useGameStore.getState().setScreen(target as any)
+    }
+  }, [isLoaded])
+
   useEffect(() => {
     if (isLoaded && !loadError) {
       connectWebSocket()
