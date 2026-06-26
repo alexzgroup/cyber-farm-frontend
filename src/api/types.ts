@@ -65,6 +65,18 @@ export interface ApiUserPublic {
   cooldown_until?: number   // unix timestamp; absent/null = can attack now
   is_online?:     boolean
   defense_power?: number
+  is_favorite?:   boolean
+}
+
+export interface ApiFavorite {
+  id:         number   // user id of the favorite
+  username:   string
+  first_name: string
+  last_name:  string
+  avatar_url?: string
+  added_at:   string
+  cooldown_until?: number  // unix ts; null = can raid now
+  is_online?:  boolean
 }
 
 export interface ApiDroneUpgrade {
@@ -276,6 +288,7 @@ export interface ApiDuelPlayer {
   ton_balance: number
   power:       number   // total battle power from all active drones + upgrades
   is_online?:  boolean
+  is_favorite?: boolean
 }
 
 export interface ApiDuelChallenge {

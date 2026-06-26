@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore, type RaidResult, type Drone } from '../store/gameStore'
 import { PvPHeader } from '../components/PvPHeader'
-import { getRaidTargets, getRaidHistory, getIncomingRaids } from '../api'
+import { HeartButton } from '../components/HeartButton'
+import { getRaidTargets, getRaidHistory, getIncomingRaids, addFavorite, removeFavorite } from '../api'
 import type { ApiUserPublic, ApiRaid } from '../api/types'
 import { RaidGame } from '../game/RaidGame'
 import { fmtGold } from '../utils/format'
@@ -13,11 +14,12 @@ type View    = 'targets' | 'battle' | 'result' | 'history'
 type HistTab = 'attack' | 'defense'
 
 // ── Target card ───────────────────────────────────────────────────────────────
-function TargetCard({ player, attackerLevel, workingDrones, onAttack }: {
-  player:        ApiUserPublic
-  attackerLevel: number
-  workingDrones: Drone[]
-  onAttack:      (id: number) => void
+function TargetCard({ player, attackerLevel, workingDrones, onAttack, onToggleFavorite }: {
+  player:           ApiUserPublic
+  attackerLevel:    number
+  workingDrones:    Drone[]
+  onAttack:         (id: number) => void
+  onToggleFavorite: (id: number, current: boolean) => void
 }) {
   const { t } = useTranslation()
   const onlineStatus = useGameStore((s) => s.onlineStatus)
@@ -58,13 +60,21 @@ function TargetCard({ player, attackerLevel, workingDrones, onAttack }: {
           </p>
         )}
       </div>
-      <button
-        className={`${styles.attackBtn} ${disabled ? styles.attackDisabled : ''} ${onCooldown ? styles.attackCooldown : ''}`}
-        onClick={() => !disabled && onAttack(player.id)}
-        disabled={disabled}
-      >
-        {onCooldown ? <span>{fmtCooldown(remaining)}</span> : <>⚔️<span>{t('raids.attack')}</span></>}
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <HeartButton
+          active={!!player.is_favorite}
+          onClick={() => onToggleFavorite(player.id, !!player.is_favorite)}
+          size={44}
+        />
+        <button
+          className={`${styles.attackBtn} ${disabled ? styles.attackDisabled : ''} ${onCooldown ? styles.attackCooldown : ''}`}
+          onClick={() => !disabled && onAttack(player.id)}
+          disabled={disabled}
+          title={t('raids.attack')}
+        >
+          {onCooldown ? <span>{fmtCooldown(remaining)}</span> : '⚔️'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -225,6 +235,31 @@ export function RaidsScreen() {
     return () => clearTimeout(handle)
   }, [search])
 
+  // Auto-trigger raid if we arrived here from Favorites with a pending target
+  const pendingRaidTargetId   = useGameStore((s) => s.pendingRaidTargetId)
+  const setPendingRaidTarget  = useGameStore((s) => s.setPendingRaidTarget)
+  useEffect(() => {
+    if (pendingRaidTargetId == null) return
+    if (workingDrones.length === 0) {
+      setPendingRaidTarget(null)
+      return
+    }
+    const id = pendingRaidTargetId
+    setPendingRaidTarget(null)
+    handleAttack(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingRaidTargetId])
+
+  const handleToggleFavorite = async (id: number, current: boolean) => {
+    setTargets((prev) => prev.map((p) => p.id === id ? { ...p, is_favorite: !current } : p))
+    try {
+      if (current) await removeFavorite(id)
+      else         await addFavorite(id)
+    } catch {
+      setTargets((prev) => prev.map((p) => p.id === id ? { ...p, is_favorite: current } : p))
+    }
+  }
+
   const handleAttack = async (targetId: number) => {
     const result = await executeRaid(targetId)
     if (!result) return
@@ -326,6 +361,7 @@ export function RaidsScreen() {
                       attackerLevel={attackerLevel}
                       workingDrones={workingDrones}
                       onAttack={handleAttack}
+                      onToggleFavorite={handleToggleFavorite}
                     />
                   ))}
                 </div>

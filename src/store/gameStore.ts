@@ -66,7 +66,7 @@ export interface IncomingRaidEntry {
   timestamp:    number
 }
 
-export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'unit-detail' | 'purchases' | 'topup' | 'contest' | 'duel' | 'duel-battle' | 'duel-history' | 'referrals' | 'withdrawal'
+export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'unit-detail' | 'purchases' | 'topup' | 'contest' | 'duel' | 'duel-battle' | 'duel-history' | 'referrals' | 'withdrawal' | 'favorites'
 
 export type UnitUpgrades = Record<string, Record<string, number>>
 
@@ -184,6 +184,8 @@ interface GameState {
   setTonBalance:             (amount: number) => void
   tonDepositToast:           { amount: number } | null
   setTonDepositToast:        (n: { amount: number } | null) => void
+  pendingRaidTargetId:       number | null
+  setPendingRaidTarget:      (id: number | null) => void
   marketSoldToast:           { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null
   setMarketSoldToast:        (n: { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null) => void
   cancelledListings:         Set<number>
@@ -486,7 +488,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   purchaseUnitUpgrade: async (unitId, upgradeId, cost) => {
     const { drones, turrets, unitUpgrades } = get()
     const current = unitUpgrades[unitId]?.[upgradeId] ?? 0
-    if (current >= 3) return false
+    if (current >= 10) return false
 
     const isDrone = drones.some((d) => d.id === unitId)
     try {
@@ -531,6 +533,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setTonBalance:      (amount) => set({ tonBalance: amount }),
   tonDepositToast:    null,
   setTonDepositToast: (n) => set({ tonDepositToast: n }),
+  pendingRaidTargetId: null,
+  setPendingRaidTarget: (id) => set({ pendingRaidTargetId: id }),
   marketSoldToast:    null,
   setMarketSoldToast: (n) => set({ marketSoldToast: n }),
   cancelledListings:  new Set<number>(),

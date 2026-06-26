@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { PvPHeader } from '../components/PvPHeader'
+import { HeartButton } from '../components/HeartButton'
 import { totalPower, powerTier } from '../utils/duelPower'
 import * as api from '../api'
 import type { ApiDuelPlayer } from '../api/types'
@@ -55,6 +56,16 @@ export function DuelScreen() {
   const pagedPlayers   = players.slice(page * PLAYERS_PER_PAGE, (page + 1) * PLAYERS_PER_PAGE)
   const totalPages     = Math.ceil(players.length / PLAYERS_PER_PAGE)
   const selectedPlayer = players.find((p) => p.id === selectedId)
+
+  const handleToggleFavorite = async (id: number, current: boolean) => {
+    setPlayers((prev) => prev.map((p) => p.id === id ? { ...p, is_favorite: !current } : p))
+    try {
+      if (current) await api.removeFavorite(id)
+      else         await api.addFavorite(id)
+    } catch {
+      setPlayers((prev) => prev.map((p) => p.id === id ? { ...p, is_favorite: current } : p))
+    }
+  }
 
   const handleChallenge = async () => {
     if (!selectedPlayer || !betAmount || Number(betAmount) <= 0) return
@@ -183,6 +194,13 @@ export function DuelScreen() {
                     )}
                   </div>
                 </div>
+
+                {/* Favorite toggle */}
+                <HeartButton
+                  active={!!p.is_favorite}
+                  onClick={() => handleToggleFavorite(p.id, !!p.is_favorite)}
+                  size={28}
+                />
 
                 {/* Power bar + tier */}
                 <div style={s.cardRight}>

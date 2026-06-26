@@ -556,6 +556,25 @@ export function ProfileScreen() {
                   </svg>
                 )}
               </button>
+
+              {/* Favorites shortcut */}
+              <button
+                onClick={() => setScreen('favorites')}
+                title={t('favorites.title')}
+                style={{
+                  flexShrink: 0,
+                  width: 44, height: 44, borderRadius: 12,
+                  border: '1px solid rgba(255,61,127,0.35)',
+                  background: 'linear-gradient(135deg, rgba(255,61,127,0.2), rgba(255,61,127,0.08))',
+                  color: '#ff3d7f', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginLeft: 8,
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
             </div>
 
             {/* Referral link + copy */}

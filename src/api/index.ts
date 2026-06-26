@@ -297,6 +297,20 @@ export function cancelListing(id: number): Promise<{ ok: boolean }> {
   return apiFetch(`/api/market/${id}`, { method: 'DELETE' })
 }
 
+// ── Favorites ──────────────────────────────────────────────────────────────
+
+export function getFavorites(): Promise<{ items: import('./types').ApiFavorite[]; total: number }> {
+  return apiFetch('/api/favorites')
+}
+
+export function addFavorite(favoriteId: number): Promise<{ ok: boolean; id: number }> {
+  return apiFetch('/api/favorites', { method: 'POST', body: JSON.stringify({ favorite_id: favoriteId }) })
+}
+
+export function removeFavorite(favoriteId: number): Promise<{ ok: boolean; removed: number }> {
+  return apiFetch(`/api/favorites/${favoriteId}`, { method: 'DELETE' })
+}
+
 // ── Leaderboard ────────────────────────────────────────────────────────────
 
 export function getLeaderboard(limit = 50): Promise<ApiLeaderboardEntry[]> {

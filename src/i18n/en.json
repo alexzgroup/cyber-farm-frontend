@@ -310,6 +310,13 @@
   "search": {
     "placeholder": "Search by @username, Telegram ID or name"
   },
+  "favorites": {
+    "title": "Favorite friends",
+    "empty": "No favorites yet",
+    "emptyHint": "Add players to favorites by tapping the heart icon in Duel and Raids sections.",
+    "add": "Add to favorites",
+    "remove": "Remove from favorites"
+  },
   "duel": {
     "title": "Duel",
     "bet": "Stake",
