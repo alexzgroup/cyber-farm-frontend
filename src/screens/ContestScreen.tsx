@@ -86,7 +86,7 @@ function Podium({ last }: { last: ContestLast }) {
           <div key={w.rank} className={`${styles.podiumItem} ${orderClass[i]}`}>
             <span className={styles.podiumMedal}>{orderMedal[i]}</span>
             <span className={styles.podiumName}>{name}</span>
-            <span className={styles.podiumScore}>⬡ {w.score.toLocaleString('ru')}</span>
+            <span className={styles.podiumScore}>⬡ {Math.floor(w.score).toLocaleString('ru')}</span>
             <span className={styles.podiumPrize}>◈ {parseFloat(w.prize_gold.toFixed(4))} TON</span>
           </div>
         )
@@ -178,7 +178,7 @@ export function ContestScreen() {
                       {isTop ? MEDALS[entry.rank - 1] : entry.rank}
                     </span>
                     <span className={styles.lbName}>{name}{isMe ? ' 👈' : ''}</span>
-                    <span className={styles.lbScore}>⬡ {entry.score.toLocaleString('ru')}</span>
+                    <span className={styles.lbScore}>⬡ {Math.floor(entry.score).toLocaleString('ru')}</span>
                     {entry.projected_prize > 0 && (
                       <span className={styles.lbPrize}>
                         ~◈ {parseFloat(entry.projected_prize.toFixed(4))} TON

@@ -179,7 +179,10 @@
     "reserved": "Зарезервировано",
     "reservedSec": "ещё {{n}} сек",
     "tonCommissionHint": "Вы получите ◈ {{net}} TON (комиссия {{pct}})",
-    "tonPoolHint": "3% от продажи идёт в еженедельный призовой пул 🏆"
+    "tonPoolHint": "3% от продажи идёт в еженедельный призовой пул 🏆",
+    "range": "Допустимая цена: от {{min}} до {{max}} {{currency}}",
+    "errorMin": "Цена не может быть меньше {{min}} {{currency}}",
+    "errorMax": "Цена не может быть больше {{max}} {{currency}}"
   },
   "contest": {
     "title": "Конкурсы",

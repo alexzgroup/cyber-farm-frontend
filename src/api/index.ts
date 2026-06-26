@@ -223,6 +223,10 @@ export interface MarketFees {
   contest_rate:        number
   platform_commission: number
   seller_rate:         number
+  min_gold:            number
+  max_gold:            number
+  min_ton:             number
+  max_ton:             number
 }
 
 export function getMarketFees(): Promise<MarketFees> {
