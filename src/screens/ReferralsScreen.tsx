@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { getReferralList } from '../api'
+import { Avatar } from '../components/Avatar'
 import type { ReferralEntry } from '../api/types'
 
 const LEVEL_COLORS: Record<number, string> = {
@@ -55,6 +56,7 @@ export function ReferralsScreen() {
             const color = LEVEL_COLORS[r.level] ?? '#64748b'
             return (
               <div key={i} style={s.row}>
+                <Avatar url={r.avatar_url} firstName={r.first_name} lastName={r.last_name} username={r.username} size={32} />
                 <span style={{ ...s.levelBadge, color, borderColor: color + '50', background: color + '12' }}>
                   {t('profile.levelN', { n: r.level })}
                 </span>

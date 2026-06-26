@@ -4,6 +4,7 @@ import { useTonWallet, useTonConnectUI } from '@tonconnect/ui-react'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
 import { getWalletInvoice, connectWallet, disconnectWallet, getRaidStats, getRaidHistory, getIncomingRaids, prepareReferralMessage, getReferralStats } from '../api'
+import { Avatar } from '../components/Avatar'
 import type { ApiWalletInvoice, ApiRaid, ReferralStats, RaidStats } from '../api/types'
 import styles from './ProfileScreen.module.css'
 
@@ -632,7 +633,10 @@ export function ProfileScreen() {
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       padding: '6px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 8,
                     }}>
-                      <span style={{ fontSize: 13, color: '#cbd5e1' }}>{name}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                        <Avatar url={r.avatar_url} firstName={r.first_name} lastName={r.last_name} username={r.username} size={26} />
+                        <span style={{ fontSize: 13, color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                      </div>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{
                           fontSize: 11, color: '#22d3ee', background: 'rgba(6,182,212,0.12)',
@@ -643,7 +647,7 @@ export function ProfileScreen() {
                         <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
                           {r.created_at.slice(0, 10)}
                         </span>
-                      </div>
+                    </div>
                     </div>
                   )
                 })}

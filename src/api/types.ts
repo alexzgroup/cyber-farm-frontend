@@ -3,6 +3,7 @@ export interface ReferralEntry {
   username:   string
   first_name: string
   last_name:  string
+  avatar_url?: string
   created_at: string
 }
 
@@ -59,6 +60,7 @@ export interface ApiUserPublic {
   id:             number
   username:       string
   first_name:     string
+  avatar_url?:    string
   balance:        number
   cooldown_until?: number   // unix timestamp; absent/null = can attack now
   is_online?:     boolean
@@ -269,6 +271,7 @@ export interface ApiDuelPlayer {
   id:          number
   username:    string
   first_name:  string
+  avatar_url?: string
   balance:     number
   ton_balance: number
   power:       number   // total battle power from all active drones + upgrades
