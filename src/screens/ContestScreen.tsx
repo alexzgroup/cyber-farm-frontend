@@ -139,6 +139,7 @@ export function ContestScreen() {
               <span className={styles.poolUnit}> TON</span>
             </div>
             <div className={styles.poolHint}>{t('contest.contribution')}</div>
+            <div className={styles.poolRules}>{t('contest.rules')}</div>
           </div>
 
           {/* Countdown */}

@@ -107,6 +107,13 @@
   margin-top: 6px;
 }
 
+.poolRules {
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
 /* ── Countdown ── */
 .countdownCard {
   background: rgba(255,255,255,0.04);

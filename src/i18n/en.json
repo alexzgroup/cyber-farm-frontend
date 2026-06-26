@@ -201,6 +201,7 @@
     "minutes": "m",
     "seconds": "s",
     "contribution": "3% of TON sales on P2P market goes to the pool",
+    "rules": "The winner earns the most per week: drone income + raid trophies. Draw every Monday.",
     "emptyLeaderboard": "No participants yet",
     "farmBtn": "🏆 Contest"
   },
