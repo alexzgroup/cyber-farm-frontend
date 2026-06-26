@@ -307,6 +307,9 @@
     "title": "Settings",
     "sound": "Sounds"
   },
+  "search": {
+    "placeholder": "Search by @username, Telegram ID or name"
+  },
   "duel": {
     "title": "Duel",
     "bet": "Stake",

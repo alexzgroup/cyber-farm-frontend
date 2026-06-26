@@ -199,6 +199,7 @@ export function RaidsScreen() {
   const [targetsPage, setTargetsPage] = useState(0)
   const [targets, setTargets]         = useState<ApiUserPublic[]>([])
   const [targetsLoading, setTargetsLoading] = useState(true)
+  const [search, setSearch]           = useState('')
   const { t }       = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -212,11 +213,17 @@ export function RaidsScreen() {
     : 0
 
   useEffect(() => {
-    getRaidTargets()
-      .then(setTargets)
-      .catch(() => setTargets([]))
-      .finally(() => setTargetsLoading(false))
-  }, [])
+    const trimmed = search.trim()
+    if (trimmed.length === 1) return
+    setTargetsLoading(true)
+    const handle = setTimeout(() => {
+      getRaidTargets(trimmed.length >= 2 ? trimmed : undefined)
+        .then(setTargets)
+        .catch(() => setTargets([]))
+        .finally(() => setTargetsLoading(false))
+    }, 300)
+    return () => clearTimeout(handle)
+  }, [search])
 
   const handleAttack = async (targetId: number) => {
     const result = await executeRaid(targetId)
@@ -292,6 +299,18 @@ export function RaidsScreen() {
               <h3 className={styles.sectionTitle}>{t('raids.chooseTarget')}</h3>
               <span className={styles.sectionCount}>{t('raids.playerCount', { count: targets.length })}</span>
             </div>
+
+            <input
+              type="text"
+              placeholder={t('search.placeholder')}
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setTargetsPage(0) }}
+              style={{
+                margin: '0 0 10px', padding: '8px 12px', borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)',
+                color: '#e0e0e0', fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
+              }}
+            />
 
             {targetsLoading ? (
               <div className={styles.warning}>{t('raids.loading')}</div>

@@ -28,6 +28,7 @@ export function DuelScreen() {
   const [challenging, setChallenging] = useState(false)
   const [error, setError]             = useState('')
   const [page, setPage]               = useState(0)
+  const [search, setSearch]           = useState('')
 
   // Can the current user afford to challenge anyone?
   const amount     = Number(betAmount) || 0
@@ -39,11 +40,17 @@ export function DuelScreen() {
   const myTier  = powerTier(myPower)
 
   useEffect(() => {
-    api.getDuelPlayers()
-      .then(setPlayers)
-      .catch(() => setPlayers([]))
-      .finally(() => setLoading(false))
-  }, [])
+    const trimmed = search.trim()
+    if (trimmed.length === 1) return
+    setLoading(true)
+    const handle = setTimeout(() => {
+      api.getDuelPlayers(trimmed.length >= 2 ? trimmed : undefined)
+        .then(setPlayers)
+        .catch(() => setPlayers([]))
+        .finally(() => setLoading(false))
+    }, 300)
+    return () => clearTimeout(handle)
+  }, [search])
 
   const pagedPlayers   = players.slice(page * PLAYERS_PER_PAGE, (page + 1) * PLAYERS_PER_PAGE)
   const totalPages     = Math.ceil(players.length / PLAYERS_PER_PAGE)
@@ -110,23 +117,30 @@ export function DuelScreen() {
       <div style={s.betBox}>
         <div style={s.betRow}>
           <span style={s.betLabel}>{t('duel.bet')}</span>
+          <input
+            style={s.betInput}
+            type="number" min="1"
+            placeholder={t('duel.betPlaceholder')}
+            value={betAmount}
+            onChange={(e) => setBetAmount(e.target.value)}
+          />
           <div style={s.currencyToggle}>
             <button style={{ ...s.currBtn, ...(currency === 'gold' ? s.currActive    : {}) }} onClick={() => setCurrency('gold')}>⬡ Золото</button>
             <button style={{ ...s.currBtn, ...(currency === 'ton'  ? s.currActiveTon : {}) }} onClick={() => setCurrency('ton') }>◈ TON</button>
           </div>
         </div>
-        <input
-          style={s.betInput}
-          type="number" min="1"
-          placeholder={t('duel.betPlaceholder')}
-          value={betAmount}
-          onChange={(e) => setBetAmount(e.target.value)}
-        />
         {error && <div style={s.error}>{error}</div>}
       </div>
 
       {/* Player list */}
       <div style={s.listLabel}>{t('duel.chooseFoe')}</div>
+      <input
+        type="text"
+        placeholder={t('search.placeholder')}
+        value={search}
+        onChange={(e) => { setSearch(e.target.value); setPage(0) }}
+        style={s.searchInput}
+      />
       {loading ? (
         <div style={s.loading}>{t('duel.loading')}</div>
       ) : (
@@ -232,18 +246,19 @@ const s: Record<string, React.CSSProperties> = {
   myPowerFill:  { height: '100%', borderRadius: 2, transition: 'width 0.6s ease' },
 
   // Bet
-  betBox:   { padding: '10px 16px', flexShrink: 0 },
-  betRow:   { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  betLabel: { fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 },
-  currencyToggle: { display: 'flex', gap: 4 },
-  currBtn:       { background: 'transparent', border: '1px solid #334155', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: '#64748b', cursor: 'pointer' },
+  betBox:   { padding: '8px 16px', flexShrink: 0 },
+  betRow:   { display: 'flex', alignItems: 'center', gap: 10 },
+  betLabel: { fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, flexShrink: 0 },
+  currencyToggle: { display: 'flex', gap: 4, flexShrink: 0 },
+  currBtn:       { background: 'transparent', border: '1px solid #334155', borderRadius: 6, padding: '6px 8px', fontSize: 11, color: '#64748b', cursor: 'pointer', whiteSpace: 'nowrap' },
   currActive:    { borderColor: '#f59e0b', color: '#f59e0b', background: 'rgba(245,158,11,0.12)' },
   currActiveTon: { borderColor: '#38bdf8', color: '#38bdf8', background: 'rgba(56,189,248,0.12)' },
-  betInput: { width: '100%', background: '#111827', border: '1px solid #334155', borderRadius: 8, padding: '10px 12px', color: '#e2e8f0', fontSize: 15, boxSizing: 'border-box' },
+  betInput: { flex: 1, minWidth: 0, background: '#111827', border: '1px solid #334155', borderRadius: 8, padding: '7px 10px', color: '#e2e8f0', fontSize: 14, boxSizing: 'border-box' },
   error:    { fontSize: 11, color: '#f87171', marginTop: 6 },
 
   // List
   listLabel: { padding: '8px 16px 4px', fontSize: 10, color: '#475569', letterSpacing: 1.5, textTransform: 'uppercase', flexShrink: 0 },
+  searchInput: { margin: '0 16px 8px', padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: '#e0e0e0', fontSize: 13, outline: 'none', flexShrink: 0 } as React.CSSProperties,
   loading:   { padding: 20, textAlign: 'center', color: '#475569', fontSize: 13 },
   list:      { flex: 1, overflowY: 'auto', padding: '4px 12px 8px', display: 'flex', flexDirection: 'column', gap: 6 },
 
@@ -274,8 +289,8 @@ const s: Record<string, React.CSSProperties> = {
   pageBtnDisabled: { opacity: 0.3, cursor: 'not-allowed' },
   pageInfo:        { fontSize: 12, color: '#64748b' },
 
-  notice: { padding: '6px 16px', fontSize: 10, color: '#334155', textAlign: 'center', flexShrink: 0 },
-  challengeBtn: { margin: '8px 16px 16px', padding: '14px', borderRadius: 12, background: 'linear-gradient(135deg, #dc2626, #b91c1c)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', letterSpacing: 0.5, flexShrink: 0 },
+  notice: { padding: '3px 16px', fontSize: 9, color: '#334155', textAlign: 'center', flexShrink: 0 },
+  challengeBtn: { margin: '4px auto 10px', padding: '10px 28px', borderRadius: 10, background: 'linear-gradient(135deg, #dc2626, #b91c1c)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', letterSpacing: 0.5, flexShrink: 0, display: 'block', maxWidth: 280, width: 'auto' },
   challengeBtnDisabled: { background: '#1e293b', color: '#475569', cursor: 'not-allowed' },
 
   stub: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: '32px 24px' },

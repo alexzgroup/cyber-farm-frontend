@@ -308,6 +308,9 @@
     "title": "Настройки",
     "sound": "Звуки"
   },
+  "search": {
+    "placeholder": "Поиск по @юзернейму, Telegram ID или имени"
+  },
   "duel": {
     "title": "Схватка",
     "bet": "Ставка",

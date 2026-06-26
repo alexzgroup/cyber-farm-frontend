@@ -112,8 +112,9 @@ export function upgradeTurret(
 
 // ── Raids ──────────────────────────────────────────────────────────────────
 
-export function getRaidTargets(): Promise<ApiUserPublic[]> {
-  return apiFetch('/api/raids/targets')
+export function getRaidTargets(search?: string): Promise<ApiUserPublic[]> {
+  const qs = search && search.trim().length >= 2 ? `?search=${encodeURIComponent(search.trim())}` : ''
+  return apiFetch(`/api/raids/targets${qs}`)
 }
 
 export function startRaid(defenderId: number): Promise<ApiRaid> {
@@ -304,8 +305,9 @@ export function getLeaderboard(limit = 50): Promise<ApiLeaderboardEntry[]> {
 
 // ── Duel ───────────────────────────────────────────────────────────────────
 
-export function getDuelPlayers(): Promise<import('./types').ApiDuelPlayer[]> {
-  return apiFetch('/api/duel/players')
+export function getDuelPlayers(search?: string): Promise<import('./types').ApiDuelPlayer[]> {
+  const qs = search && search.trim().length >= 2 ? `?search=${encodeURIComponent(search.trim())}` : ''
+  return apiFetch(`/api/duel/players${qs}`)
 }
 
 export function getMyActiveDuel(): Promise<{ active: boolean; duel_id?: number }> {
