@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
-import { createListing, getMarketFees } from '../api'
+import { createListing, getMarketFees, getRaidStats } from '../api'
 import { fmtGold } from '../utils/format'
 import styles from './SellModal.module.css'
+
+const MIN_RAIDS_FOR_P2P = 10
 
 interface Props {
   unitId:   number
@@ -25,12 +27,18 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
   const [limits,   setLimits]   = useState({
     min_gold: 100, max_gold: 100000, min_ton: 0.1, max_ton: 1000,
   })
+  const [raidsTotal, setRaidsTotal] = useState<number | null>(null)
 
   useEffect(() => {
     getMarketFees()
       .then(f => setLimits({ min_gold: f.min_gold, max_gold: f.max_gold, min_ton: f.min_ton, max_ton: f.max_ton }))
       .catch(() => {})
+    getRaidStats()
+      .then(s => setRaidsTotal(s.total))
+      .catch(() => setRaidsTotal(0))
   }, [])
+
+  const isLocked = raidsTotal !== null && raidsTotal < MIN_RAIDS_FOR_P2P
 
   const priceNum = parseFloat(price) || 0
   const minPrice = currency === 'ton' ? limits.min_ton  : limits.min_gold
@@ -69,6 +77,21 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
         </div>
 
         <div className={styles.unitName}>{unitName}</div>
+
+        {isLocked ? (
+          <div className={styles.locked}>
+            <div className={styles.lockedIcon}>🔒</div>
+            <div className={styles.lockedTitle}>{t('sell.lockedTitle')}</div>
+            <div className={styles.lockedText}>
+              {t('sell.lockedDesc', { needed: MIN_RAIDS_FOR_P2P, have: raidsTotal ?? 0 })}
+            </div>
+            <div className={styles.lockedMotivation}>{t('sell.lockedMotivation')}</div>
+            <button className={styles.submitBtn} onClick={onClose}>
+              {t('sell.lockedCta')}
+            </button>
+          </div>
+        ) : (
+        <>
 
         {/* Currency selector */}
         <div className={styles.currencyRow}>
@@ -134,6 +157,8 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
         >
           {busy ? '...' : t('sell.submit')}
         </button>
+        </>
+        )}
       </div>
     </div>
   )

@@ -183,7 +183,11 @@
     "tonPoolHint": "3% goes to the weekly prize pool 🏆",
     "range": "Allowed price: from {{min}} to {{max}} {{currency}}",
     "errorMin": "Price must be at least {{min}} {{currency}}",
-    "errorMax": "Price must be at most {{max}} {{currency}}"
+    "errorMax": "Price must be at most {{max}} {{currency}}",
+    "lockedTitle": "P2P market unlocks at level 2",
+    "lockedDesc": "Complete {{needed}} raids to list units for sale. You already have {{have}} — great start!",
+    "lockedMotivation": "Every raid earns you XP, coins and enemies. Grind hard — the market will become your weapon 💪",
+    "lockedCta": "Let's fight!"
   },
   "contest": {
     "title": "Contests",
