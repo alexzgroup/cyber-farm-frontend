@@ -22,6 +22,20 @@ export interface ReferralList {
   pages:    number
 }
 
+export interface ReferralRatesLevel {
+  purchase_first_ton:  number
+  purchase_pct_of_ton: number
+  progress_ton:        number
+}
+
+export interface ReferralRates {
+  l1: ReferralRatesLevel
+  l2: ReferralRatesLevel
+  l3: ReferralRatesLevel
+  progress_min_raids:   number
+  progress_min_balance: number
+}
+
 export type DroneType         = 'scout' | 'combat' | 'stealth'
 export type DroneUpgradeType  = 'cargo_bay' | 'stealth_module' | 'energy_cell' | 'ai_navigation' | 'armor'
 export type TurretUpgradeType = 'scope' | 'firepower' | 'range' | 'reload' | 'shield'

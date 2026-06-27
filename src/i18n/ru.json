@@ -302,7 +302,25 @@
     "title": "Мои рефералы",
     "empty": "Ещё никого не пригласили",
     "allBtn": "Все рефералы",
-    "tonEarned": "◈ {{amount}} TON заработано"
+    "tonEarned": "◈ {{amount}} TON заработано",
+    "howToEarn": "Как заработать TON",
+    "inviteEarnTon": "Пригласи друга — получи TON",
+    "earnedToast": "+{{amount}} TON от {{name}}",
+    "earnedToastTotal": "Всего ◈ {{total}}",
+    "modal": {
+      "title": "Условия начисления бонусов",
+      "intro": "Приглашай друзей и зарабатывай TON за их активность. Бонусы начисляются на 3 уровня в глубину.",
+      "purchaseFirstTitle": "💎 За первую покупку реферала",
+      "purchaseFirstDesc": "Разовый бонус, когда твой реферал впервые оплачивает что-то через Stars или TON.",
+      "purchasePctTitle": "📊 % от каждой последующей покупки",
+      "purchasePctDesc": "С каждой покупки реферала ты получаешь процент в TON-эквиваленте.",
+      "progressTitle": "⚔️ За прогресс реферала",
+      "progressDesc": "Разовый бонус, когда реферал делает {{raids}} рейдов и накапливает {{balance}} gold.",
+      "levelLabel": "Уровень {{n}}",
+      "tonUnit": "TON",
+      "pctUnit": "%",
+      "close": "Понятно"
+    }
   },
   "settings": {
     "title": "Настройки",

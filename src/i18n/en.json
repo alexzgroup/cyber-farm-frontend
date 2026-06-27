@@ -301,7 +301,25 @@
     "title": "My Referrals",
     "empty": "You haven't invited anyone yet",
     "allBtn": "All referrals",
-    "tonEarned": "◈ {{amount}} TON earned"
+    "tonEarned": "◈ {{amount}} TON earned",
+    "howToEarn": "How to earn TON",
+    "inviteEarnTon": "Invite a friend — get TON",
+    "earnedToast": "+{{amount}} TON from {{name}}",
+    "earnedToastTotal": "Total ◈ {{total}}",
+    "modal": {
+      "title": "Bonus conditions",
+      "intro": "Invite friends and earn TON for their activity. Bonuses go up to 3 levels deep.",
+      "purchaseFirstTitle": "💎 First purchase by your referral",
+      "purchaseFirstDesc": "One-time bonus when your referral makes their first Stars or TON payment.",
+      "purchasePctTitle": "📊 % from every following purchase",
+      "purchasePctDesc": "You earn a percentage (in TON equivalent) from every subsequent purchase of your referral.",
+      "progressTitle": "⚔️ Referral progress",
+      "progressDesc": "One-time bonus when your referral completes {{raids}} raids and accumulates {{balance}} gold.",
+      "levelLabel": "Level {{n}}",
+      "tonUnit": "TON",
+      "pctUnit": "%",
+      "close": "Got it"
+    }
   },
   "settings": {
     "title": "Settings",

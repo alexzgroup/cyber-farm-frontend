@@ -211,6 +211,10 @@ export function prepareReferralMessage(): Promise<{ id: string; expiration_date:
   return apiFetch('/api/referral/prepare', { method: 'POST' })
 }
 
+export function getReferralRates(): Promise<import('./types').ReferralRates> {
+  return apiFetch('/api/referral/rates')
+}
+
 export function buyListingWithStars(listingId: number): Promise<{
   invoice_url: string
   stars: number

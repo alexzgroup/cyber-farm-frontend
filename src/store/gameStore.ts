@@ -188,6 +188,8 @@ interface GameState {
   setPendingRaidTarget:      (id: number | null) => void
   marketSoldToast:           { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null
   setMarketSoldToast:        (n: { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null) => void
+  referralEarnedToast:       { amount: number; name: string; total: number; level: number; trigger: string } | null
+  setReferralEarnedToast:    (n: { amount: number; name: string; total: number; level: number; trigger: string } | null) => void
   cancelledListings:         Set<number>
   markListingCancelled:      (id: number) => void
   showConfetti:              boolean
@@ -537,6 +539,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setPendingRaidTarget: (id) => set({ pendingRaidTargetId: id }),
   marketSoldToast:    null,
   setMarketSoldToast: (n) => set({ marketSoldToast: n }),
+  referralEarnedToast:    null,
+  setReferralEarnedToast: (n) => set({ referralEarnedToast: n }),
   cancelledListings:  new Set<number>(),
   markListingCancelled: (id) => set((s) => ({ cancelledListings: new Set([...s.cancelledListings, id]) })),
   showConfetti:       false,

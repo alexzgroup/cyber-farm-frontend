@@ -8,6 +8,7 @@ import type { ApiUserPublic, ApiRaid } from '../api/types'
 import { RaidGame } from '../game/RaidGame'
 import { fmtGold } from '../utils/format'
 import { useCountdown, fmtCooldown } from '../hooks/useCooldown'
+import { InviteFriendButton } from '../components/InviteFriendButton'
 import styles from './RaidsScreen.module.css'
 
 type View    = 'targets' | 'battle' | 'result' | 'history'
@@ -308,6 +309,9 @@ export function RaidsScreen() {
                 ? t('raids.stolenCoins', { amount: fmtGold(raidResult.amount), name: raidResult.targetName })
                 : t('raids.droneHurt', { name: raidResult.targetName })}
             </p>
+            {raidResult.won && (
+              <InviteFriendButton style={{ marginTop: 12, marginBottom: 4 }} />
+            )}
             <button className={styles.backBtn} onClick={() => { setView('targets'); setResult(null) }}>
               {t('raids.back')}
             </button>

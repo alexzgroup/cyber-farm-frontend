@@ -5,6 +5,7 @@ import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
 import { getWalletInvoice, connectWallet, disconnectWallet, getRaidStats, getRaidHistory, getIncomingRaids, prepareReferralMessage, getReferralStats } from '../api'
 import { Avatar } from '../components/Avatar'
+import { HowToEarnTonModal } from '../components/HowToEarnTonModal'
 import type { ApiWalletInvoice, ApiRaid, ReferralStats, RaidStats } from '../api/types'
 import styles from './ProfileScreen.module.css'
 
@@ -166,6 +167,7 @@ export function ProfileScreen() {
     : ''
   const [refCopied,  setRefCopied]  = useState(false)
   const [shareState, setShareState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [howModalOpen, setHowModalOpen] = useState(false)
 
   const tgWebApp = (window as any).Telegram?.WebApp
 
@@ -672,6 +674,21 @@ export function ProfileScreen() {
                 })}
               </div>
             )}
+
+            {/* "How to earn TON" button — always visible to motivate inviting */}
+            <button
+              onClick={() => setHowModalOpen(true)}
+              style={{
+                width: '100%', padding: '10px', borderRadius: 10,
+                background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.25)',
+                color: '#22d3ee', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                fontFamily: 'monospace', letterSpacing: 0.3,
+              }}
+            >
+              💎 {t('referrals.howToEarn')}
+            </button>
+
+            <HowToEarnTonModal open={howModalOpen} onClose={() => setHowModalOpen(false)} />
 
             {/* "All referrals" link */}
             {refStats && refStats.total > 0 && (

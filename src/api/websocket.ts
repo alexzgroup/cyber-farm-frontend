@@ -211,6 +211,20 @@ function dispatch(msg: WsMessage) {
       break
     }
 
+    case 'referral.earned': {
+      // Referrer earned TON from their downline activity
+      store.setReferralEarnedToast({
+        amount:  Number(msg.payload.amount_ton ?? 0),
+        name:    String(msg.payload.referred_name ?? '?'),
+        total:   Number(msg.payload.total_earned ?? 0),
+        level:   Number(msg.payload.level ?? 1),
+        trigger: String(msg.payload.trigger ?? ''),
+      })
+      // Refresh TON balance so the +amount is visible immediately
+      store.loadGameState()
+      break
+    }
+
     case 'duel.result': {
       // Battle ended (other player submitted result) — force-end this client's scene
       const myId = useGameStore.getState().userId

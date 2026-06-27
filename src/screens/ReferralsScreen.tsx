@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { getReferralList } from '../api'
 import { Avatar } from '../components/Avatar'
+import { HowToEarnTonModal } from '../components/HowToEarnTonModal'
 import type { ReferralEntry } from '../api/types'
 
 const LEVEL_COLORS: Record<number, string> = {
@@ -22,6 +23,7 @@ export function ReferralsScreen() {
   const [pages, setPages]   = useState(1)
   const [total, setTotal]   = useState(0)
   const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -45,6 +47,12 @@ export function ReferralsScreen() {
         <span style={s.title}>{t('referrals.title')}</span>
         <span style={s.count}>{total}</span>
       </div>
+
+      <button style={s.howBtn} onClick={() => setModalOpen(true)}>
+        💎 {t('referrals.howToEarn')}
+      </button>
+
+      <HowToEarnTonModal open={modalOpen} onClose={() => setModalOpen(false)} />
 
       {loading ? (
         <div style={s.loading}>{t('market.loading')}</div>
@@ -97,6 +105,7 @@ const s: Record<string, React.CSSProperties> = {
   backBtn: { background: 'none', border: 'none', color: '#94a3b8', fontSize: 18, cursor: 'pointer', padding: '0 6px' },
   title:   { fontSize: 17, fontWeight: 700, color: '#e2e8f0', letterSpacing: 1, flex: 1 },
   count:   { fontSize: 13, color: '#64748b', background: 'rgba(255,255,255,0.05)', padding: '2px 10px', borderRadius: 10 },
+  howBtn:  { margin: '10px 16px 0', padding: '10px', borderRadius: 10, border: '1px solid rgba(56,189,248,0.25)', background: 'rgba(56,189,248,0.08)', color: '#22d3ee', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'monospace', letterSpacing: 0.3 },
   loading: { padding: 32, textAlign: 'center', color: '#475569', fontSize: 13 },
   empty:   { padding: 32, textAlign: 'center', color: '#475569', fontSize: 13 },
   list:    { flex: 1, overflowY: 'auto', padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 6 },
