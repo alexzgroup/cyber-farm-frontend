@@ -8,6 +8,7 @@ import { RaidAlert } from './components/RaidAlert'
 import { TonDepositToast } from './components/TonDepositToast'
 import { MarketSoldToast } from './components/MarketSoldToast'
 import { ReferralEarnedToast } from './components/ReferralEarnedToast'
+import { DailyBonusModal } from './components/DailyBonusModal'
 import { Confetti } from './components/Confetti'
 import { FarmScreen } from './screens/FarmScreen'
 import { ShopScreen } from './screens/ShopScreen'
@@ -142,6 +143,7 @@ export function App() {
       <TonDepositToast />
       <MarketSoldToast />
       <ReferralEarnedToast />
+      <DailyBonusModal />
       {showConfetti && <Confetti onDone={hideConfetti} />}
       <DuelChallengeModal />
       <DuelWaitingModal />

@@ -215,6 +215,14 @@ export function getReferralRates(): Promise<import('./types').ReferralRates> {
   return apiFetch('/api/referral/rates')
 }
 
+export function getDailyBonusStatus(): Promise<import('./types').DailyBonusStatus> {
+  return apiFetch('/api/daily-bonus/status')
+}
+
+export function claimDailyBonus(): Promise<import('./types').DailyBonusClaim> {
+  return apiFetch('/api/daily-bonus/claim', { method: 'POST' })
+}
+
 export function buyListingWithStars(listingId: number): Promise<{
   invoice_url: string
   stars: number

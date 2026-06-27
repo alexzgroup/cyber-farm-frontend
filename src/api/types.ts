@@ -28,6 +28,26 @@ export interface ReferralRatesLevel {
   progress_ton:        number
 }
 
+export interface DailyBonusRewardRow {
+  day:  number
+  gold?: number
+  ton?:  number
+}
+
+export interface DailyBonusStatus {
+  current_streak:  number
+  next_streak:     number
+  claimable:       boolean
+  last_claim_at:   string | null
+  rewards:         DailyBonusRewardRow[]
+}
+
+export interface DailyBonusClaim {
+  streak:      number
+  reward_gold: number
+  reward_ton:  number
+}
+
 export interface ReferralRates {
   l1: ReferralRatesLevel
   l2: ReferralRatesLevel

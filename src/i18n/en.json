@@ -325,6 +325,17 @@
     "title": "Settings",
     "sound": "Sounds"
   },
+  "daily": {
+    "title": "Daily reward",
+    "subtitle": "Log in every day — streak grows, rewards grow",
+    "day": "Day {{n}}",
+    "claim": "Claim",
+    "claimed": "Claimed",
+    "today": "Today",
+    "comeBack": "Come back tomorrow",
+    "toastGold": "+{{amount}} gold for day {{day}}",
+    "toastTon": "+{{amount}} TON for day {{day}}!"
+  },
   "search": {
     "placeholder": "Search by @username, Telegram ID or name"
   },

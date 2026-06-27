@@ -326,6 +326,17 @@
     "title": "Настройки",
     "sound": "Звуки"
   },
+  "daily": {
+    "title": "Ежедневная награда",
+    "subtitle": "Заходи каждый день — серия растёт, награды тоже",
+    "day": "День {{n}}",
+    "claim": "Забрать",
+    "claimed": "Получено",
+    "today": "Сегодня",
+    "comeBack": "Вернись завтра",
+    "toastGold": "+{{amount}} gold за день {{day}}",
+    "toastTon": "+{{amount}} TON за день {{day}}!"
+  },
   "search": {
     "placeholder": "Поиск по @юзернейму, Telegram ID или имени"
   },
