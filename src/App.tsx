@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from './store/gameStore'
 import { connectWebSocket, disconnectWebSocket } from './api/websocket'
-import { syncEnergy } from './api'
 import { BottomNav } from './components/BottomNav'
 import { RaidAlert } from './components/RaidAlert'
 import { TonDepositToast } from './components/TonDepositToast'
@@ -92,14 +91,12 @@ export function App() {
     return () => clearInterval(id)
   }, [])
 
-  // Also flush immediately when tab is hidden (user switches away or closes)
+  // Also flush immediately when tab is hidden (user switches away or closes).
+  // Energy is server-authoritative — no client-side sync needed.
   useEffect(() => {
     const onHide = () => {
       if (document.visibilityState === 'hidden') {
         useGameStore.getState().flushTaps()
-        // Save energy so it survives page refresh
-        const { energy, isLoaded } = useGameStore.getState()
-        if (isLoaded) syncEnergy(energy).catch(() => {})
       }
     }
     document.addEventListener('visibilitychange', onHide)
