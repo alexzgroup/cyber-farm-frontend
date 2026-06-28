@@ -33,6 +33,32 @@
     "cancel": "Cancel",
     "wrong": "Wrong answer, try again"
   },
+  "faq": {
+    "title": "FAQ",
+    "subtitle": "Short answers to how CyberFarm works.",
+    "items": {
+      "essence": {
+        "title": "What is the game",
+        "body": "CyberFarm is a cyber drone farm inside Telegram. You collect combat and scout drones that generate passive gold every second — even when the app is closed. Defense turrets keep your farm safe from raiders, while you can raid other players and steal their coins. The endgame is converting gold to real TON via the P2P market, the weekly contest pool, and the referral network."
+      },
+      "earning": {
+        "title": "How to earn",
+        "body": "Five income streams:\n• Passive — every drone produces gold each second. More drones / higher levels = more output.\n• Taps — clicking a drone gives gold at the rate of your highest drone level (L1 — 0.1, L2 — 0.3, L3 — 0.5 per tap). Costs energy.\n• Raids — attack other players and grab up to 10% of their balance.\n• Market — sell your units and equipment for gold or TON.\n• Weekly contest — the top of the weekly_earned leaderboard splits a TON prize pool.\nPlus: daily login bonus (day 7 is TON), 100 g starter pack and the referral program."
+      },
+      "raids": {
+        "title": "Raid rules",
+        "body": "• You need working drones — broken ones can't fight.\n• Attack power = sum of (level × 10) across drones, combat type gets +20%. Defense = sum of defense_power of the target's turrets. Victory if attack > defense after a random ±20% shift.\n• Victory: take 10% of the target's balance. Defeat: you lose up to 5% of the attempted loot to the defender, and your weakest drone breaks.\n• Cooldown: you can only attack the same target once per hour.\n• Anti-farm: no attacks on accounts younger than 2 hours or with balance below 150 gold.\n• Limit: more than 10 raids per minute → captcha. Bot-like rhythm → 5-minute auto-ban."
+      },
+      "referrals": {
+        "title": "Referral program",
+        "body": "Three-level rewards — invite friends through your link (see the Friends section in Profile).\n• First purchase: L1 — 0.01 TON, L2 — 0.005, L3 — 0.001.\n• % of every following purchase: L1 — 2%, L2 — 1%, L3 — 0.2%.\n• Progress bonus when your friend completes 20 raids and reaches 1000 gold: L1 — 0.005 TON, L2 — 0.0025, L3 — 0.0005.\nNo caps, no expiration. Full payout history lives in the Friends section."
+      },
+      "rules": {
+        "title": "Rules and bans",
+        "body": "Anything that breaks fair play is forbidden:\n• Bots, scripts and auto-clickers on taps or raids.\n• Alt-account networks used to farm yourself.\n• Exploiting economy bugs or cooldown bypasses.\n• Inflating the referral program with fake registrations.\n\nAuto-protection detects bot patterns: if your median inter-raid gap drops below 30 seconds across 50+ raids in the last hour, you get an automatic 5-minute ban. While banned, raids are blocked and you see a countdown screen. Once it expires, access is restored. Repeated violations lead to longer bans and possible disqualification from the contest."
+      }
+    }
+  },
   "farm": {
     "droneZone": "DRONE ZONE",
     "defenseZone": "DEFENCE ZONE",

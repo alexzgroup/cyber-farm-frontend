@@ -28,6 +28,7 @@ import { DuelHistoryScreen } from './screens/DuelHistoryScreen'
 import { ReferralsScreen } from './screens/ReferralsScreen'
 import { FavoritesScreen } from './screens/FavoritesScreen'
 import { WithdrawalScreen } from './screens/WithdrawalScreen'
+import { FAQScreen } from './screens/FAQScreen'
 import { DuelChallengeModal } from './components/DuelChallengeModal'
 import { DuelWaitingModal } from './components/DuelWaitingModal'
 import { NAV_HEIGHT } from './layout'
@@ -166,6 +167,7 @@ export function App() {
         {screen === 'duel-history' && <DuelHistoryScreen />}
         {screen === 'referrals'    && <ReferralsScreen />}
         {screen === 'favorites'    && <FavoritesScreen />}
+        {screen === 'faq'          && <FAQScreen />}
       </div>
       <BottomNav />
     </div>

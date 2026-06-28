@@ -66,7 +66,7 @@ export interface IncomingRaidEntry {
   timestamp:    number
 }
 
-export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'unit-detail' | 'purchases' | 'topup' | 'contest' | 'duel' | 'duel-battle' | 'duel-history' | 'referrals' | 'withdrawal' | 'favorites'
+export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'unit-detail' | 'purchases' | 'topup' | 'contest' | 'duel' | 'duel-battle' | 'duel-history' | 'referrals' | 'withdrawal' | 'favorites' | 'faq'
 
 export type UnitUpgrades = Record<string, Record<string, number>>
 
@@ -150,6 +150,10 @@ interface GameState {
   // shows a modal asking the user to solve it; the answer is then passed back into the
   // raid retry via store.executeRaid.
   pendingCaptcha:    { id: string; question: string; defenderId: number } | null
+  // Result of a captcha-gated raid that already succeeded on the server but still
+  // needs to play out visually. RaidsScreen consumes this on mount via useEffect and
+  // then clears it via clearPendingRaidResult.
+  pendingRaidResult: { defenderId: number; result: RaidResult } | null
   drones:         Drone[]
   turrets:        Turret[]
   raidLog:                 RaidLogEntry[]
@@ -186,6 +190,7 @@ interface GameState {
   buyTurret:          (level?: 1 | 2 | 3) => Promise<boolean>
   executeRaid:        (defenderId: number, captchaAnswer?: string) => Promise<RaidResult | null>
   dismissCaptcha:     () => void
+  clearPendingRaidResult: () => void
   purchaseUnitUpgrade:(unitId: string, upgradeId: string, cost: number) => Promise<boolean>
   syncPositions:      () => void
   clearRaidResult:           () => void
@@ -256,6 +261,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   bannedUntil:       null,
   bannedReason:      '',
   pendingCaptcha:    null,
+  pendingRaidResult: null,
   drones:         [],
   turrets:        [],
   raidLog:                  [],
@@ -492,6 +498,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   // ── Raids ──────────────────────────────────────────────────────────────
 
   dismissCaptcha: () => set({ pendingCaptcha: null }),
+  clearPendingRaidResult: () => set({ pendingRaidResult: null }),
 
   executeRaid: async (defenderId, captchaAnswer) => {
     const captchaState = get().pendingCaptcha
@@ -500,7 +507,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       : undefined
     try {
       const raid = await api.startRaid(defenderId, captcha)
-      if (captcha) set({ pendingCaptcha: null })
+      // Don't clear pendingCaptcha yet — we'll do it together with pendingRaidResult
+      // below so the modal close and the battle-scene trigger happen in one update.
       const won    = raid.result === 'victory'
       const amount = Number(raid.coins_stolen)
 
@@ -537,6 +545,13 @@ export const useGameStore = create<GameState>((set, get) => ({
         drones:            drones.map(mapDrone),
       })
 
+      // If this was a captcha-gated retry, push the result through pendingRaidResult
+      // so RaidsScreen can play the battle visually (its handleAttack flow returned
+      // null on the first 429, never reaching the battle view). Also clear the modal.
+      if (captcha) {
+        set({ pendingCaptcha: null, pendingRaidResult: { defenderId, result } })
+      }
+
       return result
     } catch (err: unknown) {
       const e = err as { status?: number; data?: { error?: string; banned_until?: number; banned_reason?: string } }
@@ -551,7 +566,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
         return null
       }
-      if (e?.status === 429 && e.data?.error === 'captcha_required') {
+      // Both "captcha required" (first hit) and "captcha invalid" (wrong answer) need
+      // a fresh challenge — the previous one is consumed by the server either way.
+      if (e?.status === 429 && (e.data?.error === 'captcha_required' || e.data?.error === 'captcha_invalid')) {
         try {
           const ch = await api.getCaptchaChallenge()
           set({ pendingCaptcha: { id: ch.id, question: ch.question, defenderId } })

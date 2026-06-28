@@ -222,6 +222,13 @@ export function RaidsScreen() {
   const bannedReason = useGameStore((s) => s.bannedReason)
   const isBanned     = bannedUntil != null && bannedUntil > Date.now()
 
+  // Captcha-gated raid retry: the modal calls executeRaid with the answer; on
+  // success the store stashes the resulting RaidResult here. We pick it up to
+  // drive the visual battle scene, since handleAttack returned early on the
+  // first 429 captcha_required and never reached the setView('battle') step.
+  const pendingRaidResult      = useGameStore((s) => s.pendingRaidResult)
+  const clearPendingRaidResult = useGameStore((s) => s.clearPendingRaidResult)
+
   const workingDrones = drones.filter((d) => !d.isBroken)
   const attackerLevel = workingDrones.length > 0
     ? Math.max(...workingDrones.map((d) => d.level))
@@ -265,11 +272,9 @@ export function RaidsScreen() {
     }
   }
 
-  const handleAttack = async (targetId: number) => {
-    const result = await executeRaid(targetId)
-    if (!result) return
+  const playRaidVisual = (defenderId: number, result: RaidResult) => {
     setTargets((prev) => prev.map((p) =>
-      p.id === targetId ? { ...p, cooldown_until: Math.floor(Date.now() / 1000) + 3600 } : p
+      p.id === defenderId ? { ...p, cooldown_until: Math.floor(Date.now() / 1000) + 3600 } : p
     ))
     setAttackerDrones([...workingDrones])
     const turretLevels = result.defenderTurretLevels ?? []
@@ -281,6 +286,21 @@ export function RaidsScreen() {
     setResult(result)
     setView('battle')
   }
+
+  const handleAttack = async (targetId: number) => {
+    const result = await executeRaid(targetId)
+    if (!result) return
+    playRaidVisual(targetId, result)
+  }
+
+  // After captcha modal succeeds, store populates pendingRaidResult. Drive the
+  // battle visual from it and clear so we don't loop.
+  useEffect(() => {
+    if (!pendingRaidResult) return
+    playRaidVisual(pendingRaidResult.defenderId, pendingRaidResult.result)
+    clearPendingRaidResult()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingRaidResult])
 
   const pagedTargets = targets.slice(
     targetsPage * TARGETS_PER_PAGE,

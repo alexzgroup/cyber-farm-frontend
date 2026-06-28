@@ -46,6 +46,14 @@ export function FarmScreen() {
         {t('contest.farmBtn')}
       </button>
 
+      {/* Floating help button — bottom-right above the bottom nav. Opens the FAQ. */}
+      <button
+        className={styles.faqBtn}
+        onClick={() => setScreen('faq')}
+        aria-label={t('faq.title')}
+        title={t('faq.title')}
+      >?</button>
+
       {/* Zoom controls */}
       <div className={styles.zoomControls}>
         <button className={styles.zoomBtn} onClick={() => fireZoom(+ZOOM_STEP)} {...{title: t('farm.zoomIn')}}>+</button>
