@@ -47,7 +47,7 @@
       },
       "raids": {
         "title": "Raid rules",
-        "body": "• You need working drones — broken ones can't fight.\n• Attack power = sum of (level × 10) across drones, combat type gets +20%. Defense = sum of defense_power of the target's turrets. Victory if attack > defense after a random ±20% shift.\n• Victory: take 10% of the target's balance. Defeat: you lose up to 5% of the attempted loot to the defender, and your weakest drone breaks.\n• Cooldown: you can only attack the same target once per hour.\n• Anti-farm: no attacks on accounts younger than 2 hours or with balance below 150 gold.\n• Limit: more than 10 raids per minute → captcha. Bot-like rhythm → 5-minute auto-ban."
+        "body": "• You need working drones — broken ones can't fight.\n• Attack power = sum of (level × 10) across drones, combat type gets +20%. Defense = sum of defense_power of the target's turrets. Victory if attack > defense after a random ±20% shift.\n• Victory: take 10% of the target's balance. Defeat: you lose up to 5% of the attempted loot to the defender, and your weakest drone breaks.\n• Cooldown: you can only attack the same target once per hour.\n• Anti-farm: no attacks on accounts younger than 2 hours or with balance below 150 gold.\n• Too many raids in a row → captcha. Suspicious automated rhythm → temporary ban."
       },
       "referrals": {
         "title": "Referral program",
@@ -55,7 +55,7 @@
       },
       "rules": {
         "title": "Rules and bans",
-        "body": "Anything that breaks fair play is forbidden:\n• Bots, scripts and auto-clickers on taps or raids.\n• Alt-account networks used to farm yourself.\n• Exploiting economy bugs or cooldown bypasses.\n• Inflating the referral program with fake registrations.\n\nAuto-protection detects bot patterns: if your median inter-raid gap drops below 30 seconds across 50+ raids in the last hour, you get an automatic 5-minute ban. While banned, raids are blocked and you see a countdown screen. Once it expires, access is restored. Repeated violations lead to longer bans and possible disqualification from the contest."
+        "body": "Anything that breaks fair play is forbidden:\n• Bots, scripts and auto-clickers on taps or raids.\n• Alt-account networks used to farm yourself.\n• Exploiting economy bugs or cooldown bypasses.\n• Inflating the referral program with fake registrations.\n\nIf the system detects suspicious activity, you get a temporary ban. While banned, raids are blocked and you see a countdown screen — once it expires, access is restored. Repeated violations lead to longer bans and possible disqualification from the contest."
       }
     }
   },
