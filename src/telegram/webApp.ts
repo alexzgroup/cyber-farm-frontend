@@ -100,20 +100,44 @@ export const webApp = new Proxy({} as TelegramWebApp, {
   },
 })
 
-// Asks the Telegram client to show the system "allow this bot to message you" dialog.
-// Resolves to true if the user granted permission, false otherwise (declined, errored,
-// or the API is unavailable — e.g. older Telegram or outside-Telegram dev session).
-export function requestBotWriteAccess(): Promise<boolean> {
-  return new Promise((resolve) => {
-    const app = getWebApp()
-    if (!app?.requestWriteAccess) {
-      // Outside Telegram (dev) or pre-7.2 client — treat as granted so the UI flow proceeds.
-      resolve(true)
-      return
+// Asks the Telegram client to show the native "allow this bot to message you"
+// dialog. Uses the modern SDK 2.x Promise-based API when available (works in
+// real Telegram on Bot API 6.9+), and falls back to the raw WebApp.requestWriteAccess
+// callback for older clients. In dev / outside Telegram returns true so the UI
+// flow can proceed.
+//
+// Note: Telegram only shows the dialog when the user has NOT yet granted write
+// access (i.e. they have not started a chat with the bot via /start or have
+// blocked it). For anyone who already pressed /start the SDK resolves to
+// 'allowed' immediately with no popup — that's by design on the Telegram side.
+export async function requestBotWriteAccess(): Promise<boolean> {
+  // 1) Modern SDK path. Throws ERR_NOT_SUPPORTED when client is too old; we
+  //    catch and fall through to legacy.
+  try {
+    const sdk = await import('@telegram-apps/sdk')
+    if (sdk.requestWriteAccess?.isAvailable?.()) {
+      const status = await sdk.requestWriteAccess()
+      console.log('[CyberFarm] requestWriteAccess (sdk) status:', status)
+      return status === 'allowed'
     }
+  } catch (err) {
+    console.warn('[CyberFarm] requestWriteAccess (sdk) failed, falling back', err)
+  }
+
+  // 2) Legacy raw WebApp API.
+  const app = getWebApp()
+  if (!app?.requestWriteAccess) {
+    console.log('[CyberFarm] requestWriteAccess: no Telegram WebApp available — granting locally')
+    return true
+  }
+  return new Promise<boolean>((resolve) => {
     try {
-      app.requestWriteAccess((granted) => resolve(Boolean(granted)))
-    } catch {
+      app.requestWriteAccess!((granted) => {
+        console.log('[CyberFarm] requestWriteAccess (legacy) granted:', granted)
+        resolve(Boolean(granted))
+      })
+    } catch (err) {
+      console.warn('[CyberFarm] requestWriteAccess (legacy) threw', err)
       resolve(false)
     }
   })
@@ -135,4 +159,10 @@ export function initTelegramApp(): void {
   } catch (e) {
     console.warn('[TelegramWebApp] init error:', e)
   }
+  // SDK 2.x: initialise the event bridge so utilities like requestWriteAccess
+  // can fire postEvent calls. Lazy-imported to avoid pulling the bridge into
+  // the dev build when we're not in Telegram.
+  import('@telegram-apps/sdk').then((sdk) => {
+    try { sdk.init() } catch (e) { console.warn('[TelegramWebApp] sdk init error:', e) }
+  }).catch(() => {/* no-op */})
 }

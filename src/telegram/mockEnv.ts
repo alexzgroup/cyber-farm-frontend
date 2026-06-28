@@ -60,7 +60,15 @@ export function setupMockTelegram() {
     setBackgroundColor: (color: string) => {},
     enableClosingConfirmation: () => {},
     disableClosingConfirmation: () => {},
-    requestWriteAccess: (cb?: (granted: boolean) => void) => cb?.(true),
+    // Mock the native permission dialog with a browser confirm() so the
+    // dev environment makes the choice visible. Allows testing both branches
+    // of the opt-in flow (granted vs. cancelled) without a real Telegram client.
+    requestWriteAccess: (cb?: (granted: boolean) => void) => {
+      const granted = window.confirm(
+        '[Mock Telegram]\n\nAllow this bot to send you messages?',
+      )
+      cb?.(granted)
+    },
     requestContact: (cb?: (sent: boolean) => void) => cb?.(true),
     showPopup: (params: object, cb?: (btn: string) => void) => cb?.('ok'),
     showScanQrPopup: () => {},
