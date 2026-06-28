@@ -140,9 +140,10 @@ interface GameState {
   firstName:        string
   lastName:         string
   username:         string
-  energy:         number
-  maxEnergy:      number
-  energyProgress: number
+  energy:            number
+  maxEnergy:         number
+  energyRegenPerMin: number  // от сервера (зависит от energy_regen_interval_sec)
+  energyProgress:    number
   drones:         Drone[]
   turrets:        Turret[]
   raidLog:                 RaidLogEntry[]
@@ -238,9 +239,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   firstName:        '',
   lastName:         '',
   username:         '',
-  energy:           100,
-  maxEnergy:      100,
-  energyProgress: 0,
+  energy:            100,
+  maxEnergy:         100,
+  energyRegenPerMin: 2,
+  energyProgress:    0,
   drones:         [],
   turrets:        [],
   raidLog:                  [],
@@ -346,8 +348,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         lastName:         user.last_name  ?? '',
         username:         user.username   ?? '',
         // Energy is server-authoritative — always trust /user/me.
-        energy:           user.energy,
-        maxEnergy:        user.max_energy,
+        energy:             user.energy,
+        maxEnergy:          user.max_energy,
+        energyRegenPerMin:  user.energy_regen_per_min ?? 2,
         drones:           drones.map(mapDrone),
         turrets:          turrets.map(mapTurret),
         unitUpgrades,
@@ -477,11 +480,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       // Refresh balance, energy and drone state after raid — server is authoritative.
       const [user, drones] = await Promise.all([api.getMe(), api.getDrones()])
       set({
-        balance:         Number(user.balance),
-        incomeRateTotal: user.income_rate_total ?? 0,
-        energy:          user.energy,
-        maxEnergy:       user.max_energy,
-        drones:          drones.map(mapDrone),
+        balance:           Number(user.balance),
+        incomeRateTotal:   user.income_rate_total ?? 0,
+        energy:            user.energy,
+        maxEnergy:         user.max_energy,
+        energyRegenPerMin: user.energy_regen_per_min ?? get().energyRegenPerMin,
+        drones:            drones.map(mapDrone),
       })
 
       return result

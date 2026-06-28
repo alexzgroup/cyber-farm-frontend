@@ -38,10 +38,24 @@
   gap: 10px;
 }
 
+.energyWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
 .energy {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.energyHint {
+  font-size: 10px;
+  color: #6b7280;
+  font-family: monospace;
+  letter-spacing: 0.02em;
 }
 
 .energyBar {

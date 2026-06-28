@@ -12,6 +12,9 @@
     "error": "Ошибка загрузки данных",
     "retry": "Повторить"
   },
+  "hud": {
+    "energyRegen": "+{{rate}} ⚡/мин"
+  },
   "farm": {
     "droneZone": "DRONE ZONE",
     "defenseZone": "DEFENCE ZONE",

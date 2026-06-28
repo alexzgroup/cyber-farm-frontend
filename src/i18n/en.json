@@ -12,6 +12,9 @@
     "error": "Failed to load game data",
     "retry": "Retry"
   },
+  "hud": {
+    "energyRegen": "+{{rate}} ⚡/min"
+  },
   "farm": {
     "droneZone": "DRONE ZONE",
     "defenseZone": "DEFENCE ZONE",

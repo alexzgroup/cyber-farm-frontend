@@ -74,9 +74,10 @@ export interface ApiUser {
   income_rate_total:  number   // coins/second from all non-broken drones
   ton_balance:        number   // real TON crypto balance
   ton_wallet:         string   // connected TON wallet address (for withdrawals)
-  energy:             number
-  max_energy:         number
-  vip_until:          string | null
+  energy:               number
+  max_energy:           number
+  energy_regen_per_min: number   // server-controlled regen rate, settable via CRM
+  vip_until:            string | null
   reg_language:        string   // set at registration from Telegram, immutable
   language:            string   // user-selected language (ru/en)
   allow_notification:  boolean  // false = user opted out of re-engagement reminders
