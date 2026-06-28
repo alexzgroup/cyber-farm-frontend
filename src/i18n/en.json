@@ -20,6 +20,19 @@
     "promptSubtitle": "Turn on alerts — be first to know about raids, rewards and TON drops.",
     "enableBtn": "Turn on"
   },
+  "ban": {
+    "title": "Raids temporarily blocked",
+    "text": "You've been temporarily banned for breaking the rules. Raids will be available again when the timer ends.",
+    "reason": "Reason: {{reason}}",
+    "reasonAuto": "automatic anti-cheat"
+  },
+  "captcha": {
+    "title": "Prove you're not a bot",
+    "subtitle": "Too many raids in a row. Solve this to continue.",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "wrong": "Wrong answer, try again"
+  },
   "farm": {
     "droneZone": "DRONE ZONE",
     "defenseZone": "DEFENCE ZONE",

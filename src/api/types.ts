@@ -77,6 +77,8 @@ export interface ApiUser {
   energy:               number
   max_energy:           number
   energy_regen_per_min: number   // server-controlled regen rate, settable via CRM
+  banned_until:         string | null  // ISO timestamp; when in future, raids are blocked
+  banned_reason:        string         // short tag ("auto-cheat", "manual", ...)
   vip_until:            string | null
   reg_language:        string   // set at registration from Telegram, immutable
   language:            string   // user-selected language (ru/en)

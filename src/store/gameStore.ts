@@ -144,6 +144,12 @@ interface GameState {
   maxEnergy:         number
   energyRegenPerMin: number  // от сервера (зависит от energy_regen_interval_sec)
   energyProgress:    number
+  bannedUntil:       number | null   // ms-epoch; null = not banned
+  bannedReason:      string
+  // Pending captcha challenge for the raid burst gate. When non-null, the RaidsScreen
+  // shows a modal asking the user to solve it; the answer is then passed back into the
+  // raid retry via store.executeRaid.
+  pendingCaptcha:    { id: string; question: string; defenderId: number } | null
   drones:         Drone[]
   turrets:        Turret[]
   raidLog:                 RaidLogEntry[]
@@ -178,7 +184,8 @@ interface GameState {
   upgradeDrone:       (droneId: string) => Promise<boolean>
   repairDrone:        (droneId: string) => Promise<boolean>
   buyTurret:          (level?: 1 | 2 | 3) => Promise<boolean>
-  executeRaid:        (defenderId: number) => Promise<RaidResult | null>
+  executeRaid:        (defenderId: number, captchaAnswer?: string) => Promise<RaidResult | null>
+  dismissCaptcha:     () => void
   purchaseUnitUpgrade:(unitId: string, upgradeId: string, cost: number) => Promise<boolean>
   syncPositions:      () => void
   clearRaidResult:           () => void
@@ -246,6 +253,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   maxEnergy:         100,
   energyRegenPerMin: 2,
   energyProgress:    0,
+  bannedUntil:       null,
+  bannedReason:      '',
+  pendingCaptcha:    null,
   drones:         [],
   turrets:        [],
   raidLog:                  [],
@@ -364,6 +374,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         energy:             user.energy,
         maxEnergy:          user.max_energy,
         energyRegenPerMin:  user.energy_regen_per_min ?? 2,
+        bannedUntil:        user.banned_until ? new Date(user.banned_until).getTime() : null,
+        bannedReason:       user.banned_reason ?? '',
         drones:           drones.map(mapDrone),
         turrets:          turrets.map(mapTurret),
         unitUpgrades,
@@ -479,9 +491,16 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // ── Raids ──────────────────────────────────────────────────────────────
 
-  executeRaid: async (defenderId) => {
+  dismissCaptcha: () => set({ pendingCaptcha: null }),
+
+  executeRaid: async (defenderId, captchaAnswer) => {
+    const captchaState = get().pendingCaptcha
+    const captcha = captchaAnswer && captchaState && captchaState.defenderId === defenderId
+      ? { id: captchaState.id, answer: captchaAnswer }
+      : undefined
     try {
-      const raid = await api.startRaid(defenderId)
+      const raid = await api.startRaid(defenderId, captcha)
+      if (captcha) set({ pendingCaptcha: null })
       const won    = raid.result === 'victory'
       const amount = Number(raid.coins_stolen)
 
@@ -519,7 +538,26 @@ export const useGameStore = create<GameState>((set, get) => ({
       })
 
       return result
-    } catch {
+    } catch (err: unknown) {
+      const e = err as { status?: number; data?: { error?: string; banned_until?: number; banned_reason?: string } }
+      if (e?.status === 403 && e.data?.error === 'banned') {
+        // Server says we're banned — sync UI so the overlay appears immediately
+        // even if /user/me hasn't been refetched yet.
+        if (e.data.banned_until) {
+          set({
+            bannedUntil:  e.data.banned_until * 1000,
+            bannedReason: e.data.banned_reason ?? '',
+          })
+        }
+        return null
+      }
+      if (e?.status === 429 && e.data?.error === 'captcha_required') {
+        try {
+          const ch = await api.getCaptchaChallenge()
+          set({ pendingCaptcha: { id: ch.id, question: ch.question, defenderId } })
+        } catch { /* ignore — toast already gone */ }
+        return null
+      }
       return null
     }
   },

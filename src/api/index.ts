@@ -110,11 +110,21 @@ export function getRaidTargets(search?: string): Promise<ApiUserPublic[]> {
   return apiFetch(`/api/raids/targets${qs}`)
 }
 
-export function startRaid(defenderId: number): Promise<ApiRaid> {
+export function startRaid(
+  defenderId: number,
+  captcha?: { id: string; answer: string },
+): Promise<ApiRaid> {
   return apiFetch('/api/raids', {
     method: 'POST',
-    body:   JSON.stringify({ defender_id: defenderId }),
+    body:   JSON.stringify({
+      defender_id: defenderId,
+      ...(captcha ? { captcha_id: captcha.id, captcha_answer: captcha.answer } : {}),
+    }),
   })
+}
+
+export function getCaptchaChallenge(): Promise<{ id: string; question: string; ttl: number }> {
+  return apiFetch('/api/captcha/challenge')
 }
 
 export function getRaidHistory(): Promise<ApiRaid[]> {

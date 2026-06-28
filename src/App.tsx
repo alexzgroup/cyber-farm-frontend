@@ -9,6 +9,7 @@ import { MarketSoldToast } from './components/MarketSoldToast'
 import { ReferralEarnedToast } from './components/ReferralEarnedToast'
 import { DailyBonusModal } from './components/DailyBonusModal'
 import { NotificationPermissionToast } from './components/NotificationPermissionToast'
+import { CaptchaModal } from './components/CaptchaModal'
 import { Confetti } from './components/Confetti'
 import { FarmScreen } from './screens/FarmScreen'
 import { ShopScreen } from './screens/ShopScreen'
@@ -143,6 +144,7 @@ export function App() {
       <ReferralEarnedToast />
       <DailyBonusModal />
       <NotificationPermissionToast />
+      <CaptchaModal />
       {showConfetti && <Confetti onDone={hideConfetti} />}
       <DuelChallengeModal />
       <DuelWaitingModal />

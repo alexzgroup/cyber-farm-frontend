@@ -9,6 +9,7 @@ import { RaidGame } from '../game/RaidGame'
 import { fmtGold } from '../utils/format'
 import { useCountdown, fmtCooldown } from '../hooks/useCooldown'
 import { InviteFriendButton } from '../components/InviteFriendButton'
+import { BanOverlay } from '../components/BanOverlay'
 import styles from './RaidsScreen.module.css'
 
 type View    = 'targets' | 'battle' | 'result' | 'history'
@@ -214,9 +215,12 @@ export function RaidsScreen() {
   const { t }       = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const drones      = useGameStore((s) => s.drones)
-  const executeRaid = useGameStore((s) => s.executeRaid)
-  const setScreen   = useGameStore((s) => s.setScreen)
+  const drones       = useGameStore((s) => s.drones)
+  const executeRaid  = useGameStore((s) => s.executeRaid)
+  const setScreen    = useGameStore((s) => s.setScreen)
+  const bannedUntil  = useGameStore((s) => s.bannedUntil)
+  const bannedReason = useGameStore((s) => s.bannedReason)
+  const isBanned     = bannedUntil != null && bannedUntil > Date.now()
 
   const workingDrones = drones.filter((d) => !d.isBroken)
   const attackerLevel = workingDrones.length > 0
@@ -285,6 +289,11 @@ export function RaidsScreen() {
 
   return (
     <div ref={containerRef} className={styles.screen}>
+
+      {/* ── Auto-cheat ban overlay (blocks the whole screen until timer expires) ── */}
+      {isBanned && bannedUntil != null && (
+        <BanOverlay bannedUntilMs={bannedUntil} reason={bannedReason} />
+      )}
 
       {/* ── Battle overlay ── */}
       {view === 'battle' && raidResult && (
