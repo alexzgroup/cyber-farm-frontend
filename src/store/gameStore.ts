@@ -168,6 +168,9 @@ interface GameState {
   tickBalance:        () => void           // called every second from App.tsx
   updateLanguage:       (lang: 'ru' | 'en') => Promise<void>
   updateNotifications:  (enabled: boolean) => Promise<void>
+  // Opt-in flow that first asks Telegram for write-access permission, then flips
+  // the server flag iff the user granted it. Returns true if both succeeded.
+  requestNotifications: () => Promise<boolean>
   updateDuelSettings:   (enabled: boolean) => Promise<void>
   tap:                () => void           // FarmScene tap mechanic
   flushTaps:          () => Promise<void>  // send pendingTaps count to backend
@@ -393,6 +396,23 @@ export const useGameStore = create<GameState>((set, get) => ({
   updateNotifications: async (enabled) => {
     set({ allowNotification: enabled })
     try { await api.updateUserNotifications(enabled) } catch { set({ allowNotification: !enabled }) }
+  },
+
+  // Telegram-mediated opt-in: shows the native "allow this bot to message you" dialog,
+  // then persists the choice on the server. Used by the on-boarding toast and by the
+  // Profile screen when the user flips the switch from off → on.
+  requestNotifications: async () => {
+    const { requestBotWriteAccess } = await import('../telegram/webApp')
+    const granted = await requestBotWriteAccess()
+    if (!granted) return false
+    set({ allowNotification: true })
+    try {
+      await api.updateUserNotifications(true)
+      return true
+    } catch {
+      set({ allowNotification: false })
+      return false
+    }
   },
 
   // ── Duel challenges opt-in / opt-out ──────────────────────────

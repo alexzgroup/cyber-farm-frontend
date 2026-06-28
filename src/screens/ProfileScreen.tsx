@@ -77,6 +77,17 @@ export function ProfileScreen() {
   const updateLanguage      = useGameStore((s) => s.updateLanguage)
   const allowNotification   = useGameStore((s) => s.allowNotification)
   const updateNotifications = useGameStore((s) => s.updateNotifications)
+  const requestNotifs       = useGameStore((s) => s.requestNotifications)
+
+  // Off → on goes through the Telegram write-access dialog; on → off is a direct
+  // server toggle (no permission needed to opt out).
+  const handleNotifToggle = async () => {
+    if (allowNotification) {
+      await updateNotifications(false)
+    } else {
+      await requestNotifs()
+    }
+  }
   const allowDuel           = useGameStore((s) => s.allowDuel)
   const updateDuelSettings  = useGameStore((s) => s.updateDuelSettings)
   const drones              = useGameStore((s) => s.drones)
@@ -710,7 +721,7 @@ export function ProfileScreen() {
           <div ref={settingsRef} className={styles.secLabel}><span className={styles.secDot} />{t('profile.section_settings')}</div>
           <section className={`${styles.card} ${styles.settings}`}>
             {/* Notifications */}
-            <div className={styles.setRow} onClick={() => updateNotifications(!allowNotification)}>
+            <div className={styles.setRow} onClick={handleNotifToggle}>
               <span className={styles.setIc}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>

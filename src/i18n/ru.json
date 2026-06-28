@@ -15,6 +15,11 @@
   "hud": {
     "energyRegen": "+{{rate}} ⚡/мин"
   },
+  "notif": {
+    "promptTitle": "Не пропусти главное",
+    "promptSubtitle": "Включи уведомления — узнаешь о рейдах, наградах и розыгрышах TON первым.",
+    "enableBtn": "Включить"
+  },
   "farm": {
     "droneZone": "DRONE ZONE",
     "defenseZone": "DEFENCE ZONE",

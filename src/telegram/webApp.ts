@@ -78,6 +78,9 @@ export interface TelegramWebApp {
   onEvent: (eventType: string, eventHandler: () => void) => void
   offEvent: (eventType: string, eventHandler: () => void) => void
   isVersionAtLeast: (version: string) => boolean
+  // Bot API 7.2+: asks the user for permission to receive messages from the bot.
+  // Mock and older Telegram clients may not have it — always probe with optional chaining.
+  requestWriteAccess?: (callback?: (accessGranted: boolean) => void) => void
 }
 
 // Lazy getter — safe to call at any time; returns null if not inside Telegram.
@@ -96,6 +99,25 @@ export const webApp = new Proxy({} as TelegramWebApp, {
     return typeof val === 'function' ? val.bind(app) : val
   },
 })
+
+// Asks the Telegram client to show the system "allow this bot to message you" dialog.
+// Resolves to true if the user granted permission, false otherwise (declined, errored,
+// or the API is unavailable — e.g. older Telegram or outside-Telegram dev session).
+export function requestBotWriteAccess(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const app = getWebApp()
+    if (!app?.requestWriteAccess) {
+      // Outside Telegram (dev) or pre-7.2 client — treat as granted so the UI flow proceeds.
+      resolve(true)
+      return
+    }
+    try {
+      app.requestWriteAccess((granted) => resolve(Boolean(granted)))
+    } catch {
+      resolve(false)
+    }
+  })
+}
 
 export function initTelegramApp(): void {
   const app = getWebApp()

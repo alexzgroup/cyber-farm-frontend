@@ -15,6 +15,11 @@
   "hud": {
     "energyRegen": "+{{rate}} ⚡/min"
   },
+  "notif": {
+    "promptTitle": "Don't miss the action",
+    "promptSubtitle": "Turn on alerts — be first to know about raids, rewards and TON drops.",
+    "enableBtn": "Turn on"
+  },
   "farm": {
     "droneZone": "DRONE ZONE",
     "defenseZone": "DEFENCE ZONE",
