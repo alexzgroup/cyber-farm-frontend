@@ -21,10 +21,10 @@ export function getMe(): Promise<ApiUser> {
   return apiFetch('/api/user/me')
 }
 
-export function flushTapBonus(bonus: number): Promise<{ balance: number }> {
+export function flushTaps(taps: number): Promise<{ balance: number; energy: number; taps_applied: number }> {
   return apiFetch('/api/user/tap', {
     method: 'POST',
-    body:   JSON.stringify({ bonus }),
+    body:   JSON.stringify({ taps }),
   })
 }
 

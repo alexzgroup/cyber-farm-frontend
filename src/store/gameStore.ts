@@ -131,7 +131,7 @@ interface GameState {
   balanceBase:      number   // last committed balance from server
   balanceUpdatedAt: number   // ms timestamp of last server commit
   incomeRateTotal:  number   // coins/second — sum of active drone income_rate
-  pendingTapBonus:  number   // accumulated tap bonus not yet flushed to backend
+  pendingTaps:      number   // taps accumulated since last server flush — sent as a count
   tonBalance:       number   // real TON crypto balance
   tonWallet:        string   // connected TON wallet address (empty = not connected)
   // Telegram user profile
@@ -170,7 +170,7 @@ interface GameState {
   updateNotifications:  (enabled: boolean) => Promise<void>
   updateDuelSettings:   (enabled: boolean) => Promise<void>
   tap:                () => void           // FarmScene tap mechanic
-  flushTaps:          () => Promise<void>  // send pendingTapBonus to backend
+  flushTaps:          () => Promise<void>  // send pendingTaps count to backend
   buyDrone:           (droneType?: import('../api/types').DroneType) => Promise<boolean>
   upgradeDrone:       (droneId: string) => Promise<boolean>
   repairDrone:        (droneId: string) => Promise<boolean>
@@ -231,7 +231,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   balanceBase:      0,
   balanceUpdatedAt: 0,
   incomeRateTotal:  0,
-  pendingTapBonus:  0,
+  pendingTaps:      0,
   tonBalance:       0,
   tonWallet:        '',
   userId:           0,
@@ -261,8 +261,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   loadError:      null,
 
   // ── Tap mechanic (FarmScene) ───────────────────────────────────────────
+  // Optimistic update: we apply gold + energy on the client immediately for snappy UI,
+  // then send the tap count to the server. The server is authoritative — it caps
+  // by real energy and computes bonus from MAX(drone.level). On flush we overwrite
+  // balance/energy with the server response.
   tap: () => {
-    const { energy, balance, drones, pendingTapBonus } = get()
+    const { energy, balance, drones, pendingTaps } = get()
     if (energy <= 0) return
     const maxLevel = Math.max(1, ...drones.map((d) => d.level)) as DroneLevel
     const bonus = DRONE_UPGRADES[maxLevel - 1]?.tapBonus ?? 0.1
@@ -271,22 +275,28 @@ export const useGameStore = create<GameState>((set, get) => ({
       balance:          newBalance,
       balanceBase:      newBalance,
       balanceUpdatedAt: Date.now(),
-      pendingTapBonus:  pendingTapBonus + bonus,
+      pendingTaps:      pendingTaps + 1,
       energy:           energy - 1,
     })
   },
 
   flushTaps: async () => {
-    const { pendingTapBonus } = get()
-    if (pendingTapBonus <= 0) return
-    const toFlush = pendingTapBonus
-    set({ pendingTapBonus: 0 })
+    const { pendingTaps } = get()
+    if (pendingTaps <= 0) return
+    const toFlush = pendingTaps
+    set({ pendingTaps: 0 })
     try {
-      const res = await api.flushTapBonus(toFlush)
-      set({ balanceBase: res.balance, balanceUpdatedAt: Date.now() })
+      const res = await api.flushTaps(toFlush)
+      // Server is the source of truth — overwrite optimistic values.
+      set({
+        balance:          Number(res.balance),
+        balanceBase:      Number(res.balance),
+        balanceUpdatedAt: Date.now(),
+        energy:           res.energy,
+      })
     } catch {
       // Restore on error so it retries on next flush
-      set((s) => ({ pendingTapBonus: s.pendingTapBonus + toFlush }))
+      set((s) => ({ pendingTaps: s.pendingTaps + toFlush }))
     }
   },
 
