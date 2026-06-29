@@ -373,3 +373,38 @@
 .histStatusWin  { background: rgba(57,255,20,0.12); color: #39ff14; }
 .histStatusLose { background: rgba(255,68,68,0.12); color: #ff6b6b; }
 .histCoins { font-size: 11px; color: #ffd700; }
+
+/* Floating shield purchase CTA */
+.shieldFab {
+  position: fixed;
+  right: 16px;
+  bottom: 80px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4b6cff 0%, #8a5cf6 100%);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(80, 110, 255, 0.45), 0 0 0 4px rgba(80, 110, 255, 0.12);
+  cursor: pointer;
+  z-index: 90;
+  animation: shieldPulse 2.5s ease-in-out infinite;
+}
+
+.shieldFabIcon {
+  font-size: 18px;
+}
+
+.shieldFabText {
+  letter-spacing: 0.2px;
+}
+
+@keyframes shieldPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 6px 20px rgba(80, 110, 255, 0.45), 0 0 0 4px rgba(80, 110, 255, 0.12); }
+  50%      { transform: scale(1.04); box-shadow: 0 8px 28px rgba(80, 110, 255, 0.65), 0 0 0 8px rgba(80, 110, 255, 0.08); }
+}

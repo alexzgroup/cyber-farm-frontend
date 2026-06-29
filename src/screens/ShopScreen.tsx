@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useGameStore, DRONE_UPGRADES, REPAIR_COSTS } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
 import { DroneIcon, TurretIcon, UnitCircle, WrenchIcon } from '../components/UnitIcons'
+import { ShieldModal } from '../components/ShieldModal'
 import styles from './ShopScreen.module.css'
 
 const DRONE_COLORS: Record<number, string> = { 1: '#00ccee', 2: '#ff4400', 3: '#9900ff' }
@@ -28,6 +29,7 @@ export function ShopScreen() {
   const [turretToast,  setTurretToast]  = useState('')
   const [buyingDrone,  setBuyingDrone]  = useState(false)
   const [upgradingId,  setUpgradingId]  = useState<string | null>(null)
+  const [shieldOpen,   setShieldOpen]   = useState(false)
 
   const brokenDrones   = drones.filter((d) => d.isBroken)
   const newDronePrice  = 300 + drones.length * 200
@@ -58,6 +60,22 @@ export function ShopScreen() {
     <div className={styles.screen}>
       <h2 className={styles.title}>{t('shop.title')}</h2>
       <p className={styles.balance}>⬡ {fmtGold(balance)}</p>
+
+      {/* Shield offer banner — top, animated */}
+      <button
+        type="button"
+        className={styles.shieldBanner}
+        onClick={() => setShieldOpen(true)}
+        aria-label="Купить щит от рейдов"
+      >
+        <span className={styles.shieldBannerSheen} />
+        <span className={styles.shieldBannerIcon}>🛡</span>
+        <span className={styles.shieldBannerText}>
+          <span className={styles.shieldBannerTitle}>Щит от рейдов</span>
+          <span className={styles.shieldBannerSub}>1 день — 15 ⭐. Никто не атакует ферму.</span>
+        </span>
+        <span className={styles.shieldBannerArrow}>→</span>
+      </button>
 
       {/* Repair section */}
       {brokenDrones.length > 0 && (
@@ -209,6 +227,8 @@ export function ShopScreen() {
           })}
         </div>
       </section>
+
+      <ShieldModal open={shieldOpen} onClose={() => setShieldOpen(false)} />
     </div>
   )
 }

@@ -10,6 +10,7 @@ import { fmtGold } from '../utils/format'
 import { useCountdown, fmtCooldown } from '../hooks/useCooldown'
 import { InviteFriendButton } from '../components/InviteFriendButton'
 import { BanOverlay } from '../components/BanOverlay'
+import { ShieldModal } from '../components/ShieldModal'
 import styles from './RaidsScreen.module.css'
 
 type View    = 'targets' | 'battle' | 'result' | 'history'
@@ -212,6 +213,7 @@ export function RaidsScreen() {
   const [targets, setTargets]         = useState<ApiUserPublic[]>([])
   const [targetsLoading, setTargetsLoading] = useState(true)
   const [search, setSearch]           = useState('')
+  const [shieldOpen, setShieldOpen]   = useState(false)
   const { t }       = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -405,8 +407,20 @@ export function RaidsScreen() {
               </>
             )}
           </section>
+
+          {/* Floating shield CTA — visible only on the targets list */}
+          <button
+            className={styles.shieldFab}
+            onClick={() => setShieldOpen(true)}
+            aria-label="Купить щит от рейдов"
+          >
+            <span className={styles.shieldFabIcon}>🛡</span>
+            <span className={styles.shieldFabText}>Защититься</span>
+          </button>
         </>
       )}
+
+      <ShieldModal open={shieldOpen} onClose={() => setShieldOpen(false)} />
     </div>
   )
 }

@@ -169,6 +169,18 @@ export function buyProduct(productId: number): Promise<{ invoice_url: string }> 
   return apiFetch(`/api/shop/products/${productId}/buy`, { method: 'POST' })
 }
 
+// ── Raid shield ────────────────────────────────────────────────────────────
+
+export function getShieldPrice(): Promise<{ stars_per_day: number; shielded_until?: number }> {
+  return apiFetch('/api/shield/price')
+}
+
+export function buyShield(days: number): Promise<{
+  invoice_url: string; stars: number; days: number; stars_per_day: number
+}> {
+  return apiFetch('/api/shield/buy', { method: 'POST', body: JSON.stringify({ days }) })
+}
+
 export function getWalletRate(): Promise<{ stars_per_ton: number; ton_to_usd: number; source: string }> {
   return apiFetch('/api/wallet/rate')
 }

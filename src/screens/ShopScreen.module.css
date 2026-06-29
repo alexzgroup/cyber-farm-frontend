@@ -145,3 +145,75 @@
   text-shadow: 0 0 8px #39ff14;
   padding: 0 8px;
 }
+
+/* Shield offer banner — top of shop, animated sheen */
+.shieldBanner {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(80, 110, 255, 0.4);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(75, 108, 255, 0.18) 0%, rgba(138, 92, 246, 0.16) 100%);
+  color: #e8f0ff;
+  font-family: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  box-shadow: 0 4px 18px rgba(80, 110, 255, 0.18);
+}
+
+.shieldBannerIcon {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 6px rgba(80, 110, 255, 0.6));
+  flex-shrink: 0;
+}
+
+.shieldBannerText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shieldBannerTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.shieldBannerSub {
+  font-size: 11px;
+  color: rgba(200, 215, 240, 0.75);
+}
+
+.shieldBannerArrow {
+  color: #b8d4ff;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.shieldBannerSheen {
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  animation: shieldSheen 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shieldSheen {
+  0%, 100% { left: -60%; }
+  50%      { left: 110%; }
+}
