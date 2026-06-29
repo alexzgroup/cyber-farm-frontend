@@ -150,19 +150,23 @@
 .shieldBanner {
   position: relative;
   width: 100%;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 16px;
+  padding: 18px 20px;
+  margin: 0;
   border: 1px solid rgba(80, 110, 255, 0.4);
   border-radius: 14px;
   background: linear-gradient(135deg, rgba(75, 108, 255, 0.18) 0%, rgba(138, 92, 246, 0.16) 100%);
   color: #e8f0ff;
   font-family: inherit;
+  line-height: 1.4;
   cursor: pointer;
   overflow: hidden;
   text-align: left;
   box-shadow: 0 4px 18px rgba(80, 110, 255, 0.18);
+  box-sizing: border-box;
 }
 
 .shieldBannerIcon {
@@ -175,7 +179,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .shieldBannerTitle {
