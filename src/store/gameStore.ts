@@ -12,13 +12,16 @@ export interface DroneUpgrade {
   tapBonus:     number
 }
 
+// Prices reflect what the server charges in backend/api/internal/handler/drone.go
+// (DroneUpgradePrice). Keep them in sync — the server is authoritative.
 export const DRONE_UPGRADES: DroneUpgrade[] = [
-  { level: 1, name: 'Базовый дрон',  description: 'Стандартный фермер',        price: 0,    tapBonus: 0.1 },
-  { level: 2, name: 'Турбо-дрон',    description: '+300% доход, +0.2 за клик', price: 500,  tapBonus: 0.3 },
-  { level: 3, name: 'Нано-дрон',     description: '+900% доход, +0.5 за клик', price: 2000, tapBonus: 0.5 },
+  { level: 1, name: 'Базовый дрон',  description: 'Стандартный фермер',        price: 0,   tapBonus: 0.1 },
+  { level: 2, name: 'Турбо-дрон',    description: '+300% доход, +0.2 за клик', price: 200, tapBonus: 0.3 },
+  { level: 3, name: 'Нано-дрон',     description: '+900% доход, +0.5 за клик', price: 500, tapBonus: 0.5 },
 ]
 
-export const REPAIR_COSTS: Record<DroneLevel, number> = { 1: 50, 2: 150, 3: 400 }
+// Backend handler/drone.go.Repair charges a flat 50 regardless of drone level.
+export const REPAIR_COSTS: Record<DroneLevel, number> = { 1: 50, 2: 50, 3: 50 }
 
 // ── Local types ────────────────────────────────────────────────────────────
 
