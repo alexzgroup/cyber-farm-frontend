@@ -11,23 +11,26 @@ import { useCountdown, fmtCooldown } from '../hooks/useCooldown'
 import { InviteFriendButton } from '../components/InviteFriendButton'
 import { BanOverlay } from '../components/BanOverlay'
 import { ShieldModal } from '../components/ShieldModal'
+import { ShieldedTargetModal } from '../components/ShieldedTargetModal'
 import styles from './RaidsScreen.module.css'
 
 type View    = 'targets' | 'battle' | 'result' | 'history'
 type HistTab = 'attack' | 'defense'
 
 // ── Target card ───────────────────────────────────────────────────────────────
-function TargetCard({ player, attackerLevel, workingDrones, onAttack, onToggleFavorite }: {
+function TargetCard({ player, attackerLevel, workingDrones, onAttack, onToggleFavorite, onShieldedClick }: {
   player:           ApiUserPublic
   attackerLevel:    number
   workingDrones:    Drone[]
   onAttack:         (id: number) => void
   onToggleFavorite: (id: number, current: boolean) => void
+  onShieldedClick:  (player: ApiUserPublic) => void
 }) {
   const { t } = useTranslation()
   const onlineStatus = useGameStore((s) => s.onlineStatus)
   const remaining    = useCountdown(player.cooldown_until)
   const onCooldown   = remaining > 0
+  const shielded     = !!player.shielded_until && player.shielded_until * 1000 > Date.now()
   const isOnline     = player.id in onlineStatus ? onlineStatus[player.id] : player.is_online
 
   const attackPower  = workingDrones.reduce((s, d) => s + d.level * 10, 0)
@@ -52,7 +55,9 @@ function TargetCard({ player, attackerLevel, workingDrones, onAttack, onToggleFa
         <div className={styles.targetStats}>
           <span>⬡ {Math.round(Number(player.balance))}</span>
         </div>
-        {onCooldown ? (
+        {shielded ? (
+          <p className={styles.cooldown}>🛡 Под защитой</p>
+        ) : onCooldown ? (
           <p className={styles.cooldown}>⏱ {t('raids.cooldownLabel')} {fmtCooldown(remaining)}</p>
         ) : (
           <p className={styles.reward}>
@@ -69,14 +74,24 @@ function TargetCard({ player, attackerLevel, workingDrones, onAttack, onToggleFa
           onClick={() => onToggleFavorite(player.id, !!player.is_favorite)}
           size={44}
         />
-        <button
-          className={`${styles.attackBtn} ${disabled ? styles.attackDisabled : ''} ${onCooldown ? styles.attackCooldown : ''}`}
-          onClick={() => !disabled && onAttack(player.id)}
-          disabled={disabled}
-          title={t('raids.attack')}
-        >
-          {onCooldown ? <span>{fmtCooldown(remaining)}</span> : '⚔️'}
-        </button>
+        {shielded ? (
+          <button
+            className={styles.shieldedBtn}
+            onClick={() => onShieldedClick(player)}
+            title="Защищён от рейдов"
+          >
+            🛡
+          </button>
+        ) : (
+          <button
+            className={`${styles.attackBtn} ${disabled ? styles.attackDisabled : ''} ${onCooldown ? styles.attackCooldown : ''}`}
+            onClick={() => !disabled && onAttack(player.id)}
+            disabled={disabled}
+            title={t('raids.attack')}
+          >
+            {onCooldown ? <span>{fmtCooldown(remaining)}</span> : '⚔️'}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -214,6 +229,7 @@ export function RaidsScreen() {
   const [targetsLoading, setTargetsLoading] = useState(true)
   const [search, setSearch]           = useState('')
   const [shieldOpen, setShieldOpen]   = useState(false)
+  const [shieldedTarget, setShieldedTarget] = useState<ApiUserPublic | null>(null)
   const { t }       = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -397,6 +413,7 @@ export function RaidsScreen() {
                       workingDrones={workingDrones}
                       onAttack={handleAttack}
                       onToggleFavorite={handleToggleFavorite}
+                      onShieldedClick={setShieldedTarget}
                     />
                   ))}
                 </div>
@@ -421,6 +438,11 @@ export function RaidsScreen() {
       )}
 
       <ShieldModal open={shieldOpen} onClose={() => setShieldOpen(false)} />
+      <ShieldedTargetModal
+        player={shieldedTarget}
+        onClose={() => setShieldedTarget(null)}
+        onBuyOwnShield={() => { setShieldedTarget(null); setShieldOpen(true) }}
+      />
     </div>
   )
 }

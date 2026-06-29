@@ -209,6 +209,8 @@ interface GameState {
   setMarketSoldToast:        (n: { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null) => void
   referralEarnedToast:       { amount: number; name: string; total: number; level: number; trigger: string } | null
   setReferralEarnedToast:    (n: { amount: number; name: string; total: number; level: number; trigger: string } | null) => void
+  shieldVersion:             number  // bumped on shield.updated WS event so subscribers re-fetch
+  bumpShieldVersion:         () => void
   cancelledListings:         Set<number>
   markListingCancelled:      (id: number) => void
   showConfetti:              boolean
@@ -638,6 +640,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   setMarketSoldToast: (n) => set({ marketSoldToast: n }),
   referralEarnedToast:    null,
   setReferralEarnedToast: (n) => set({ referralEarnedToast: n }),
+  shieldVersion:          0,
+  bumpShieldVersion:      () => set((s) => ({ shieldVersion: s.shieldVersion + 1 })),
   cancelledListings:  new Set<number>(),
   markListingCancelled: (id) => set((s) => ({ cancelledListings: new Set([...s.cancelledListings, id]) })),
   showConfetti:       false,

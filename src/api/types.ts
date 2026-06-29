@@ -100,6 +100,7 @@ export interface ApiUserPublic {
   avatar_url?:    string
   balance:        number
   cooldown_until?: number   // unix timestamp; absent/null = can attack now
+  shielded_until?: number   // unix timestamp; non-null = target has raid shield
   is_online?:     boolean
   defense_power?: number
   is_favorite?:   boolean

@@ -216,6 +216,15 @@ function dispatch(msg: WsMessage) {
       break
     }
 
+    case 'shield.updated': {
+      // Shield was extended after a successful Stars purchase — refresh user
+      // (v_ip_until lives on the user object) and bump shieldVersion so the
+      // ShieldModal re-reads /shield/price.
+      store.loadGameState()
+      store.bumpShieldVersion()
+      break
+    }
+
     case 'referral.earned': {
       // Referrer earned TON from their downline activity
       store.setReferralEarnedToast({

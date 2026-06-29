@@ -16,12 +16,16 @@ interface Props {
 
 export function ShieldModal({ open, onClose }: Props) {
   const loadGameState = useGameStore((s) => s.loadGameState)
+  const shieldVersion = useGameStore((s) => s.shieldVersion)
   const [days, setDays] = useState(1)
   const [pricePerDay, setPricePerDay] = useState(15)
   const [shieldedUntil, setShieldedUntil] = useState<number | undefined>(undefined)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
+  // Re-fetch when the modal opens OR when shieldVersion changes — the latter
+  // gets bumped by the shield.updated WS event so the modal stays in sync even
+  // when the user pays from another tab/device.
   useEffect(() => {
     if (!open) return
     getShieldPrice()
@@ -30,7 +34,7 @@ export function ShieldModal({ open, onClose }: Props) {
         setShieldedUntil(r.shielded_until)
       })
       .catch(() => {})
-  }, [open])
+  }, [open, shieldVersion])
 
   if (!open) return null
 

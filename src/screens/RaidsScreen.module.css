@@ -408,3 +408,24 @@
   0%, 100% { transform: scale(1); box-shadow: 0 6px 20px rgba(80, 110, 255, 0.45), 0 0 0 4px rgba(80, 110, 255, 0.12); }
   50%      { transform: scale(1.04); box-shadow: 0 8px 28px rgba(80, 110, 255, 0.65), 0 0 0 8px rgba(80, 110, 255, 0.08); }
 }
+
+/* Shielded target — pacific look, taps open info modal */
+.shieldedBtn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(80, 160, 255, 0.4);
+  border-radius: 10px;
+  background: rgba(80, 160, 255, 0.12);
+  color: #b8d4ff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.shieldedBtn:hover {
+  background: rgba(80, 160, 255, 0.2);
+}
