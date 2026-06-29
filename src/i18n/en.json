@@ -330,7 +330,22 @@
     "walletAddress": "Wallet address",
     "depositComment": "Transfer comment",
     "depositCommentWarning": "Without the comment your TON won't be credited!",
-    "openInWallet": "Open in wallet"
+    "openInWallet": "Open in wallet",
+    "earnMore": "Earn more",
+    "earnMoreSub": "Watch ads — get gold every 5 minutes"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "subtitle": "Complete simple tasks and earn gold",
+    "gold50Title": "Get {{amount}} gold",
+    "gold50Sub": "Watch a short ad video",
+    "watchAd": "Watch ad · +{{amount}} gold",
+    "loadingAd": "Loading ad…",
+    "availableIn": "Available in {{time}}",
+    "cooldownHint": "Reward is available once every {{minutes}} minutes",
+    "adError": "Failed to show the ad. Try again later.",
+    "adNotFinished": "Ad wasn't watched to the end",
+    "sdkError": "Failed to load the ad module"
   },
   "common": {
     "coins": "coins",

@@ -29,6 +29,7 @@ import { ReferralsScreen } from './screens/ReferralsScreen'
 import { FavoritesScreen } from './screens/FavoritesScreen'
 import { WithdrawalScreen } from './screens/WithdrawalScreen'
 import { FAQScreen } from './screens/FAQScreen'
+import { TasksScreen } from './screens/TasksScreen'
 import { DuelChallengeModal } from './components/DuelChallengeModal'
 import { DuelWaitingModal } from './components/DuelWaitingModal'
 import { NAV_HEIGHT } from './layout'
@@ -168,6 +169,7 @@ export function App() {
         {screen === 'referrals'    && <ReferralsScreen />}
         {screen === 'favorites'    && <FavoritesScreen />}
         {screen === 'faq'          && <FAQScreen />}
+        {screen === 'tasks'        && <TasksScreen />}
       </div>
       <BottomNav />
     </div>

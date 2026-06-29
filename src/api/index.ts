@@ -218,6 +218,10 @@ export function getReferralRates(): Promise<import('./types').ReferralRates> {
   return apiFetch('/api/referral/rates')
 }
 
+export function getAdsgramStatus(): Promise<{ next_at: number; cooldown_sec: number; reward: number }> {
+  return apiFetch('/api/adsgram/status')
+}
+
 export function getDailyBonusStatus(): Promise<import('./types').DailyBonusStatus> {
   return apiFetch('/api/daily-bonus/status')
 }

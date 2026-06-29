@@ -82,6 +82,11 @@ function dispatch(msg: WsMessage) {
         store.setTonDepositToast({ amount })
         break
       }
+      // AdSgram reward credited — refresh balance so the +50 gold shows up
+      if (msg.payload?.type === 'adsgram_reward') {
+        store.loadGameState()
+        break
+      }
       // Sub-type dispatch: raid_incoming arrives on this channel
       if (msg.payload?.type === 'raid_incoming') {
         const defended = msg.payload.result !== 'victory'

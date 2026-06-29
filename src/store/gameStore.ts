@@ -66,7 +66,7 @@ export interface IncomingRaidEntry {
   timestamp:    number
 }
 
-export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'unit-detail' | 'purchases' | 'topup' | 'contest' | 'duel' | 'duel-battle' | 'duel-history' | 'referrals' | 'withdrawal' | 'favorites' | 'faq'
+export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'unit-detail' | 'purchases' | 'topup' | 'contest' | 'duel' | 'duel-battle' | 'duel-history' | 'referrals' | 'withdrawal' | 'favorites' | 'faq' | 'tasks'
 
 export type UnitUpgrades = Record<string, Record<string, number>>
 

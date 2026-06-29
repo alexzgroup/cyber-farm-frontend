@@ -15,6 +15,7 @@ const SCREEN_PARENT: Partial<Record<string, string>> = {
   'unit-detail': 'farm',
   purchases:     'farm',
   topup:         'profile',
+  tasks:         'profile',
   market:        'market',
   raids:          'duel',
   'duel-battle':  'duel',

@@ -46,6 +46,14 @@ export function FarmScreen() {
         {t('contest.farmBtn')}
       </button>
 
+      {/* Earn-gold shortcut — gold circle above the FAQ button. Opens Tasks. */}
+      <button
+        className={styles.tasksBtn}
+        onClick={() => setScreen('tasks')}
+        aria-label={t('tasks.title')}
+        title={t('tasks.title')}
+      >$</button>
+
       {/* Floating help button — bottom-right above the bottom nav. Opens the FAQ. */}
       <button
         className={styles.faqBtn}

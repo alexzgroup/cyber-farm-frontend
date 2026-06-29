@@ -353,6 +353,39 @@ export function ProfileScreen() {
             </button>
           </div>
 
+          {/* ── Earn more (AdSgram) ── */}
+          <button
+            onClick={() => setScreen('tasks')}
+            style={{
+              width: '100%', padding: '14px 18px', borderRadius: 14,
+              background: 'linear-gradient(90deg, rgba(246,197,68,0.22), rgba(255,179,2,0.32), rgba(246,197,68,0.22))',
+              backgroundSize: '200% 100%',
+              border: '1px solid rgba(246,197,68,0.45)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left',
+              color: '#fde68a', position: 'relative', overflow: 'hidden',
+              animation: 'earnMorePulse 2.4s ease-in-out infinite, earnMoreShimmer 3.5s linear infinite',
+            }}
+          >
+            <style>{`
+              @keyframes earnMorePulse {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(246,197,68,0.45); }
+                50%      { box-shadow: 0 0 0 14px rgba(246,197,68,0); }
+              }
+              @keyframes earnMoreShimmer {
+                0%   { background-position:   0% 50%; }
+                100% { background-position: 200% 50%; }
+              }
+            `}</style>
+            <span style={{ fontSize: 26 }}>💰</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 800, fontSize: 15 }}>{t('profile.earnMore')}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+                {t('profile.earnMoreSub')}
+              </div>
+            </div>
+            <span style={{ color: '#fde68a', fontSize: 18 }}>→</span>
+          </button>
+
           {/* ── Farm stats ── */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
             {[
