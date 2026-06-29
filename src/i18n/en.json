@@ -37,6 +37,22 @@
     "title": "FAQ",
     "subtitle": "Short answers to how CyberFarm works.",
     "items": {
+      "airdrop": {
+        "title": "🪂 AirDrop CFM Token — Q4 2026",
+        "body": "We're launching our own CFM token on the TON network. Snapshot — Dec 31, 2026. TGE and listing on TON DEX — Q1-Q2 2027.\n\nEvery action you take in the game already accumulates allocation points:\n• Stars pack purchase — ×3 points\n• TON deposit — ×5 points\n• Drone upgrade / turret purchase — +1 point per gold spent\n• Victorious raid — +10 points\n• Referred a friend (who joined) — +50 points\n• Battle Pass / VIP — extra multipliers on top (×2 / ×3)\n\nImportant: points are calculated retroactively — all your past activity is already counted. Tiers: Bronze → Silver → Gold → Platinum → Diamond. The higher the tier, the bigger the CFM allocation at TGE.\n\n💡 Goal: be in the top tier by snapshot on Dec 31, 2026. Every gold you buy is future CFM."
+      },
+      "staking": {
+        "title": "🔒 Stake Gold — coming soon",
+        "body": "Lock your gold for 1 / 7 / 30 days and receive a fixed TON payout at the end of the term. Perfect for turning accumulated gold into a real TON asset without using the P2P market.\n\nRates and parameters will be published at launch. Launch — after the AirDrop CFM announcement."
+      },
+      "battlepass": {
+        "title": "🎟 Battle Pass — coming soon",
+        "body": "Seasonal pass, 30 days, 59 ⭐. What's inside:\n• ×2 multiplier on AirDrop points\n• Exclusive cosmetic drone skin\n• +1 additional turret slot for the pass duration\n• Daily bonus — +50 gold and full energy\n• 4-hour daily raid immunity window of your choice\n\nLaunch — after staking."
+      },
+      "vip": {
+        "title": "💎 VIP — coming soon",
+        "body": "Premium subscription, 149 ⭐/month. What it gives:\n• ×2 passive income across all drones\n• +1 drone slot above the regular limit\n• Permanent shield from raids\n• VIP badge in leaderboard, market and raids\n• +10% attack bonus\n• ×3 multiplier on AirDrop points\n\nLaunch — after Battle Pass."
+      },
       "essence": {
         "title": "What is the game",
         "body": "CyberFarm is a cyber drone farm inside Telegram. You collect combat and scout drones that generate passive gold every second — even when the app is closed. Defense turrets keep your farm safe from raiders, while you can raid other players and steal their coins. The endgame is converting gold to real TON via the P2P market, the weekly contest pool, and the referral network."

@@ -6,10 +6,14 @@ import styles from './FAQScreen.module.css'
 // Identifiers correspond to keys under `faq.items` in the i18n files. Order
 // here drives display order in the list.
 const ITEMS = [
+  { id: 'airdrop',   icon: '🪂' },
   { id: 'essence',   icon: '🎯' },
   { id: 'earning',   icon: '💰' },
   { id: 'raids',     icon: '⚔️' },
   { id: 'referrals', icon: '🤝' },
+  { id: 'staking',   icon: '🔒' },
+  { id: 'battlepass', icon: '🎟' },
+  { id: 'vip',       icon: '💎' },
   { id: 'rules',     icon: '🛡️' },
 ] as const
 
