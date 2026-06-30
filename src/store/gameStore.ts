@@ -157,6 +157,10 @@ interface GameState {
   // needs to play out visually. RaidsScreen consumes this on mount via useEffect and
   // then clears it via clearPendingRaidResult.
   pendingRaidResult: { defenderId: number; result: RaidResult } | null
+  // Last raid attempt failure for the UI to surface as a toast.
+  // kind: 'daily_limit' (resets at midnight UTC), 'shielded' (target safe until untilTs),
+  //       'cooldown' (same target available again at untilTs).
+  raidError: { kind: 'daily_limit' | 'shielded' | 'cooldown'; untilTs: number; meta?: Record<string, number> } | null
   drones:         Drone[]
   turrets:        Turret[]
   raidLog:                 RaidLogEntry[]
@@ -194,6 +198,7 @@ interface GameState {
   executeRaid:        (defenderId: number, captchaAnswer?: string) => Promise<RaidResult | null>
   dismissCaptcha:     () => void
   clearPendingRaidResult: () => void
+  clearRaidError:     () => void
   purchaseUnitUpgrade:(unitId: string, upgradeId: string, cost: number) => Promise<boolean>
   syncPositions:      () => void
   clearRaidResult:           () => void
@@ -267,6 +272,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   bannedReason:      '',
   pendingCaptcha:    null,
   pendingRaidResult: null,
+  raidError:         null,
   drones:         [],
   turrets:        [],
   raidLog:                  [],
@@ -504,6 +510,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   dismissCaptcha: () => set({ pendingCaptcha: null }),
   clearPendingRaidResult: () => set({ pendingRaidResult: null }),
+  clearRaidError: () => set({ raidError: null }),
 
   executeRaid: async (defenderId, captchaAnswer) => {
     const captchaState = get().pendingCaptcha
@@ -559,7 +566,20 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       return result
     } catch (err: unknown) {
-      const e = err as { status?: number; data?: { error?: string; banned_until?: number; banned_reason?: string } }
+      const e = err as {
+        status?: number
+        data?: {
+          error?: string
+          banned_until?: number
+          banned_reason?: string
+          shielded_until?: number
+          cooldown_until?: number
+          next_reset_at?: number
+          limit?: number
+          used?: number
+          remaining_seconds?: number
+        }
+      }
       if (e?.status === 403 && e.data?.error === 'banned') {
         // Server says we're banned — sync UI so the overlay appears immediately
         // even if /user/me hasn't been refetched yet.
@@ -571,6 +591,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
         return null
       }
+      // Defender is under newbie or purchased shield.
+      if (e?.status === 403 && e.data?.error === 'defender_shielded' && e.data.shielded_until) {
+        set({ raidError: { kind: 'shielded', untilTs: e.data.shielded_until } })
+        return null
+      }
       // Both "captcha required" (first hit) and "captcha invalid" (wrong answer) need
       // a fresh challenge — the previous one is consumed by the server either way.
       if (e?.status === 429 && (e.data?.error === 'captcha_required' || e.data?.error === 'captcha_invalid')) {
@@ -578,6 +603,28 @@ export const useGameStore = create<GameState>((set, get) => ({
           const ch = await api.getCaptchaChallenge()
           set({ pendingCaptcha: { id: ch.id, question: ch.question, defenderId } })
         } catch { /* ignore — toast already gone */ }
+        return null
+      }
+      // Daily raid limit hit — reset at next UTC midnight.
+      if (e?.status === 429 && e.data?.error === 'raid_daily_limit' && e.data.next_reset_at) {
+        set({
+          raidError: {
+            kind: 'daily_limit',
+            untilTs: e.data.next_reset_at,
+            meta: { limit: e.data.limit ?? 0, used: e.data.used ?? 0 },
+          },
+        })
+        return null
+      }
+      // Per-target cooldown — same player attacked too recently.
+      if (e?.status === 429 && e.data?.error === 'raid_cooldown' && e.data.cooldown_until) {
+        set({
+          raidError: {
+            kind: 'cooldown',
+            untilTs: e.data.cooldown_until,
+            meta: { remaining_seconds: e.data.remaining_seconds ?? 0 },
+          },
+        })
         return null
       }
       return null

@@ -17,6 +17,30 @@ import styles from './RaidsScreen.module.css'
 type View    = 'targets' | 'battle' | 'result' | 'history'
 type HistTab = 'attack' | 'defense'
 
+// Format the raidError state into a human-readable message.
+// Kinds: 'shielded' — target is under newbie/paid shield until untilTs (unix sec).
+//        'daily_limit' — you've hit your daily raid quota; resets at untilTs UTC midnight.
+//        'cooldown' — same target attacked too recently; available again at untilTs.
+function formatRaidError(
+  err: { kind: 'daily_limit' | 'shielded' | 'cooldown'; untilTs: number; meta?: Record<string, number> },
+  t: (k: string, opts?: Record<string, unknown>) => string,
+): string {
+  const until = new Date(err.untilTs * 1000)
+  const timeStr = until.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const dateStr = until.toLocaleDateString([], { day: '2-digit', month: 'short' })
+  if (err.kind === 'shielded') {
+    return t('raids.errShielded', { date: dateStr, time: timeStr })
+  }
+  if (err.kind === 'daily_limit') {
+    const limit = err.meta?.limit ?? 5
+    return t('raids.errDailyLimit', { limit, time: timeStr })
+  }
+  // cooldown
+  const remain = err.meta?.remaining_seconds ?? Math.max(0, Math.floor(err.untilTs - Date.now() / 1000))
+  const mins = Math.ceil(remain / 60)
+  return t('raids.errCooldown', { mins })
+}
+
 // ── Target card ───────────────────────────────────────────────────────────────
 function TargetCard({ player, attackerLevel, workingDrones, onAttack, onToggleFavorite, onShieldedClick }: {
   player:           ApiUserPublic
@@ -233,12 +257,21 @@ export function RaidsScreen() {
   const { t }       = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const drones       = useGameStore((s) => s.drones)
-  const executeRaid  = useGameStore((s) => s.executeRaid)
-  const setScreen    = useGameStore((s) => s.setScreen)
-  const bannedUntil  = useGameStore((s) => s.bannedUntil)
-  const bannedReason = useGameStore((s) => s.bannedReason)
-  const isBanned     = bannedUntil != null && bannedUntil > Date.now()
+  const drones         = useGameStore((s) => s.drones)
+  const executeRaid    = useGameStore((s) => s.executeRaid)
+  const setScreen      = useGameStore((s) => s.setScreen)
+  const bannedUntil    = useGameStore((s) => s.bannedUntil)
+  const bannedReason   = useGameStore((s) => s.bannedReason)
+  const isBanned       = bannedUntil != null && bannedUntil > Date.now()
+  const raidError      = useGameStore((s) => s.raidError)
+  const clearRaidError = useGameStore((s) => s.clearRaidError)
+
+  // Auto-dismiss raid error toast after 5s
+  useEffect(() => {
+    if (!raidError) return
+    const t = setTimeout(() => clearRaidError(), 5000)
+    return () => clearTimeout(t)
+  }, [raidError, clearRaidError])
 
   // Captcha-gated raid retry: the modal calls executeRaid with the answer; on
   // success the store stashes the resulting RaidResult here. We pick it up to
@@ -434,6 +467,15 @@ export function RaidsScreen() {
             <span className={styles.shieldFabIcon}>🛡</span>
             <span className={styles.shieldFabText}>Защититься</span>
           </button>
+
+          {raidError && (
+            <div className={styles.raidErrorToast} onClick={clearRaidError} role="alert">
+              <span className={styles.raidErrorIcon}>
+                {raidError.kind === 'shielded' ? '🛡' : raidError.kind === 'cooldown' ? '⏱' : '🚫'}
+              </span>
+              <span className={styles.raidErrorText}>{formatRaidError(raidError, t)}</span>
+            </div>
+          )}
         </>
       )}
 
