@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
+import { STARTER_PACK } from '../constants/starter'
 import { getShopProducts, buyProduct } from '../api'
 import type { ApiProduct } from '../api/types'
 import { fmtGold } from '../utils/format'
@@ -45,6 +46,7 @@ export function TopUpScreen() {
   const { t } = useTranslation()
   const setScreen    = useGameStore((s) => s.setScreen)
   const loadGameState = useGameStore((s) => s.loadGameState)
+  const hasStarsPurchase = useGameStore((s) => s.hasStarsPurchase)
 
   const [products, setProducts] = useState<ApiProduct[]>([])
   const [loading,  setLoading]  = useState(true)
@@ -105,6 +107,33 @@ export function TopUpScreen() {
       {toast && (
         <div className={`${styles.toast} ${toast.ok ? styles.toastOk : styles.toastErr}`}>
           {toast.msg}
+        </div>
+      )}
+
+      {!hasStarsPurchase && (
+        <div className={styles.starterHero} data-testid="starter-hero">
+          <span className={styles.starterHeroSheen} />
+          <div className={styles.starterHeroBadge}>{t('starter.badge')}</div>
+          <div className={styles.starterHeroTitle}>
+            <span className={styles.starterHeroIcon}>🎁</span>
+            {t('starter.heroTitle', { stars: STARTER_PACK.stars })}
+          </div>
+          <div className={styles.starterHeroSub}>
+            <Trans
+              i18nKey="starter.heroSubDays"
+              count={STARTER_PACK.bonusDays}
+              values={{ gold: STARTER_PACK.goldAmount, count: STARTER_PACK.bonusDays }}
+              components={{ b: <b /> }}
+            />
+          </div>
+          <div className={styles.starterHeroRow}>
+            <span className={styles.starterHeroPrice}>{STARTER_PACK.stars} ⭐</span>
+            <span className={styles.starterHeroOld}>{STARTER_PACK.oldStars} ⭐</span>
+            <span className={styles.starterHeroBonus}>
+              {t('starter.heroBonus', { count: STARTER_PACK.bonusDays })}
+            </span>
+          </div>
+          <div className={styles.starterHeroLimited}>{t('starter.limited')}</div>
         </div>
       )}
 

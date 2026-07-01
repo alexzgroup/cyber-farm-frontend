@@ -108,3 +108,45 @@
 
 .settingsBtn:hover  { background: rgba(255,255,255,0.13); }
 .settingsBtn:active { transform: scale(0.9); }
+
+/* Starter Pack promo icon in HUD — pulses to attract attention */
+.starterBtn {
+  position: relative;
+  pointer-events: auto;
+  background: linear-gradient(135deg, rgba(255,170,40,0.25), rgba(138,92,246,0.25));
+  border: 1px solid rgba(255,190,60,0.6);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.15s;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 rgba(255,190,60,0.7);
+  animation: starterHudPulse 1.8s ease-in-out infinite;
+}
+
+.starterBtn:active { transform: scale(0.9); }
+
+.starterBtnIcon {
+  font-size: 18px;
+  filter: drop-shadow(0 1px 4px rgba(255,190,60,0.9));
+}
+
+.starterBtnDot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  background: #ff3d55;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255,61,85,0.9);
+}
+
+@keyframes starterHudPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255,190,60,0.0); }
+  50%      { box-shadow: 0 0 16px rgba(255,190,60,0.7); }
+}

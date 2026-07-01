@@ -286,6 +286,24 @@
     "failed": "Ошибка оплаты. Попробуйте снова.",
     "footer": "Telegram берёт 30% · Деньги уходят разработчикам игры"
   },
+  "starter": {
+    "badge": "Первая покупка",
+    "limited": "🔥 Только один раз — предложение сгорит после первой покупки Stars",
+    "hudLabel": "Стартовый пак",
+    "shopTitle": "Стартовый пак · {{stars}} ⭐",
+    "shopSubDays_one":  "{{gold}} gold + <b>щит на {{count}} день в подарок</b> за первую покупку",
+    "shopSubDays_few":  "{{gold}} gold + <b>щит на {{count}} дня в подарок</b> за первую покупку",
+    "shopSubDays_many": "{{gold}} gold + <b>щит на {{count}} дней в подарок</b> за первую покупку",
+    "shopDiscount": "-{{pct}}%",
+    "heroTitle": "Стартовый пак за {{stars}} ⭐",
+    "heroSubDays_one":  "{{gold}} gold <b>+ щит на {{count}} день в подарок</b>. Только для новых игроков.",
+    "heroSubDays_few":  "{{gold}} gold <b>+ щит на {{count}} дня в подарок</b>. Только для новых игроков.",
+    "heroSubDays_many": "{{gold}} gold <b>+ щит на {{count}} дней в подарок</b>. Только для новых игроков.",
+    "heroBonus_one":  "+{{count}} день щита",
+    "heroBonus_few":  "+{{count}} дня щита",
+    "heroBonus_many": "+{{count}} дней щита",
+    "heroOnce": "Предложение сгорит после первой покупки любого пакета"
+  },
   "unitDetail": {
     "level": "Уровень",
     "type": "Тип",

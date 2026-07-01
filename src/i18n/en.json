@@ -287,6 +287,21 @@
     "failed": "Payment failed. Please try again.",
     "footer": "Telegram takes 30% · Funds go to game developers"
   },
+  "starter": {
+    "badge": "First-time offer",
+    "limited": "🔥 One-time only — this offer disappears after your first Stars purchase",
+    "hudLabel": "Starter Pack",
+    "shopTitle": "Starter Pack · {{stars}} ⭐",
+    "shopSubDays_one":  "{{gold}} gold + <b>{{count}}-day shield free</b> on your first purchase",
+    "shopSubDays_other": "{{gold}} gold + <b>{{count}}-day shield free</b> on your first purchase",
+    "shopDiscount": "-{{pct}}%",
+    "heroTitle": "Starter Pack for {{stars}} ⭐",
+    "heroSubDays_one":  "{{gold}} gold <b>+ {{count}}-day shield free</b>. New players only.",
+    "heroSubDays_other": "{{gold}} gold <b>+ {{count}}-day shield free</b>. New players only.",
+    "heroBonus_one":  "+{{count}} day shield",
+    "heroBonus_other": "+{{count}} days shield",
+    "heroOnce": "This offer expires after your first purchase of any pack"
+  },
   "unitDetail": {
     "level": "Level",
     "type": "Type",

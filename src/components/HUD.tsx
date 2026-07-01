@@ -13,8 +13,12 @@ export function HUD() {
   const regenPerMin    = useGameStore((s) => s.energyRegenPerMin)
   const energyProgress = useGameStore((s) => s.energyProgress)
   const soundEnabled   = useGameStore((s) => s.soundEnabled)
+  const isLoaded          = useGameStore((s) => s.isLoaded)
+  const hasStarsPurchase  = useGameStore((s) => s.hasStarsPurchase)
+  const setScreen         = useGameStore((s) => s.setScreen)
 
   const [showSettings, setShowSettings] = useState(false)
+  const showStarterOffer = isLoaded && !hasStarsPurchase
 
   const isRegening = energy < maxEnergy
   const fillPct    = ((energy + energyProgress) / maxEnergy) * 100
@@ -46,6 +50,18 @@ export function HUD() {
             </div>
             {regenText && <span className={styles.energyHint}>{regenText}</span>}
           </div>
+
+          {showStarterOffer && (
+            <button
+              className={styles.starterBtn}
+              onClick={() => setScreen('topup')}
+              aria-label={t('starter.hudLabel')}
+              data-testid="hud-starter-icon"
+            >
+              <span className={styles.starterBtnIcon}>⭐</span>
+              <span className={styles.starterBtnDot} />
+            </button>
+          )}
 
           <button
             className={styles.settingsBtn}

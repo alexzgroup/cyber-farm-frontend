@@ -84,6 +84,7 @@ export interface ApiUser {
   language:            string   // user-selected language (ru/en)
   allow_notification:  boolean  // false = user opted out of re-engagement reminders
   allow_duel:          boolean  // false = hidden from duel list, cannot receive challenges
+  has_stars_purchase:  boolean  // true after the user's first completed Stars pack purchase
   created_at:          string
 }
 

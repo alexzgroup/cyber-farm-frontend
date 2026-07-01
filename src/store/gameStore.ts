@@ -171,6 +171,7 @@ interface GameState {
   language:            string   // current UI language (ru/en), synced from API
   allowNotification:   boolean  // synced from API allow_notification
   allowDuel:           boolean  // synced from API allow_duel
+  hasStarsPurchase:    boolean  // true after first completed Stars pack purchase
   onlineStatus:        Record<number, boolean>  // live updates from player.online/offline WS events
 
   // UI
@@ -283,6 +284,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   language:            'ru',
   allowNotification:   true,
   allowDuel:           true,
+  hasStarsPurchase:    false,
   onlineStatus:        {},
   activeScreen:        'farm',
   selectedUnitId: null,
@@ -399,6 +401,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         language:            user.language ?? 'ru',
         allowNotification:   user.allow_notification ?? true,
         allowDuel:           user.allow_duel ?? true,
+        hasStarsPurchase:    user.has_stars_purchase ?? false,
         isLoaded:            true,
         loadError:           null,
       })

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useGameStore, DRONE_UPGRADES, REPAIR_COSTS } from '../store/gameStore'
+import { STARTER_PACK, starterDiscountPct } from '../constants/starter'
 import { fmtGold } from '../utils/format'
 import { DroneIcon, TurretIcon, UnitCircle, WrenchIcon } from '../components/UnitIcons'
 import { ShieldModal } from '../components/ShieldModal'
@@ -23,6 +24,7 @@ export function ShopScreen() {
   const buyDrone     = useGameStore((s) => s.buyDrone)
   const buyTurret    = useGameStore((s) => s.buyTurret)
   const setScreen    = useGameStore((s) => s.setScreen)
+  const hasStarsPurchase = useGameStore((s) => s.hasStarsPurchase)
   const { t } = useTranslation()
 
   const [buyingTurret, setBuyingTurret] = useState<number | null>(null)
@@ -60,6 +62,38 @@ export function ShopScreen() {
     <div className={styles.screen}>
       <h2 className={styles.title}>{t('shop.title')}</h2>
       <p className={styles.balance}>⬡ {fmtGold(balance)}</p>
+
+      {/* Starter Pack offer — highlighted for users who never bought Stars */}
+      {!hasStarsPurchase && (
+        <button
+          type="button"
+          className={styles.starterBanner}
+          onClick={() => setScreen('topup')}
+          aria-label={t('starter.hudLabel')}
+          data-testid="starter-pack-banner"
+        >
+          <span className={styles.starterBannerSheen} />
+          <span className={styles.starterBannerBadge}>
+            {t('starter.shopDiscount', { pct: starterDiscountPct() })}
+          </span>
+          <span className={styles.starterBannerIcon}>⭐</span>
+          <span className={styles.shieldBannerText}>
+            <span className={styles.shieldBannerTitle}>
+              {t('starter.shopTitle', { stars: STARTER_PACK.stars })}
+            </span>
+            <span className={styles.shieldBannerSub}>
+              <Trans
+                i18nKey="starter.shopSubDays"
+                count={STARTER_PACK.bonusDays}
+                values={{ gold: STARTER_PACK.goldAmount, count: STARTER_PACK.bonusDays }}
+                components={{ b: <b /> }}
+              />
+            </span>
+            <span className={styles.starterBannerLimited}>{t('starter.limited')}</span>
+          </span>
+          <span className={styles.shieldBannerArrow}>→</span>
+        </button>
+      )}
 
       {/* Shield offer banner — top, animated */}
       <button

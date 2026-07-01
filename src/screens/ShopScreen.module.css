@@ -221,3 +221,79 @@
   0%, 100% { left: -60%; }
   50%      { left: 110%; }
 }
+
+/* Starter Pack promo — gold/purple, first-purchase only */
+.starterBanner {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  margin: 0 0 10px 0;
+  border: 1px solid rgba(255, 190, 60, 0.55);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 170, 40, 0.22) 0%, rgba(138, 92, 246, 0.22) 100%);
+  color: #fff;
+  font-family: inherit;
+  line-height: 1.4;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  box-shadow: 0 4px 22px rgba(255, 170, 40, 0.28);
+  box-sizing: border-box;
+  animation: starterPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes starterPulse {
+  0%, 100% { box-shadow: 0 4px 22px rgba(255, 170, 40, 0.28); }
+  50%      { box-shadow: 0 6px 28px rgba(255, 170, 40, 0.55); }
+}
+
+.starterBannerIcon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 8px rgba(255, 190, 60, 0.8));
+  flex-shrink: 0;
+}
+
+.starterBannerBadge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  padding: 3px 8px;
+  background: #ff3d55;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(255, 61, 85, 0.5);
+}
+
+.starterBannerLimited {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: #ffd479;
+  text-shadow: 0 1px 4px rgba(255,190,60,0.4);
+}
+
+.starterBannerSheen {
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 235, 180, 0.28) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  animation: shieldSheen 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
