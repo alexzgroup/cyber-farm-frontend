@@ -45,7 +45,7 @@ export function PurchaseHistoryScreen() {
     <div className={styles.screen}>
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => setScreen('equipment')}>
-          ← {t('common.back')}
+          {t('common.back')}
         </button>
         <h2 className={styles.title}>{t('purchases.title')}</h2>
       </div>

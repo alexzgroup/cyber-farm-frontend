@@ -109,6 +109,16 @@
 .settingsBtn:hover  { background: rgba(255,255,255,0.13); }
 .settingsBtn:active { transform: scale(0.9); }
 
+/* Column stack: sound on top, starter promo below */
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+.controls > * { pointer-events: auto; }
+
 /* Starter Pack promo icon in HUD — pulses to attract attention */
 .starterBtn {
   position: relative;

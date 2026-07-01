@@ -99,7 +99,7 @@ export function TopUpScreen() {
     <div className={styles.screen}>
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => setScreen('profile')}>
-          ← {t('common.back')}
+          {t('common.back')}
         </button>
         <h2 className={styles.title}>{t('topup.title')}</h2>
       </div>
@@ -113,10 +113,12 @@ export function TopUpScreen() {
       {!hasStarsPurchase && (
         <div className={styles.starterHero} data-testid="starter-hero">
           <span className={styles.starterHeroSheen} />
-          <div className={styles.starterHeroBadge}>{t('starter.badge')}</div>
-          <div className={styles.starterHeroTitle}>
-            <span className={styles.starterHeroIcon}>🎁</span>
-            {t('starter.heroTitle', { stars: STARTER_PACK.stars })}
+          <div className={styles.starterHeroHeader}>
+            <div className={styles.starterHeroTitle}>
+              <span className={styles.starterHeroIcon}>🎁</span>
+              <span>{t('starter.heroTitle', { stars: STARTER_PACK.stars })}</span>
+            </div>
+            <div className={styles.starterHeroBadge}>{t('starter.badge')}</div>
           </div>
           <div className={styles.starterHeroSub}>
             <Trans

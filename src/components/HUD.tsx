@@ -51,25 +51,27 @@ export function HUD() {
             {regenText && <span className={styles.energyHint}>{regenText}</span>}
           </div>
 
-          {showStarterOffer && (
+          <div className={styles.controls}>
             <button
-              className={styles.starterBtn}
-              onClick={() => setScreen('topup')}
-              aria-label={t('starter.hudLabel')}
-              data-testid="hud-starter-icon"
+              className={styles.settingsBtn}
+              onClick={() => setShowSettings(true)}
+              aria-label="Настройки"
             >
-              <span className={styles.starterBtnIcon}>⭐</span>
-              <span className={styles.starterBtnDot} />
+              {soundEnabled ? '🔊' : '🔇'}
             </button>
-          )}
 
-          <button
-            className={styles.settingsBtn}
-            onClick={() => setShowSettings(true)}
-            aria-label="Настройки"
-          >
-            {soundEnabled ? '🔊' : '🔇'}
-          </button>
+            {showStarterOffer && (
+              <button
+                className={styles.starterBtn}
+                onClick={() => setScreen('topup')}
+                aria-label={t('starter.hudLabel')}
+                data-testid="hud-starter-icon"
+              >
+                <span className={styles.starterBtnIcon}>⭐</span>
+                <span className={styles.starterBtnDot} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
