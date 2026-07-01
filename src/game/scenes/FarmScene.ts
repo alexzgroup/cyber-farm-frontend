@@ -37,8 +37,9 @@ export class FarmScene extends Phaser.Scene {
     this.worldH = this.calcWorldH(H, drones.length, turrets.length)
 
     this.drawBackground(W, this.worldH, drones.length)
-    // Grid removed by design — replaced with volumetric nebula + lightning.
-    this.createLightningLayer(W, this.worldH)
+    // Grid removed by design — replaced with a big Matrix-style dome behind
+    // the whole scene. See createMatrixSphere() for the layers.
+    this.createMatrixSphere(W, this.worldH)
     this.createParticles()
     this.spawnInitialDrones()
     this.spawnInitialTurrets()
@@ -86,121 +87,156 @@ export class FarmScene extends Phaser.Scene {
     return DRONE_START_Y + rows * DRONE_CELL + 177
   }
 
-  // ─── Background: layered "cyber space" — deep nebula, star field, animated
-  //     scanlines, radial pulse rings, faint horizon and speed-lines. Extends
-  //     2000px beyond the world so zooming out never exposes raw black. ─────
+  // ─── Background: dark base with subtle zone tint + neon separator. The
+  //     visual signature comes from createMatrixSphere() below. ─────────────
   private drawBackground(W: number, worldH: number, droneCount: number) {
     const sepY = this.separatorY(droneCount)
     const PAD  = 2000
 
-    // 1) Base deep-space fill — nearly black with a faint blue tint.
     const bg = this.add.graphics().setDepth(-100)
-    bg.fillStyle(0x05070f, 1)
+    // Base — near-black void.
+    bg.fillStyle(0x02040a, 1)
     bg.fillRect(-PAD, -PAD, W + PAD * 2, worldH + PAD * 2)
 
-    // 2) Nebula clouds — big translucent circles in cyan / violet.
-    //    Placed randomly across the world so scrolling reveals new pockets.
-    const nebula = this.add.graphics().setDepth(-95)
-    const NEBULA_COLORS = [0x1a3a7a, 0x3a1a7a, 0x0a2a5a, 0x5a1a4a]
-    for (let i = 0; i < 22; i++) {
-      const nx = Phaser.Math.Between(-PAD, W + PAD)
-      const ny = Phaser.Math.Between(-PAD, worldH + PAD)
-      const nr = Phaser.Math.Between(140, 320)
-      const nc = NEBULA_COLORS[i % NEBULA_COLORS.length]
-      nebula.fillStyle(nc, 0.04); nebula.fillCircle(nx, ny, nr)
-      nebula.fillStyle(nc, 0.06); nebula.fillCircle(nx, ny, nr * 0.6)
-      nebula.fillStyle(nc, 0.08); nebula.fillCircle(nx, ny, nr * 0.3)
-    }
-
-    // 3) Star field — 240 pinpricks, tiny with sparser brighter ones.
-    const stars = this.add.graphics().setDepth(-94)
-    for (let i = 0; i < 240; i++) {
-      const sx = Phaser.Math.Between(-PAD, W + PAD)
-      const sy = Phaser.Math.Between(-PAD, worldH + PAD)
-      const bright = Math.random() < 0.15
-      stars.fillStyle(bright ? 0xffffff : 0x9fc4ff, bright ? 0.8 : 0.35)
-      stars.fillCircle(sx, sy, bright ? 1.2 : 0.6)
-    }
-
-    // 4) Radial pulse rings — three concentric rings from the world centre.
-    //    Animated in the update loop via scale tween below.
-    const cx = W / 2
-    const cy = worldH / 2
-    for (let i = 0; i < 3; i++) {
-      const ring = this.add.graphics().setDepth(-90)
-      ring.lineStyle(2, 0x00e5ff, 0.14)
-      ring.strokeCircle(0, 0, 200)
-      ring.setPosition(cx, cy)
-      this.tweens.add({
-        targets: ring,
-        scale: { from: 0.4, to: 3.5 },
-        alpha: { from: 0.7, to: 0 },
-        duration: 5200,
-        delay: i * 1700,
-        repeat: -1,
-        ease: 'Cubic.easeOut',
-      })
-    }
-
-    // 5) Diagonal "data streams" — thin lines drifting across the field.
-    const streams = this.add.graphics().setDepth(-88)
-    streams.lineStyle(1, 0x00e5ff, 0.10)
-    for (let i = 0; i < 14; i++) {
-      const y0 = Phaser.Math.Between(-PAD, worldH + PAD)
-      streams.lineBetween(-PAD, y0, W + PAD, y0 + Phaser.Math.Between(-30, 30))
-    }
-    streams.lineStyle(1, 0xa855f7, 0.08)
-    for (let i = 0; i < 8; i++) {
-      const y0 = Phaser.Math.Between(-PAD, worldH + PAD)
-      streams.lineBetween(-PAD, y0, W + PAD, y0 + Phaser.Math.Between(-30, 30))
-    }
-
-    // 6) Zone tints — subtle so the base nebula still shows through.
-    bg.fillStyle(0x0d1420, 0.55)
+    // Zone tints (very subtle — the matrix sphere is the main visual).
+    bg.fillStyle(0x061a2a, 0.55)
     bg.fillRect(-PAD, -PAD, W + PAD * 2, sepY + PAD)
-    bg.fillStyle(0x0a1e10, 0.55)
+    bg.fillStyle(0x061a10, 0.55)
     bg.fillRect(-PAD, sepY, W + PAD * 2, worldH - sepY + PAD)
 
-    // 7) Separator with soft neon halo.
-    bg.lineStyle(6, 0x00e5ff, 0.10)
+    // Separator between drone and defense zones.
+    bg.lineStyle(6, 0x00ff88, 0.08)
     bg.lineBetween(-PAD, sepY, W + PAD, sepY)
-    bg.lineStyle(2, 0x00e5ff, 0.42)
+    bg.lineStyle(2, 0x00ff88, 0.35)
     bg.lineBetween(-PAD, sepY, W + PAD, sepY)
 
-    // 8) Zone labels.
+    // Zone labels.
     this.add.text(10, 68, 'DRONE ZONE', {
-      fontSize: '9px', fontFamily: 'monospace', color: '#00e5ff',
+      fontSize: '9px', fontFamily: 'monospace', color: '#00ff88',
     }).setAlpha(0.35).setDepth(-1)
     this.add.text(10, sepY + 8, 'DEFENSE ZONE', {
       fontSize: '9px', fontFamily: 'monospace', color: '#00cc44',
     }).setAlpha(0.35).setDepth(-1)
+  }
 
-    // 9) Star twinkle — a light tween on a subset of stars so the sky feels
-    //    alive. We overlay a second stars graphic pulsing gently in and out.
-    const twinkle = this.add.graphics().setDepth(-93)
-    twinkle.fillStyle(0xffffff, 0.9)
-    for (let i = 0; i < 40; i++) {
-      const sx = Phaser.Math.Between(-PAD, W + PAD)
-      const sy = Phaser.Math.Between(-PAD, worldH + PAD)
-      twinkle.fillCircle(sx, sy, 0.9)
-    }
+  /**
+   * The scene sits inside a giant Matrix-style dome: a huge translucent sphere
+   * that fills the viewport and streams falling green kana / hex characters
+   * inside its circle. The sphere is anchored to the camera (scrollFactor: 0)
+   * so it stays behind the drones no matter how the player pans or zooms.
+   *
+   * Layers (back → front):
+   *   1) Base dark overlay (whole screen)
+   *   2) Sphere body — stack of tinted-green circles simulating a radial gradient
+   *   3) Matrix rain columns (Phaser Text objects), clipped to a circular mask
+   *   4) Bright rim ring + faint outer glow so the sphere reads as a volume
+   */
+  private createMatrixSphere(W: number, _worldH: number) {
+    const H = this.scale.height
+    const cx = W / 2
+    const cy = H / 2
+    const R  = Math.max(W, H) * 0.62
+
+    // ── Sphere = just a neon rim on the dark base — no green fill layers ─────
+    // Kept as a distinct object so we can still breathe it via a tween.
+    const rim = this.add.graphics().setDepth(-88).setScrollFactor(0)
+    rim.lineStyle(8, 0x00ff88, 0.06);  rim.strokeCircle(cx, cy, R * 1.02)   // wide outer haze
+    rim.lineStyle(4, 0x00ff88, 0.20);  rim.strokeCircle(cx, cy, R * 1.00)   // mid glow
+    rim.lineStyle(2, 0x66ffaa, 0.80);  rim.strokeCircle(cx, cy, R * 0.98)   // crisp neon edge
+    // Highlight arc top-left — "glass ball" cue only, very subtle.
+    rim.lineStyle(2, 0xffffff, 0.14)
+    rim.beginPath()
+    rim.arc(cx, cy, R * 0.94, Math.PI * 1.15, Math.PI * 1.55, false)
+    rim.strokePath()
+    // Slow neon breathing.
     this.tweens.add({
-      targets: twinkle,
-      alpha: { from: 0.35, to: 0.85 },
-      duration: 2400,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
+      targets: rim,
+      alpha: { from: 0.7, to: 1 },
+      duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    })
+
+    // ── 3) Matrix rain — vertical columns of falling green chars. Each tile
+    //       fades based on its distance from the sphere centre so the rain
+    //       naturally hugs the ball shape, no Geometry Mask needed.
+    const CHARS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ0123456789ABCDEF#$%&＊+ﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓ'.split('')
+    const rand = () => CHARS[Math.floor(Math.random() * CHARS.length)]
+
+    interface RainTile {
+      text: Phaser.GameObjects.Text
+      baseAlpha: number         // brightness driven by position in the column
+    }
+    interface Column { tiles: RainTile[]; speed: number; colX: number; len: number }
+    const columns: Column[] = []
+
+    const COL_WIDTH = 18
+    const nCols = Math.ceil(W / COL_WIDTH) + 2
+
+    for (let ci = 0; ci < nCols; ci++) {
+      const colX = ci * COL_WIDTH
+      // Skip columns clearly outside the sphere.
+      if (Math.abs(colX - cx) > R * 1.05) continue
+
+      const columnLen = 12 + Math.floor(Math.random() * 6)
+      const speed = 34 + Math.random() * 55   // world px per second
+
+      const tiles: RainTile[] = []
+      for (let ri = 0; ri < columnLen; ri++) {
+        const isHead = ri === columnLen - 1
+        const t = this.add.text(colX, ri * 20, rand(), {
+          fontSize: '14px',
+          fontFamily: 'monospace',
+          color: isHead ? '#e6ffe0' : '#00cc44',
+        }).setDepth(-89).setScrollFactor(0)
+        const baseAlpha = isHead ? 1 : Math.max(0.15, ri / columnLen * 0.9)
+        t.setAlpha(baseAlpha)
+        tiles.push({ text: t, baseAlpha })
+      }
+
+      // Initial vertical offset so columns don't fall in sync.
+      const startOffset = -Math.random() * H
+      for (const tile of tiles) tile.text.y += startOffset
+
+      columns.push({ tiles, speed, colX, len: columnLen })
+    }
+
+    // Single update driver that advances every column and applies radial
+    // opacity so text fades out toward the sphere edge (and vanishes outside).
+    this.events.on(Phaser.Scenes.Events.PRE_UPDATE, (_time: number, deltaMs: number) => {
+      const dt = deltaMs / 1000
+      for (const col of columns) {
+        const dy = col.speed * dt
+        for (const tile of col.tiles) {
+          tile.text.y += dy
+          if (tile.text.y > H + 20) {
+            tile.text.y -= (col.len + 2) * 20 + Math.random() * 60
+          }
+          // Distance-from-sphere-centre fade — inside radius fully visible,
+          // fades to 0 across the last 25% of the radius, hidden outside.
+          const dx = tile.text.x - cx
+          const dy2 = tile.text.y - cy
+          const d  = Math.hypot(dx, dy2)
+          const fade = d < R * 0.75
+            ? 1
+            : d < R
+              ? 1 - (d - R * 0.75) / (R * 0.25)
+              : 0
+          tile.text.setAlpha(tile.baseAlpha * fade)
+        }
+        // ~4 % chance to randomise one tile per column per frame
+        if (Math.random() < 0.04) {
+          const idx = Math.floor(Math.random() * col.tiles.length)
+          col.tiles[idx].text.setText(rand())
+        }
+      }
     })
   }
 
   /**
-   * Farming lightning bolts — small forked strokes that briefly flash around
-   * the drones, signalling that the farm is actively mining. One graphics layer
-   * is reused: every ~700ms we clear it and draw a fresh cluster of 2-4 bolts
-   * with random paths.
+   * (kept for possible future use) Farming lightning bolts — small forked
+   * strokes that briefly flash around the drones. Currently unused; the scene
+   * uses the Matrix sphere instead. See createMatrixSphere().
    */
-  private createLightningLayer(W: number, worldH: number) {
+  private _createLightningLayer(W: number, worldH: number) {
     const g = this.add.graphics().setDepth(-10)
 
     const drawBolt = (x0: number, y0: number, x1: number, y1: number, color: number) => {
@@ -430,7 +466,7 @@ export class FarmScene extends Phaser.Scene {
     // Faux 3D perspective: squash Y so the drone reads as if viewed from
     // slightly above (arms/props feel foreshortened, body looks like a hull
     // instead of a flat sticker). Kept subtle so hitbox still matches.
-    const sprite = this.add.image(x, y, tex).setScale(0.88, 0.68).setDepth(5)
+    const sprite = this.add.image(x, y, tex).setScale(0.85).setDepth(5)
     sprite.setInteractive({ useHandCursor: true, draggable: true })
     sprite.setData('objectId', drone.id)
     sprite.setData('kind', 'drone')

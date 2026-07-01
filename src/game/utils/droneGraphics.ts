@@ -42,15 +42,14 @@ const BROKEN: DronePalette = {
   cockpit: 0x220000, lens: 0x880000, glow: 0xff4400,
 }
 
-// ─── Main drone painter ───────────────────────────────────────────────────────
-// The drone is rendered with layered "depth cake" so it reads as a volumetric
-// unit even though everything is flat-shaded Phaser Graphics:
-//   1) three-tier ground glow (outer aura → tight halo → dark shadow)
-//   2) rotors behind (fill first, back-arms after)
-//   3) two-tone belly then top hull, with a highlight stripe → gives roundness
-//   4) rim outlines that follow the hull silhouette → cheap 3D edge lighting
-//   5) cockpit dome with lens + reflection dot, glow ring around the cockpit
-//   6) front rotors with hazy motion halo drawn on top of the body
+// ─── Main drone painter (round front-facing body with 3D depth cues) ────────
+// Round drone silhouette (rounded-rect body + 4 arms out to circular rotors)
+// is what users associate with a "cyber drone". The 3D feel is added through
+// layering, not through changing the silhouette:
+//   - dark belly slab peeking below the top body → gives depth
+//   - glossy top highlight + rim outline → curved-metal cue
+//   - front rotors bigger + more opaque than back rotors → foreshortening
+//   - canopy sits raised, with lens + reflection + top rim arc
 export function paintDrone(
   g: Phaser.GameObjects.Graphics,
   broken: boolean,
@@ -58,59 +57,53 @@ export function paintDrone(
 ) {
   const c = broken ? BROKEN : PALETTES[type]
 
-  const FLx = 22,  FLy = 24
-  const FRx = 106, FRy = 24
-  const BLx = 22,  BLy = 96
-  const BRx = 106, BRy = 96
-  const AFL = { x: 48, y: 52 }
-  const AFR = { x: 80, y: 52 }
-  const ABL = { x: 48, y: 68 }
-  const ABR = { x: 80, y: 68 }
+  // Rotor anchors — X pattern, back rotors slightly smaller (perspective cue).
+  const FLx = 22,  FLy = 96
+  const FRx = 106, FRy = 96
+  const BLx = 26,  BLy = 28
+  const BRx = 102, BRy = 28
+  const AFL = { x: 50, y: 68 }
+  const AFR = { x: 78, y: 68 }
+  const ABL = { x: 50, y: 52 }
+  const ABR = { x: 78, y: 52 }
 
-  // ── Tight ground shadow only — the wide glow disc under the drone reads as
-  //     a UI circle, not a farm unit. Keep the hard shadow so drones still sit
-  //     on the ground and don't feel like flat stickers.
+  // ── Tight ground shadow only ───────────────────────────────────────────────
   g.fillStyle(0x000000, 0.42)
-  g.fillEllipse(66, 118, 68, 8)
+  g.fillEllipse(64, 118, 68, 8)
 
-  // ── Back rotors + arms (rendered first so they sit behind the hull) ────────
-  paintProp(g, BLx, BLy, c.propBack, 0.55)
-  paintProp(g, BRx, BRy, c.propBack, 0.55)
-  g.lineStyle(8, c.bodyBot, 1)
+  // ── Back rotors + arms (behind hull, thinner) ──────────────────────────────
+  paintProp(g, BLx, BLy, c.propBack, 0.6, 0.85)
+  paintProp(g, BRx, BRy, c.propBack, 0.6, 0.85)
+  g.lineStyle(6, c.bodyBot, 1)
   g.lineBetween(ABL.x, ABL.y, BLx, BLy)
   g.lineBetween(ABR.x, ABR.y, BRx, BRy)
-  g.lineStyle(2, c.armHilit, 0.35)
-  g.lineBetween(ABL.x, ABL.y - 2, BLx, BLy - 2)
-  g.lineBetween(ABR.x, ABR.y - 2, BRx, BRy - 2)
 
-  // ── Body: dark belly, main top, glossy highlight strip ─────────────────────
-  // Belly (drop shadow layer)
+  // ── Body — round rectangle with two layers for a 3D thickness illusion.
+  // Belly (peeks out below the top body)
   g.fillStyle(c.bodyBot, 1)
-  g.fillRoundedRect(37, 60, 54, 22, 9)
-  // Main hull
+  g.fillRoundedRect(37, 61, 54, 24, 12)
+  g.fillStyle(0x000000, 0.24)
+  g.fillRoundedRect(38, 78, 52, 6, 5)
+  // Main top body
   g.fillStyle(c.bodyTop, 1)
-  g.fillRoundedRect(38, 48, 52, 28, 10)
-  // Top glossy strip — 3D roundness cue
+  g.fillRoundedRect(38, 46, 52, 30, 14)
+  // Top glossy strip (roundness cue)
   g.fillStyle(c.bodyHilit, 0.55)
-  g.fillRoundedRect(40, 49, 48, 6, 6)
-  g.fillStyle(0xffffff, 0.10)
-  g.fillRoundedRect(42, 50, 44, 3, 3)
-  // Bottom shadow crease
-  g.fillStyle(0x000000, 0.20)
-  g.fillRoundedRect(40, 72, 48, 4, 3)
+  g.fillRoundedRect(40, 48, 48, 8, 8)
+  g.fillStyle(0xffffff, 0.15)
+  g.fillRoundedRect(42, 49, 44, 4, 4)
 
-  // ── Front arms with a metallic highlight ───────────────────────────────────
+  // ── Front arms (thicker, closer) ───────────────────────────────────────────
   g.lineStyle(8, c.armCol, 1)
   g.lineBetween(AFL.x, AFL.y, FLx, FLy)
   g.lineBetween(AFR.x, AFR.y, FRx, FRy)
   g.lineStyle(2, c.armHilit, 0.55)
-  g.lineBetween(AFL.x, AFL.y - 2, FLx, FLy - 2)
-  g.lineBetween(AFR.x, AFR.y - 2, FRx, FRy - 2)
+  g.lineBetween(AFL.x, AFL.y - 1.5, FLx, FLy - 1.5)
+  g.lineBetween(AFR.x, AFR.y - 1.5, FRx, FRy - 1.5)
 
-  // ── Cockpit dome ───────────────────────────────────────────────────────────
-  // Outer glow ring around the dome so the lens looks embedded, not flat
+  // ── Canopy — raised dome + lens ────────────────────────────────────────────
   if (!broken) {
-    g.fillStyle(c.glow, 0.18)
+    g.fillStyle(c.glow, 0.20)
     g.fillEllipse(64, 58, 32, 22)
   }
   g.fillStyle(c.cockpit, 1)
@@ -121,38 +114,36 @@ export function paintDrone(
     g.fillStyle(0xffffff, 0.20)
     g.fillEllipse(60, 55, 9, 6)
   }
-  g.fillStyle(c.lens, 1)
-  g.fillCircle(64, 59, 5)
-  g.fillStyle(0x66aadd, 0.85)
-  g.fillCircle(65, 58, 3)
-  g.fillStyle(0xffffff, 0.7)
-  g.fillCircle(63, 57, 1.5)
+  g.fillStyle(c.lens, 1);       g.fillCircle(64, 59, 5.5)
+  g.fillStyle(0x66aadd, 0.85);  g.fillCircle(65, 58, 3.5)
+  g.fillStyle(0xffffff, 0.85);  g.fillCircle(62, 57, 1.8)
+  if (!broken) {
+    g.lineStyle(1.2, 0xffffff, 0.35)
+    g.beginPath()
+    g.arc(64, 58, 12.5, Math.PI * 1.15, Math.PI * 1.85, false)
+    g.strokePath()
+  }
 
-  // ── Front rotors on top of everything ──────────────────────────────────────
-  paintProp(g, FLx, FLy, c.propFront, 1)
-  paintProp(g, FRx, FRy, c.propFront, 1)
+  // ── Front rotors on top (bigger + brighter) ────────────────────────────────
+  paintProp(g, FLx, FLy, c.propFront, 1, 1)
+  paintProp(g, FRx, FRy, c.propFront, 1, 1)
 
-  // ── Nav LEDs ───────────────────────────────────────────────────────────────
-  g.fillStyle(c.ledL, 1)
-  g.fillCircle(40, 54, 3)
-  g.fillStyle(c.ledL, 0.28)
-  g.fillCircle(40, 54, 7)
-  g.fillStyle(c.ledR, 1)
-  g.fillCircle(88, 54, 3)
-  g.fillStyle(c.ledR, 0.28)
-  g.fillCircle(88, 54, 7)
+  // ── Nav LEDs on the front-facing edge ──────────────────────────────────────
+  g.fillStyle(c.ledL, 1);    g.fillCircle(42, 68, 3)
+  g.fillStyle(c.ledL, 0.28); g.fillCircle(42, 68, 7)
+  g.fillStyle(c.ledR, 1);    g.fillCircle(86, 68, 3)
+  g.fillStyle(c.ledR, 0.28); g.fillCircle(86, 68, 7)
 
   // Tail light
   g.fillStyle(broken ? 0x444444 : c.glow, 1)
-  g.fillCircle(64, 71, 2)
+  g.fillCircle(64, 44, 2)
 
-  // ── Rim lights: cheap 3D edge cue ──────────────────────────────────────────
+  // ── Rim / damage overlay ───────────────────────────────────────────────────
   if (!broken) {
     g.lineStyle(2, c.glow, 0.55)
-    g.strokeRoundedRect(37, 47, 54, 28, 10)
-    // no wide under-halo ring here — user asked for the round disc to go.
+    g.strokeRoundedRect(37, 45, 54, 32, 14)
     g.lineStyle(1, c.bodyHilit, 0.35)
-    g.strokeRoundedRect(38, 49, 52, 8, 6)
+    g.strokeRoundedRect(38, 47, 52, 10, 8)
   } else {
     g.lineStyle(2, 0xff8800, 0.7)
     g.lineBetween(50, 50, 60, 62)
@@ -165,29 +156,21 @@ export function paintDrone(
 function paintProp(
   g: Phaser.GameObjects.Graphics,
   x: number, y: number,
-  color: number, alpha: number,
+  color: number, scale = 1, alpha = 1,
 ) {
+  const R = 8 * scale
   // Wide motion halo (three tiers) so the rotor reads as spinning at speed.
-  g.fillStyle(color, 0.05 * alpha)
-  g.fillCircle(x, y, 24)
-  g.fillStyle(color, 0.10 * alpha)
-  g.fillCircle(x, y, 18)
-  g.fillStyle(color, 0.22 * alpha)
-  g.fillCircle(x, y, 12)
-  // Motion-blur streak — thin bright ellipse across the rotor axis.
-  g.fillStyle(color, 0.55 * alpha)
-  g.fillEllipse(x, y, 24, 5)
-  g.fillStyle(0xffffff, 0.20 * alpha)
-  g.fillEllipse(x, y, 20, 2)
-  // Hub itself
-  g.fillStyle(0x001e2a, alpha)
-  g.fillCircle(x, y, 8)
-  g.lineStyle(1.5, 0x008899, alpha * 0.9)
-  g.strokeCircle(x, y, 8)
-  g.fillStyle(0x00aacc, alpha)
-  g.fillCircle(x, y, 4)
-  g.fillStyle(0xffffff, 0.75 * alpha)
-  g.fillCircle(x, y, 1.5)
+  g.fillStyle(color, 0.05 * alpha); g.fillCircle(x, y, R * 3.0)
+  g.fillStyle(color, 0.10 * alpha); g.fillCircle(x, y, R * 2.25)
+  g.fillStyle(color, 0.22 * alpha); g.fillCircle(x, y, R * 1.5)
+  // Motion-blur streak
+  g.fillStyle(color, 0.55 * alpha); g.fillEllipse(x, y, R * 3.0, R * 0.6)
+  g.fillStyle(0xffffff, 0.20 * alpha); g.fillEllipse(x, y, R * 2.5, R * 0.25)
+  // Hub
+  g.fillStyle(0x001e2a, alpha);  g.fillCircle(x, y, R)
+  g.lineStyle(1.5, 0x008899, alpha * 0.9); g.strokeCircle(x, y, R)
+  g.fillStyle(0x00aacc, alpha);   g.fillCircle(x, y, R * 0.5)
+  g.fillStyle(0xffffff, 0.75 * alpha); g.fillCircle(x, y, R * 0.18)
 }
 
 // ─── Farm turret painter ──────────────────────────────────────────────────────
