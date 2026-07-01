@@ -43,6 +43,14 @@ const BROKEN: DronePalette = {
 }
 
 // ─── Main drone painter ───────────────────────────────────────────────────────
+// The drone is rendered with layered "depth cake" so it reads as a volumetric
+// unit even though everything is flat-shaded Phaser Graphics:
+//   1) three-tier ground glow (outer aura → tight halo → dark shadow)
+//   2) rotors behind (fill first, back-arms after)
+//   3) two-tone belly then top hull, with a highlight stripe → gives roundness
+//   4) rim outlines that follow the hull silhouette → cheap 3D edge lighting
+//   5) cockpit dome with lens + reflection dot, glow ring around the cockpit
+//   6) front rotors with hazy motion halo drawn on top of the body
 export function paintDrone(
   g: Phaser.GameObjects.Graphics,
   broken: boolean,
@@ -59,73 +67,92 @@ export function paintDrone(
   const ABL = { x: 48, y: 68 }
   const ABR = { x: 80, y: 68 }
 
-  // Ground shadow
-  g.fillStyle(0x000000, 0.28)
-  g.fillEllipse(66, 116, 88, 14)
+  // ── Tight ground shadow only — the wide glow disc under the drone reads as
+  //     a UI circle, not a farm unit. Keep the hard shadow so drones still sit
+  //     on the ground and don't feel like flat stickers.
+  g.fillStyle(0x000000, 0.42)
+  g.fillEllipse(66, 118, 68, 8)
 
-  // Back arms + props
-  g.lineStyle(7, c.bodyBot, 1)
-  g.lineBetween(ABL.x, ABL.y, BLx, BLy)
-  g.lineBetween(ABR.x, ABR.y, BRx, BRy)
+  // ── Back rotors + arms (rendered first so they sit behind the hull) ────────
   paintProp(g, BLx, BLy, c.propBack, 0.55)
   paintProp(g, BRx, BRy, c.propBack, 0.55)
+  g.lineStyle(8, c.bodyBot, 1)
+  g.lineBetween(ABL.x, ABL.y, BLx, BLy)
+  g.lineBetween(ABR.x, ABR.y, BRx, BRy)
+  g.lineStyle(2, c.armHilit, 0.35)
+  g.lineBetween(ABL.x, ABL.y - 2, BLx, BLy - 2)
+  g.lineBetween(ABR.x, ABR.y - 2, BRx, BRy - 2)
 
-  // Body depth + face
+  // ── Body: dark belly, main top, glossy highlight strip ─────────────────────
+  // Belly (drop shadow layer)
   g.fillStyle(c.bodyBot, 1)
-  g.fillRoundedRect(38, 58, 52, 22, 8)
+  g.fillRoundedRect(37, 60, 54, 22, 9)
+  // Main hull
   g.fillStyle(c.bodyTop, 1)
-  g.fillRoundedRect(38, 48, 52, 26, 8)
-  g.fillStyle(c.bodyHilit, 0.38)
-  g.fillRoundedRect(40, 49, 48, 9, 7)
+  g.fillRoundedRect(38, 48, 52, 28, 10)
+  // Top glossy strip — 3D roundness cue
+  g.fillStyle(c.bodyHilit, 0.55)
+  g.fillRoundedRect(40, 49, 48, 6, 6)
+  g.fillStyle(0xffffff, 0.10)
+  g.fillRoundedRect(42, 50, 44, 3, 3)
+  // Bottom shadow crease
+  g.fillStyle(0x000000, 0.20)
+  g.fillRoundedRect(40, 72, 48, 4, 3)
 
-  // Front arms
-  g.lineStyle(7, c.armCol, 1)
+  // ── Front arms with a metallic highlight ───────────────────────────────────
+  g.lineStyle(8, c.armCol, 1)
   g.lineBetween(AFL.x, AFL.y, FLx, FLy)
   g.lineBetween(AFR.x, AFR.y, FRx, FRy)
-  g.lineStyle(2, c.armHilit, 0.45)
-  g.lineBetween(AFL.x, AFL.y, FLx, FLy)
-  g.lineBetween(AFR.x, AFR.y, FRx, FRy)
+  g.lineStyle(2, c.armHilit, 0.55)
+  g.lineBetween(AFL.x, AFL.y - 2, FLx, FLy - 2)
+  g.lineBetween(AFR.x, AFR.y - 2, FRx, FRy - 2)
 
-  // Cockpit dome
+  // ── Cockpit dome ───────────────────────────────────────────────────────────
+  // Outer glow ring around the dome so the lens looks embedded, not flat
+  if (!broken) {
+    g.fillStyle(c.glow, 0.18)
+    g.fillEllipse(64, 58, 32, 22)
+  }
   g.fillStyle(c.cockpit, 1)
   g.fillEllipse(64, 58, 26, 18)
   if (!broken) {
     g.fillStyle(0x002244, 0.85)
     g.fillEllipse(64, 59, 20, 13)
-    g.fillStyle(0xffffff, 0.16)
+    g.fillStyle(0xffffff, 0.20)
     g.fillEllipse(60, 55, 9, 6)
   }
   g.fillStyle(c.lens, 1)
   g.fillCircle(64, 59, 5)
-  g.fillStyle(0x66aadd, 0.75)
+  g.fillStyle(0x66aadd, 0.85)
   g.fillCircle(65, 58, 3)
-  g.fillStyle(0xffffff, 0.5)
+  g.fillStyle(0xffffff, 0.7)
   g.fillCircle(63, 57, 1.5)
 
-  // Front props
+  // ── Front rotors on top of everything ──────────────────────────────────────
   paintProp(g, FLx, FLy, c.propFront, 1)
   paintProp(g, FRx, FRy, c.propFront, 1)
 
-  // Nav LEDs
+  // ── Nav LEDs ───────────────────────────────────────────────────────────────
   g.fillStyle(c.ledL, 1)
   g.fillCircle(40, 54, 3)
-  g.fillStyle(c.ledL, 0.22)
-  g.fillCircle(40, 54, 6)
+  g.fillStyle(c.ledL, 0.28)
+  g.fillCircle(40, 54, 7)
   g.fillStyle(c.ledR, 1)
   g.fillCircle(88, 54, 3)
-  g.fillStyle(c.ledR, 0.22)
-  g.fillCircle(88, 54, 6)
+  g.fillStyle(c.ledR, 0.28)
+  g.fillCircle(88, 54, 7)
 
   // Tail light
   g.fillStyle(broken ? 0x444444 : c.glow, 1)
   g.fillCircle(64, 71, 2)
 
-  // Glow outline or damage marks
+  // ── Rim lights: cheap 3D edge cue ──────────────────────────────────────────
   if (!broken) {
-    g.lineStyle(1.5, c.glow, 0.5)
-    g.strokeRoundedRect(37, 47, 54, 28, 9)
-    g.lineStyle(1, c.glow, 0.18)
-    g.strokeEllipse(64, 76, 80, 18)
+    g.lineStyle(2, c.glow, 0.55)
+    g.strokeRoundedRect(37, 47, 54, 28, 10)
+    // no wide under-halo ring here — user asked for the round disc to go.
+    g.lineStyle(1, c.bodyHilit, 0.35)
+    g.strokeRoundedRect(38, 49, 52, 8, 6)
   } else {
     g.lineStyle(2, 0xff8800, 0.7)
     g.lineBetween(50, 50, 60, 62)
@@ -140,19 +167,26 @@ function paintProp(
   x: number, y: number,
   color: number, alpha: number,
 ) {
-  g.fillStyle(color, 0.07 * alpha)
-  g.fillCircle(x, y, 20)
-  g.fillStyle(color, 0.18 * alpha)
-  g.fillCircle(x, y, 14)
-  g.fillStyle(color, 0.5 * alpha)
-  g.fillEllipse(x, y, 22, 6)
+  // Wide motion halo (three tiers) so the rotor reads as spinning at speed.
+  g.fillStyle(color, 0.05 * alpha)
+  g.fillCircle(x, y, 24)
+  g.fillStyle(color, 0.10 * alpha)
+  g.fillCircle(x, y, 18)
+  g.fillStyle(color, 0.22 * alpha)
+  g.fillCircle(x, y, 12)
+  // Motion-blur streak — thin bright ellipse across the rotor axis.
+  g.fillStyle(color, 0.55 * alpha)
+  g.fillEllipse(x, y, 24, 5)
+  g.fillStyle(0xffffff, 0.20 * alpha)
+  g.fillEllipse(x, y, 20, 2)
+  // Hub itself
   g.fillStyle(0x001e2a, alpha)
   g.fillCircle(x, y, 8)
   g.lineStyle(1.5, 0x008899, alpha * 0.9)
   g.strokeCircle(x, y, 8)
   g.fillStyle(0x00aacc, alpha)
   g.fillCircle(x, y, 4)
-  g.fillStyle(0xffffff, 0.65 * alpha)
+  g.fillStyle(0xffffff, 0.75 * alpha)
   g.fillCircle(x, y, 1.5)
 }
 

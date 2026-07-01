@@ -37,7 +37,8 @@ export class FarmScene extends Phaser.Scene {
     this.worldH = this.calcWorldH(H, drones.length, turrets.length)
 
     this.drawBackground(W, this.worldH, drones.length)
-    this.createGridLines(W, this.worldH)
+    // Grid removed by design — replaced with volumetric nebula + lightning.
+    this.createLightningLayer(W, this.worldH)
     this.createParticles()
     this.spawnInitialDrones()
     this.spawnInitialTurrets()
@@ -85,46 +86,202 @@ export class FarmScene extends Phaser.Scene {
     return DRONE_START_Y + rows * DRONE_CELL + 177
   }
 
-  // ─── Background (extends 2000px beyond world to avoid black edges) ──────────
+  // ─── Background: layered "cyber space" — deep nebula, star field, animated
+  //     scanlines, radial pulse rings, faint horizon and speed-lines. Extends
+  //     2000px beyond the world so zooming out never exposes raw black. ─────
   private drawBackground(W: number, worldH: number, droneCount: number) {
     const sepY = this.separatorY(droneCount)
     const PAD  = 2000
 
-    const bg = this.add.graphics()
-    // Base dark fill
-    bg.fillStyle(0x0d1117, 1)
+    // 1) Base deep-space fill — nearly black with a faint blue tint.
+    const bg = this.add.graphics().setDepth(-100)
+    bg.fillStyle(0x05070f, 1)
     bg.fillRect(-PAD, -PAD, W + PAD * 2, worldH + PAD * 2)
 
-    // Drone zone overlay
-    bg.fillStyle(0x0d1420, 1)
-    bg.fillRect(-PAD, -PAD, W + PAD * 2, sepY + PAD)
+    // 2) Nebula clouds — big translucent circles in cyan / violet.
+    //    Placed randomly across the world so scrolling reveals new pockets.
+    const nebula = this.add.graphics().setDepth(-95)
+    const NEBULA_COLORS = [0x1a3a7a, 0x3a1a7a, 0x0a2a5a, 0x5a1a4a]
+    for (let i = 0; i < 22; i++) {
+      const nx = Phaser.Math.Between(-PAD, W + PAD)
+      const ny = Phaser.Math.Between(-PAD, worldH + PAD)
+      const nr = Phaser.Math.Between(140, 320)
+      const nc = NEBULA_COLORS[i % NEBULA_COLORS.length]
+      nebula.fillStyle(nc, 0.04); nebula.fillCircle(nx, ny, nr)
+      nebula.fillStyle(nc, 0.06); nebula.fillCircle(nx, ny, nr * 0.6)
+      nebula.fillStyle(nc, 0.08); nebula.fillCircle(nx, ny, nr * 0.3)
+    }
 
-    // Defense zone overlay
-    bg.fillStyle(0x0a1e10, 1)
+    // 3) Star field — 240 pinpricks, tiny with sparser brighter ones.
+    const stars = this.add.graphics().setDepth(-94)
+    for (let i = 0; i < 240; i++) {
+      const sx = Phaser.Math.Between(-PAD, W + PAD)
+      const sy = Phaser.Math.Between(-PAD, worldH + PAD)
+      const bright = Math.random() < 0.15
+      stars.fillStyle(bright ? 0xffffff : 0x9fc4ff, bright ? 0.8 : 0.35)
+      stars.fillCircle(sx, sy, bright ? 1.2 : 0.6)
+    }
+
+    // 4) Radial pulse rings — three concentric rings from the world centre.
+    //    Animated in the update loop via scale tween below.
+    const cx = W / 2
+    const cy = worldH / 2
+    for (let i = 0; i < 3; i++) {
+      const ring = this.add.graphics().setDepth(-90)
+      ring.lineStyle(2, 0x00e5ff, 0.14)
+      ring.strokeCircle(0, 0, 200)
+      ring.setPosition(cx, cy)
+      this.tweens.add({
+        targets: ring,
+        scale: { from: 0.4, to: 3.5 },
+        alpha: { from: 0.7, to: 0 },
+        duration: 5200,
+        delay: i * 1700,
+        repeat: -1,
+        ease: 'Cubic.easeOut',
+      })
+    }
+
+    // 5) Diagonal "data streams" — thin lines drifting across the field.
+    const streams = this.add.graphics().setDepth(-88)
+    streams.lineStyle(1, 0x00e5ff, 0.10)
+    for (let i = 0; i < 14; i++) {
+      const y0 = Phaser.Math.Between(-PAD, worldH + PAD)
+      streams.lineBetween(-PAD, y0, W + PAD, y0 + Phaser.Math.Between(-30, 30))
+    }
+    streams.lineStyle(1, 0xa855f7, 0.08)
+    for (let i = 0; i < 8; i++) {
+      const y0 = Phaser.Math.Between(-PAD, worldH + PAD)
+      streams.lineBetween(-PAD, y0, W + PAD, y0 + Phaser.Math.Between(-30, 30))
+    }
+
+    // 6) Zone tints — subtle so the base nebula still shows through.
+    bg.fillStyle(0x0d1420, 0.55)
+    bg.fillRect(-PAD, -PAD, W + PAD * 2, sepY + PAD)
+    bg.fillStyle(0x0a1e10, 0.55)
     bg.fillRect(-PAD, sepY, W + PAD * 2, worldH - sepY + PAD)
 
-    // Separator line
-    bg.lineStyle(2, 0x00e5ff, 0.28)
+    // 7) Separator with soft neon halo.
+    bg.lineStyle(6, 0x00e5ff, 0.10)
+    bg.lineBetween(-PAD, sepY, W + PAD, sepY)
+    bg.lineStyle(2, 0x00e5ff, 0.42)
     bg.lineBetween(-PAD, sepY, W + PAD, sepY)
 
-    // Zone labels
+    // 8) Zone labels.
     this.add.text(10, 68, 'DRONE ZONE', {
       fontSize: '9px', fontFamily: 'monospace', color: '#00e5ff',
-    }).setAlpha(0.28).setDepth(0)
-
+    }).setAlpha(0.35).setDepth(-1)
     this.add.text(10, sepY + 8, 'DEFENSE ZONE', {
       fontSize: '9px', fontFamily: 'monospace', color: '#00cc44',
-    }).setAlpha(0.28).setDepth(0)
+    }).setAlpha(0.35).setDepth(-1)
+
+    // 9) Star twinkle — a light tween on a subset of stars so the sky feels
+    //    alive. We overlay a second stars graphic pulsing gently in and out.
+    const twinkle = this.add.graphics().setDepth(-93)
+    twinkle.fillStyle(0xffffff, 0.9)
+    for (let i = 0; i < 40; i++) {
+      const sx = Phaser.Math.Between(-PAD, W + PAD)
+      const sy = Phaser.Math.Between(-PAD, worldH + PAD)
+      twinkle.fillCircle(sx, sy, 0.9)
+    }
+    this.tweens.add({
+      targets: twinkle,
+      alpha: { from: 0.35, to: 0.85 },
+      duration: 2400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    })
+  }
+
+  /**
+   * Farming lightning bolts — small forked strokes that briefly flash around
+   * the drones, signalling that the farm is actively mining. One graphics layer
+   * is reused: every ~700ms we clear it and draw a fresh cluster of 2-4 bolts
+   * with random paths.
+   */
+  private createLightningLayer(W: number, worldH: number) {
+    const g = this.add.graphics().setDepth(-10)
+
+    const drawBolt = (x0: number, y0: number, x1: number, y1: number, color: number) => {
+      // Split the run into 6-9 segments and jitter each vertex sideways so
+      // the bolt looks organic instead of straight.
+      const segs = Phaser.Math.Between(6, 9)
+      const dx = (x1 - x0) / segs
+      const dy = (y1 - y0) / segs
+      let px = x0, py = y0
+      g.lineStyle(3, color, 0.35)
+      for (let i = 1; i <= segs; i++) {
+        const jitter = 12
+        const nx = x0 + dx * i + Phaser.Math.Between(-jitter, jitter)
+        const ny = y0 + dy * i + Phaser.Math.Between(-jitter, jitter)
+        g.lineBetween(px, py, nx, ny)
+        // Occasional branch — shorter, softer.
+        if (Math.random() < 0.35 && i < segs) {
+          const bx = nx + Phaser.Math.Between(-24, 24)
+          const by = ny + Phaser.Math.Between(-10, 24)
+          g.lineStyle(2, color, 0.18)
+          g.lineBetween(nx, ny, bx, by)
+          g.lineStyle(3, color, 0.35)
+        }
+        px = nx; py = ny
+      }
+      // Bright core along the same path — thinner, more opaque.
+      g.lineStyle(1, 0xffffff, 0.75)
+      g.lineBetween(x0, y0, x1, y1)
+    }
+
+    const strike = () => {
+      g.clear()
+      // 3-6 bolts per strike — feels like the whole farm is crackling with
+      // mining energy instead of a single sparse zap.
+      const bolts = Phaser.Math.Between(3, 6)
+      for (let i = 0; i < bolts; i++) {
+        const x = Phaser.Math.Between(20, W - 20)
+        const y = Phaser.Math.Between(60, worldH - 60)
+        const len = Phaser.Math.Between(60, 140)
+        const dir = Math.random() < 0.5 ? -1 : 1
+        // Pick a colour that pops on the dark nebula.
+        const col = [0x00e5ff, 0xa855f7, 0x39ff14, 0xffd700][Phaser.Math.Between(0, 3)]
+        drawBolt(x, y - len / 2, x + dir * Phaser.Math.Between(20, 60), y + len / 2, col)
+      }
+      // Fade the whole flash out.
+      g.setAlpha(1)
+      this.tweens.add({
+        targets: g,
+        alpha: { from: 1, to: 0 },
+        duration: 520,
+        ease: 'Cubic.easeOut',
+      })
+    }
+
+    // Kick off first strike almost immediately and repeat frequently so the
+    // scene always has SOME lightning visible.
+    const schedule = () => {
+      this.time.delayedCall(Phaser.Math.Between(220, 700), () => {
+        if (!this.isAlive) return
+        strike()
+        schedule()
+      })
+    }
+    strike()
+    schedule()
   }
 
   private createGridLines(W: number, worldH: number) {
-    // Extend grid 2000px beyond world so zooming out never shows raw black
+    // Extend grid 2000px beyond world so zooming out never shows raw black.
+    // Two-tone grid: a soft base + brighter accent every 5th line for depth,
+    // sitting above the nebula but below units.
     const PAD  = 2000
     const step = 40
-    const grid = this.add.graphics()
-    grid.lineStyle(1, 0x00e5ff, 0.055)
+    const grid = this.add.graphics().setDepth(-70)
+    grid.lineStyle(1, 0x00e5ff, 0.045)
     for (let x = -PAD; x < W + PAD; x += step) grid.lineBetween(x, -PAD, x, worldH + PAD)
     for (let y = -PAD; y < worldH + PAD; y += step) grid.lineBetween(-PAD, y, W + PAD, y)
+    // Accent grid — every 200px, slightly brighter, gives a "surface" feel.
+    grid.lineStyle(1, 0x00e5ff, 0.16)
+    for (let x = -PAD; x < W + PAD; x += step * 5) grid.lineBetween(x, -PAD, x, worldH + PAD)
+    for (let y = -PAD; y < worldH + PAD; y += step * 5) grid.lineBetween(-PAD, y, W + PAD, y)
   }
 
   private createParticles() {
@@ -270,7 +427,10 @@ export class FarmScene extends Phaser.Scene {
 
   private addDroneSprite(drone: Drone, x: number, y: number) {
     const tex = getDroneTextureName(drone.droneType, drone.isBroken)
-    const sprite = this.add.image(x, y, tex).setScale(0.78).setDepth(5)
+    // Faux 3D perspective: squash Y so the drone reads as if viewed from
+    // slightly above (arms/props feel foreshortened, body looks like a hull
+    // instead of a flat sticker). Kept subtle so hitbox still matches.
+    const sprite = this.add.image(x, y, tex).setScale(0.88, 0.68).setDepth(5)
     sprite.setInteractive({ useHandCursor: true, draggable: true })
     sprite.setData('objectId', drone.id)
     sprite.setData('kind', 'drone')
