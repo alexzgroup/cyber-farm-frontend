@@ -1,19 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { getWithdrawals, requestWithdrawal } from '../api'
 import type { ApiWithdrawal, ApiWithdrawalsResponse, WithdrawalStatus } from '../api/types'
 import styles from './WithdrawalScreen.module.css'
-
-function statusLabel(s: WithdrawalStatus): string {
-  switch (s) {
-    case 'pending':      return 'На рассмотрении'
-    case 'completed':    return 'Выполнен'
-    case 'rejected':     return 'Отклонён'
-    case 'failed':       return 'Ошибка'
-    case 'pending_sign': return 'Ожидает подписи'
-    default:             return s
-  }
-}
 
 function statusColor(s: WithdrawalStatus): string {
   switch (s) {
@@ -33,6 +23,7 @@ function fmtDate(iso: string) {
 }
 
 export function WithdrawalScreen() {
+  const { t } = useTranslation()
   const setScreen   = useGameStore((s) => s.setScreen)
   const tonBalance  = useGameStore((s) => s.tonBalance)
   const tonWallet   = useGameStore((s) => s.tonWallet)
@@ -43,6 +34,17 @@ export function WithdrawalScreen() {
   const [amount,     setAmount]     = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [toast,      setToast]      = useState<{ msg: string; ok: boolean } | null>(null)
+
+  const statusLabel = (s: WithdrawalStatus): string => {
+    switch (s) {
+      case 'pending':      return t('withdrawal.statusPending')
+      case 'completed':    return t('withdrawal.statusCompleted')
+      case 'rejected':     return t('withdrawal.statusRejected')
+      case 'failed':       return t('withdrawal.statusFailed')
+      case 'pending_sign': return t('withdrawal.statusPendingSign')
+      default:             return s
+    }
+  }
 
   const load = () => {
     setLoading(true)
@@ -73,16 +75,16 @@ export function WithdrawalScreen() {
     setSubmitting(true)
     try {
       await requestWithdrawal(numAmount)
-      showToast('Заявка на вывод создана', true)
+      showToast(t('withdrawal.toastCreated'), true)
       setAmount('')
       load()
       loadGameState()
     } catch (e: unknown) {
       const msg = (e as Error).message ?? ''
-      if (msg.includes('pending'))     showToast('У вас уже есть активная заявка', false)
-      else if (msg.includes('wallet')) showToast('Кошелёк не подключён', false)
-      else if (msg.includes('balance')) showToast('Недостаточно TON', false)
-      else                              showToast('Ошибка при создании заявки', false)
+      if (msg.includes('pending'))      showToast(t('withdrawal.toastPending'),   false)
+      else if (msg.includes('wallet'))  showToast(t('withdrawal.toastNoWallet'),  false)
+      else if (msg.includes('balance')) showToast(t('withdrawal.toastNoBalance'), false)
+      else                              showToast(t('withdrawal.toastError'),    false)
     } finally {
       setSubmitting(false)
     }
@@ -93,7 +95,7 @@ export function WithdrawalScreen() {
       {/* Header */}
       <div className={styles.header}>
         <button className={styles.back} onClick={() => setScreen('profile')}>←</button>
-        <span className={styles.title}>Вывод TON</span>
+        <span className={styles.title}>{t('withdrawal.title')}</span>
       </div>
 
       {toast && (
@@ -104,32 +106,32 @@ export function WithdrawalScreen() {
 
       {/* Balance row */}
       <div className={styles.balanceRow}>
-        <span className={styles.balLabel}>Доступно</span>
+        <span className={styles.balLabel}>{t('withdrawal.available')}</span>
         <span className={styles.balVal}>◈ {fmtTon(tonBalance)} TON</span>
       </div>
 
       {/* Wallet */}
       {tonWallet ? (
         <div className={styles.walletRow}>
-          <span className={styles.walletLabel}>Кошелёк</span>
+          <span className={styles.walletLabel}>{t('withdrawal.wallet')}</span>
           <span className={styles.walletAddr}>{tonWallet.slice(0,8)}…{tonWallet.slice(-6)}</span>
         </div>
       ) : (
         <div className={styles.noWallet}>
-          ⚠️ Кошелёк не подключён. Подключите в профиле.
+          {t('withdrawal.noWalletWarn')}
         </div>
       )}
 
       {/* Form */}
       {tonWallet && (
         <div className={styles.form}>
-          <div className={styles.formLabel}>Сумма вывода (TON)</div>
+          <div className={styles.formLabel}>{t('withdrawal.amountLabel')}</div>
           <input
             className={styles.input}
             type="number"
             min={minAmount}
             step="0.01"
-            placeholder={`Минимум ${minAmount} TON`}
+            placeholder={t('withdrawal.minPlaceholder', { min: minAmount })}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
@@ -137,22 +139,29 @@ export function WithdrawalScreen() {
           {numAmount > 0 && (
             <div className={styles.breakdown}>
               <div className={styles.brow}>
-                <span>Запрошено</span>
+                <span>{t('withdrawal.requested')}</span>
                 <span>◈ {fmtTon(numAmount)} TON</span>
               </div>
               <div className={styles.brow}>
-                <span>Комиссия ({Math.round(commission * 100)}%)</span>
+                <span>{t('withdrawal.commission', { pct: Math.round(commission * 100) })}</span>
                 <span style={{ color: '#f59e0b' }}>− ◈ {fmtTon(fee)} TON</span>
               </div>
               <div className={`${styles.brow} ${styles.browTotal}`}>
-                <span>Вы получите</span>
+                <span>{t('withdrawal.youGet')}</span>
                 <span style={{ color: '#22c55e' }}>◈ {fmtTon(payout)} TON</span>
               </div>
             </div>
           )}
 
+          {/* 24h processing notice — shown above the submit button so the user
+              agrees to the SLA before creating the request. Multilingual via i18n. */}
+          <div className={styles.processingNotice} data-testid="withdrawal-24h-notice">
+            <div className={styles.processingNoticeTitle}>{t('withdrawal.processingNoticeTitle')}</div>
+            <div className={styles.processingNoticeBody}>{t('withdrawal.processingNoticeBody')}</div>
+          </div>
+
           {hasPending && (
-            <div className={styles.warn}>У вас уже есть заявка на рассмотрении</div>
+            <div className={styles.warn}>{t('withdrawal.hasPending')}</div>
           )}
 
           <button
@@ -160,36 +169,33 @@ export function WithdrawalScreen() {
             disabled={!canSubmit}
             onClick={handleSubmit}
           >
-            {submitting ? 'Отправка…' : 'Запросить вывод'}
+            {submitting ? t('withdrawal.submitting') : t('withdrawal.submit')}
           </button>
 
           <div className={styles.conditions}>
             <div className={styles.condRow}>
-              <span>Комиссия</span>
+              <span>{t('withdrawal.commissionRow')}</span>
               <span>{Math.round(commission * 100)}%</span>
             </div>
             <div className={styles.condRow}>
-              <span>Минимальная сумма</span>
+              <span>{t('withdrawal.minAmountRow')}</span>
               <span>◈ {minAmount} TON</span>
-            </div>
-            <div className={styles.condNote}>
-              Вывод обрабатывается вручную администратором. Обычно в течение 24 часов.
             </div>
           </div>
         </div>
       )}
 
       {/* History */}
-      <div className={styles.historyTitle}>История выводов</div>
+      <div className={styles.historyTitle}>{t('withdrawal.historyTitle')}</div>
 
       {loading ? (
-        <div className={styles.empty}>Загрузка…</div>
+        <div className={styles.empty}>{t('withdrawal.loading')}</div>
       ) : !data?.withdrawals.length ? (
-        <div className={styles.empty}>Заявок пока нет</div>
+        <div className={styles.empty}>{t('withdrawal.empty')}</div>
       ) : (
         <div className={styles.list}>
           {data.withdrawals.map((w) => (
-            <WithdrawalRow key={w.id} w={w} />
+            <WithdrawalRow key={w.id} w={w} statusLabel={statusLabel} />
           ))}
         </div>
       )}
@@ -197,13 +203,14 @@ export function WithdrawalScreen() {
   )
 }
 
-function WithdrawalRow({ w }: { w: ApiWithdrawal }) {
+function WithdrawalRow({ w, statusLabel }: { w: ApiWithdrawal; statusLabel: (s: WithdrawalStatus) => string }) {
+  const { t } = useTranslation()
   return (
     <div className={styles.row}>
       <div className={styles.rowLeft}>
         <div className={styles.rowAmount}>◈ {fmtTon(w.amount)} TON</div>
         <div className={styles.rowSub}>
-          выплата {fmtTon(w.payout)} · {fmtDate(w.created_at)}
+          {t('withdrawal.rowPayout', { payout: fmtTon(w.payout) })} · {fmtDate(w.created_at)}
         </div>
       </div>
       <div className={styles.rowStatus} style={{ color: statusColor(w.status) }}>
