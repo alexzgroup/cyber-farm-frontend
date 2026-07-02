@@ -295,6 +295,7 @@
     "noProducts": "No packages available",
     "cancelled": "Payment cancelled",
     "failed": "Payment failed. Please try again.",
+    "oneShotUsed": "This pack is first-purchase only — you've already claimed it.",
     "footer": "Telegram takes 30% · Funds go to game developers"
   },
   "starter": {

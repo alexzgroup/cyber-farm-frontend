@@ -67,6 +67,13 @@ export function TopUpScreen() {
 
   const handleBuy = async (product: ApiProduct) => {
     if (buyingId) return
+    // Client-side guard for one-shot products (Starter Pack): if the user
+    // already has any completed Stars purchase, the server will 400 the
+    // invoice request. Fail fast with a toast instead of a spinner.
+    if (product.is_one_shot && hasStarsPurchase) {
+      showToast(t('topup.oneShotUsed'), false)
+      return
+    }
     setBuyingId(product.id)
     try {
       const { invoice_url } = await buyProduct(product.id)

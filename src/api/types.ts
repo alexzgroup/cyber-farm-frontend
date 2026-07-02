@@ -220,6 +220,7 @@ export interface ApiProduct {
   gold_amount: number
   bonus_label: string
   sort_order:  number
+  is_one_shot: boolean
 }
 
 export interface ApiPurchaseLog {

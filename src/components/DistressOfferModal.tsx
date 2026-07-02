@@ -32,6 +32,14 @@ export function DistressOfferModal() {
   const handleBuy = async () => {
     if (busy) return
     setBusy(true)
+    // Clear local state and snooze the offer server-side BEFORE opening the
+    // invoice. If the user closes the Telegram invoice sheet without paying
+    // and re-opens the Mini App, /me must not return distress_offer=active
+    // again — otherwise a second invoice could be generated and the user
+    // could double-charge themselves (bot back-ends the actual flag flip
+    // only on successful_payment).
+    useGameStore.setState({ distressOffer: null })
+    try { await api.dismissDistressOffer() } catch { /* non-fatal */ }
     try {
       const { invoice_url } = await api.buyDistressPack()
       webApp.openInvoice?.(invoice_url, (status) => {
