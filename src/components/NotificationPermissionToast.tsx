@@ -7,8 +7,11 @@ import styles from './NotificationPermissionToast.module.css'
 // Telegram-native write-access dialog. Shows only when:
 //   - state is loaded
 //   - allowNotification is false (server-side opt-out)
-//   - this session hasn't been dismissed yet (sessionStorage flag)
+//   - the user hasn't already dismissed / handled the prompt (localStorage flag)
 //   - the user is currently on the farm screen (other screens have their own focus)
+//
+// Persistence: localStorage — a Mini App re-open is a fresh session, so
+// localStorage would resurface the toast on every launch even after opt-out.
 const DISMISS_KEY = 'cf:notif-prompt-dismissed'
 
 export function NotificationPermissionToast() {
@@ -27,7 +30,7 @@ export function NotificationPermissionToast() {
     if (!isLoaded) return
     if (allowNotification) return
     if (activeScreen !== 'farm') return
-    if (sessionStorage.getItem(DISMISS_KEY) === '1') return
+    if (localStorage.getItem(DISMISS_KEY) === '1') return
     // Small delay so the daily-bonus modal can claim focus first.
     const id = setTimeout(() => setVisible(true), 900)
     return () => clearTimeout(id)
@@ -36,7 +39,7 @@ export function NotificationPermissionToast() {
   if (!visible) return null
 
   const hide = (remember: boolean) => {
-    if (remember) sessionStorage.setItem(DISMISS_KEY, '1')
+    if (remember) localStorage.setItem(DISMISS_KEY, '1')
     setLeaving(true)
     setTimeout(() => { setVisible(false); setLeaving(false) }, 260)
   }

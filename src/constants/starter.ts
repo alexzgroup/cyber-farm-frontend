@@ -4,10 +4,10 @@
 // values are used ONLY by the marketing banner/hero UI; actual charge/reward
 // come from the /shop/products response and the payment processor.
 export const STARTER_PACK = {
-  stars:       25,
-  goldAmount:  750,
+  stars:       15,
+  goldAmount:  400,
   bonusDays:   2,
-  oldStars:    75,
+  oldStars:    45,
 } as const
 
 export const starterDiscountPct = () =>

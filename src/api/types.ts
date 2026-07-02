@@ -85,6 +85,7 @@ export interface ApiUser {
   allow_notification:  boolean  // false = user opted out of re-engagement reminders
   allow_duel:          boolean  // false = hidden from duel list, cannot receive challenges
   has_stars_purchase:  boolean  // true after the user's first completed Stars pack purchase
+  distress_offer?:     { active: boolean; reason: 'raids' | 'low_balance'; stars_price: number; gold_amount: number } | null
   created_at:          string
 }
 

@@ -49,6 +49,15 @@ export function updateUserDuelSettings(enabled: boolean): Promise<{ allow_duel: 
   })
 }
 
+// Distress offer — one-shot triggered -50% Starter (12⭐/750g).
+export function dismissDistressOffer(): Promise<{ distress_dismissed_at: string }> {
+  return apiFetch('/api/user/distress/dismiss', { method: 'POST' })
+}
+
+export function buyDistressPack(): Promise<{ invoice_url: string; stars: number; gold: number }> {
+  return apiFetch('/api/distress/buy', { method: 'POST' })
+}
+
 export function syncPositions(
   drones:  UnitPosition[],
   turrets: UnitPosition[],

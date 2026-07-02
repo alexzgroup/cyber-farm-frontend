@@ -179,6 +179,10 @@ interface GameState {
   allowNotification:   boolean  // synced from API allow_notification
   allowDuel:           boolean  // synced from API allow_duel
   hasStarsPurchase:    boolean  // true after first completed Stars pack purchase
+  // Triggered -50% Starter offer surfaced by the DistressOfferModal. `null`
+  // when server says the modal shouldn't show (purchased, dismissed <24h, or
+  // triggers not active). Populated verbatim from /api/user/me.
+  distressOffer:       { active: boolean; reason: 'raids' | 'low_balance'; starsPrice: number; goldAmount: number } | null
   onlineStatus:        Record<number, boolean>  // live updates from player.online/offline WS events
 
   // UI
@@ -297,6 +301,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   allowNotification:   true,
   allowDuel:           true,
   hasStarsPurchase:    false,
+  distressOffer:       null,
   onlineStatus:        {},
   activeScreen:        'farm',
   selectedUnitId: null,
@@ -414,6 +419,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         allowNotification:   user.allow_notification ?? true,
         allowDuel:           user.allow_duel ?? true,
         hasStarsPurchase:    user.has_stars_purchase ?? false,
+        distressOffer:       user.distress_offer && user.distress_offer.active
+          ? { active: true, reason: user.distress_offer.reason, starsPrice: user.distress_offer.stars_price, goldAmount: user.distress_offer.gold_amount }
+          : null,
         isLoaded:            true,
         loadError:           null,
       })
@@ -862,3 +870,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   toggleSound:     () => set((s) => ({ soundEnabled: !s.soundEnabled })),
   selectUnit:      (unitId) => set({ selectedUnitId: unitId }),
 }))
+
+// Dev-only hook: expose the store on window for Playwright / manual DevTools
+// dispatching. `import.meta.env.DEV` is compile-time-inlined so this block is
+// dead-code-eliminated from production bundles.
+if (import.meta.env.DEV) {
+  ;(window as unknown as { __CF_STORE__: typeof useGameStore }).__CF_STORE__ = useGameStore
+}
