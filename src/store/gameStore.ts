@@ -167,6 +167,13 @@ interface GameState {
   lastRaidResult:          RaidResult | null
   incomingRaidLog:         IncomingRaidEntry[]
   incomingRaidNotification: IncomingRaidEntry | null
+  // Sticky bottom sheet shown after a lost raid — separate from the top alert
+  // because it doesn't auto-dismiss and only appears when the user actually
+  // lost coins (defender won → no prompt).
+  defendPromptVisible:     boolean
+  // Global ShieldModal state so the defend-prompt can trigger the purchase
+  // dialog from anywhere in the app.
+  shieldModalOpen:         boolean
   unitUpgrades:   UnitUpgrades
   language:            string   // current UI language (ru/en), synced from API
   allowNotification:   boolean  // synced from API allow_notification
@@ -205,6 +212,9 @@ interface GameState {
   clearRaidResult:           () => void
   addIncomingRaid:           (entry: IncomingRaidEntry) => void
   clearIncomingNotification: () => void
+  hideDefendPrompt:          () => void
+  openShieldModal:           () => void
+  closeShieldModal:          () => void
   addBalance:                (amount: number) => void
   setTonBalance:             (amount: number) => void
   tonDepositToast:           { amount: number } | null
@@ -280,6 +290,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   lastRaidResult:           null,
   incomingRaidLog:          [],
   incomingRaidNotification: null,
+  defendPromptVisible:      false,
+  shieldModalOpen:          false,
   unitUpgrades:        {},
   language:            'ru',
   allowNotification:   true,
@@ -838,8 +850,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   addIncomingRaid: (entry) => set((s) => ({
     incomingRaidLog:          [entry, ...s.incomingRaidLog].slice(0, 50),
     incomingRaidNotification: entry,
+    // Attacker won → coins were stolen → nudge the player to buy a shield.
+    // Defender won → nothing to defend against, keep the prompt hidden.
+    defendPromptVisible:      s.defendPromptVisible || !entry.won,
   })),
   clearIncomingNotification: () => set({ incomingRaidNotification: null }),
+  hideDefendPrompt:          () => set({ defendPromptVisible: false }),
+  openShieldModal:           () => set({ shieldModalOpen: true, defendPromptVisible: false }),
+  closeShieldModal:          () => set({ shieldModalOpen: false }),
   setScreen:       (screen) => set({ activeScreen: screen }),
   toggleSound:     () => set((s) => ({ soundEnabled: !s.soundEnabled })),
   selectUnit:      (unitId) => set({ selectedUnitId: unitId }),

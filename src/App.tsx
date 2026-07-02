@@ -4,6 +4,8 @@ import { useGameStore } from './store/gameStore'
 import { connectWebSocket, disconnectWebSocket } from './api/websocket'
 import { BottomNav } from './components/BottomNav'
 import { RaidAlert } from './components/RaidAlert'
+import { RaidDefendPrompt } from './components/RaidDefendPrompt'
+import { ShieldModal } from './components/ShieldModal'
 import { TonDepositToast } from './components/TonDepositToast'
 import { MarketSoldToast } from './components/MarketSoldToast'
 import { ReferralEarnedToast } from './components/ReferralEarnedToast'
@@ -43,6 +45,8 @@ export function App() {
   const hideConfetti  = useGameStore((s) => s.hideConfetti)
   const loadGameState = useGameStore((s) => s.loadGameState)
   const language      = useGameStore((s) => s.language)
+  const shieldModalOpen  = useGameStore((s) => s.shieldModalOpen)
+  const closeShieldModal = useGameStore((s) => s.closeShieldModal)
 
   useEffect(() => { loadGameState() }, [loadGameState])
 
@@ -141,6 +145,8 @@ export function App() {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', background: '#0d1117' }}>
       <RaidAlert />
+      <RaidDefendPrompt />
+      <ShieldModal open={shieldModalOpen} onClose={closeShieldModal} />
       <TonDepositToast />
       <MarketSoldToast />
       <ReferralEarnedToast />
