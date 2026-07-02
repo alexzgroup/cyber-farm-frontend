@@ -35,6 +35,7 @@ jobs:
           VITE_WS_URL:     ${{ secrets.VITE_WS_URL }}
           VITE_BOT_URL:    ${{ secrets.VITE_BOT_URL }}
           VITE_ADMIN_IDS:  ${{ secrets.VITE_ADMIN_IDS }}
+          VITE_ENABLED_DESKTOP: ${{ secrets.VITE_ENABLED_DESKTOP }}
           VITE_ADSGRAM_REWARD_GOLD_BLOCK_ID: ${{ secrets.VITE_ADSGRAM_REWARD_GOLD_BLOCK_ID }}
           # VITE_DEV_BOT_TOKEN намеренно не передаётся — в проде mock не нужен
 

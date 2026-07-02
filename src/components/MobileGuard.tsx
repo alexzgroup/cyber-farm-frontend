@@ -14,6 +14,12 @@ function isAdmin(): boolean {
   return raw.split(',').map((s: string) => s.trim()).includes(id)
 }
 
+// Kill switch for the mobile-only gate. When `VITE_ENABLED_DESKTOP=true`
+// we let everyone in — used for conversion experiments on desktop.
+function isDesktopEnabled(): boolean {
+  return String(import.meta.env.VITE_ENABLED_DESKTOP ?? '').toLowerCase() === 'true'
+}
+
 function getStartParam(): string | null {
   const url = new URLSearchParams(window.location.search)
   const hash = new URLSearchParams(window.location.hash.slice(1))
@@ -21,7 +27,7 @@ function getStartParam(): string | null {
 }
 
 export function MobileGuard({ children }: { children: React.ReactNode }) {
-  if (isMobilePlatform() || isAdmin()) {
+  if (isDesktopEnabled() || isMobilePlatform() || isAdmin()) {
     return <>{children}</>
   }
 
