@@ -465,7 +465,6 @@ export function RaidsScreen() {
             aria-label="Купить щит от рейдов"
           >
             <span className={styles.shieldFabIcon}>🛡</span>
-            <span className={styles.shieldFabText}>Защититься</span>
           </button>
 
           {raidError && (

@@ -378,8 +378,8 @@
 .shieldFab {
   position: fixed;
   right: 16px;
-  bottom: 80px;
-  padding: 12px 18px;
+  bottom: 65px;
+  padding: 10px 14px;
   border: 0;
   border-radius: 999px;
   background: linear-gradient(90deg, #4b6cff 0%, #8a5cf6 100%);
