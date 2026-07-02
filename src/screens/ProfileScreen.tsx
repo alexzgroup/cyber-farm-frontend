@@ -501,6 +501,17 @@ export function ProfileScreen() {
                 {walletAddress.slice(0, 10)}…{walletAddress.slice(-8)}
               </div>
             )}
+            {/* Prominent warning — users must use Telegram's built-in @wallet
+                so we can push the payout back to the same chat. Third-party
+                wallets (Tonkeeper, Tonhub, MyTonWallet) technically work over
+                TON Connect but their addresses aren't linkable to the TG user
+                for support/refund flows. Red bordered box, multilingual. */}
+            {!walletConnected && (
+              <div className={styles.walletWarn} data-testid="wallet-tg-only-warn">
+                <div className={styles.walletWarnTitle}>{t('profile.walletTgOnlyTitle')}</div>
+                <div className={styles.walletWarnBody}>{t('profile.walletTgOnlyBody')}</div>
+              </div>
+            )}
           </section>
 
           {/* ── Battle stats ── */}

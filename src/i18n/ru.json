@@ -404,6 +404,8 @@
     "withdraw": "Вывести",
     "disconnectWallet": "Отключить",
     "walletWithdrawOnly": "Нужен только для вывода TON",
+    "walletTgOnlyTitle": "⚠️ Только Telegram-кошелёк",
+    "walletTgOnlyBody": "Подключай только встроенный в Telegram @wallet. Кошельки других провайдеров (Tonkeeper, Tonhub и т.д.) не поддерживаются — выплата не пройдёт.",
     "topupTon": "Пополнить",
     "tonDeposit": "Пополнение TON",
     "tonDepositDesc": "Отправьте TON на адрес ниже с обязательным комментарием. Зачисление происходит автоматически.",

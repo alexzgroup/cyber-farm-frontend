@@ -400,6 +400,8 @@
     "withdraw": "Withdraw",
     "disconnectWallet": "Disconnect",
     "walletWithdrawOnly": "Required for withdrawals only",
+    "walletTgOnlyTitle": "⚠️ Telegram Wallet only",
+    "walletTgOnlyBody": "Connect only Telegram's built-in @wallet. Third-party wallets (Tonkeeper, Tonhub, etc.) are not supported — the payout will fail.",
     "topupTon": "Top up",
     "tonDeposit": "TON Top-up",
     "tonDepositDesc": "Send TON to the address below with the required comment. Funds are credited automatically.",
