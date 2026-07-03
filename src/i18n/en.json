@@ -326,7 +326,8 @@
     "sourceWelcomeBack": "🎉 Welcome back!",
     "sourceAdmin": "🎁 Promo code from the team",
     "bannerBody": "The coupon auto-applies to any Stars pack: the price in stars drops by <b>{{pct}}%</b>. One-shot — it burns after your first purchase.",
-    "headline": "You have an active −{{pct}}% coupon"
+    "headline": "You have an active −{{pct}}% coupon",
+    "more": "More"
   },
   "welcomeBack": {
     "title": "🎉 Welcome back!",
