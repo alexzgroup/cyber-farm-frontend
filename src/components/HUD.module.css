@@ -19,14 +19,7 @@
 
 /* ── Left: gold hex + amount ─────────────────────────────────────── */
 
-/* Coin column — hex+amount on top row, coupon chip drops to the row below. */
 .coin {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-}
-.coinRow {
   display: flex;
   align-items: center;
   gap: 9px;

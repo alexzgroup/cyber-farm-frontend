@@ -32,17 +32,15 @@ export function HUD() {
   return (
     <>
       <div className={styles.topbar}>
-        {/* ── Left: hex icon + gold amount, coupon chip stacks BELOW ── */}
+        {/* ── Left: hex icon + gold amount + coupon chip on the same row ── */}
         <div className={styles.coin}>
-          <div className={styles.coinRow}>
-            <span className={styles.hexwrap} aria-hidden="true">
-              <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
-                <path d="M13 1.5 24 8v12L13 26.5 2 20V8L13 1.5Z" fill="#0c1424" stroke="#f6c544" strokeWidth="1.6"/>
-                <path d="M13 6 19.5 9.8v8L13 21.5 6.5 17.8v-8L13 6Z" fill="none" stroke="#f6c544" strokeWidth="1.3" opacity=".55"/>
-              </svg>
-            </span>
-            <span className={styles.amt}>{fmtGold(balance)}</span>
-          </div>
+          <span className={styles.hexwrap} aria-hidden="true">
+            <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
+              <path d="M13 1.5 24 8v12L13 26.5 2 20V8L13 1.5Z" fill="#0c1424" stroke="#f6c544" strokeWidth="1.6"/>
+              <path d="M13 6 19.5 9.8v8L13 21.5 6.5 17.8v-8L13 6Z" fill="none" stroke="#f6c544" strokeWidth="1.3" opacity=".55"/>
+            </svg>
+          </span>
+          <span className={styles.amt}>{fmtGold(balance)}</span>
           <CouponChip />
         </div>
 
