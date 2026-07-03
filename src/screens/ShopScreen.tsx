@@ -6,6 +6,7 @@ import { fmtGold } from '../utils/format'
 import { DroneIcon, TurretIcon, UnitCircle, WrenchIcon } from '../components/UnitIcons'
 import { ShieldModal } from '../components/ShieldModal'
 import { RescueBundleCard } from '../components/RescueBundleCard'
+import { CouponBanner } from '../components/CouponBanner'
 import { formatCountdown, useNowSecond } from '../utils/countdown'
 import styles from './ShopScreen.module.css'
 
@@ -68,6 +69,9 @@ export function ShopScreen() {
     <div className={styles.screen}>
       <h2 className={styles.title}>{t('shop.title')}</h2>
       <p className={styles.balance}>⬡ {fmtGold(balance)}</p>
+
+      {/* Coupon banner — explains the -30% discount and countdown. */}
+      <CouponBanner />
 
       {/* Starter Pack offer — highlighted for users who never bought Stars,
           and only while the 48h FOMO timer is still ticking. */}
