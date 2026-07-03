@@ -87,6 +87,25 @@
   box-shadow:
     0 10px 26px -8px rgba(246, 177, 58, 0.8),
     inset 0 0 0 1px rgba(255, 220, 140, 0.5);
+  animation: fabMoneyPulse 1.8s ease-in-out infinite;
+}
+
+/* Attention pulse — subtle scale + gold halo grow-and-fade. */
+@keyframes fabMoneyPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 10px 26px -8px rgba(246, 177, 58, 0.8),
+      inset 0 0 0 1px rgba(255, 220, 140, 0.5),
+      0 0 0 0 rgba(246, 177, 58, 0.55);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow:
+      0 12px 30px -6px rgba(246, 177, 58, 0.95),
+      inset 0 0 0 1px rgba(255, 220, 140, 0.7),
+      0 0 0 10px rgba(246, 177, 58, 0);
+  }
 }
 
 .fabHelp {
