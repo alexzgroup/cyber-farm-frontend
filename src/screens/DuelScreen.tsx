@@ -77,6 +77,8 @@ export function DuelScreen() {
     setChallenging(true)
     try {
       await startDuel(selectedPlayer, amount, currency)
+      setSelectedId(null)
+      setBetAmount('')
     } catch (e: unknown) {
       const msg = (e as Error).message ?? ''
       if (msg.includes('opponent has insufficient')) setError(t('duel.opponentInsufficient'))
