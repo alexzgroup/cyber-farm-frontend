@@ -29,6 +29,10 @@ export function TasksScreen() {
 
   const [nextAt, setNextAt] = useState<number>(0)
   const [reward, setReward] = useState<number>(50)
+  // Cooldown between ad rewards — driven by the `adsgram_cooldown_sec` setting
+  // in CRM, delivered on every status poll. Displayed in the label under the
+  // watch button; hardcoding lied to users when admins changed the setting.
+  const [cooldownSec, setCooldownSec] = useState<number>(300)
   const [now, setNow] = useState<number>(Math.floor(Date.now() / 1000))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,6 +43,7 @@ export function TasksScreen() {
       .then((s) => {
         setNextAt(s.next_at)
         setReward(s.reward)
+        if (s.cooldown_sec > 0) setCooldownSec(s.cooldown_sec)
       })
       .catch(() => {/* silent */})
   }
@@ -171,7 +176,7 @@ export function TasksScreen() {
         )}
 
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textAlign: 'center' }}>
-          {t('tasks.cooldownHint', { minutes: 5 })}
+          {t('tasks.cooldownHint', { minutes: Math.max(1, Math.round(cooldownSec / 60)) })}
         </div>
       </section>
     </div>

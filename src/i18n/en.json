@@ -421,7 +421,7 @@
     "watchAd": "Watch ad · +{{amount}} gold",
     "loadingAd": "Loading ad…",
     "availableIn": "Available in {{time}}",
-    "cooldownHint": "Reward is available once every {{minutes}} minutes",
+    "cooldownHint": "Reward is available once every {{minutes}} min.",
     "adError": "Failed to show the ad. Try again later.",
     "adNotFinished": "Ad wasn't watched to the end",
     "sdkError": "Failed to load the ad module"
