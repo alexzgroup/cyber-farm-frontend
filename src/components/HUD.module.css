@@ -156,28 +156,42 @@
 }
 .sound:active { transform: scale(0.94); }
 
-/* Starter Pack promo chip in HUD — pulses to attract attention.
-   Shows the countdown to the 48h FOMO deadline right next to the star. */
+/* Starter Pack promo chip — two visual variants driven by JSX className:
+     .starterBtnWithTimer — wide pill with countdown, lives in LEFT column
+                            under the coupon chip.
+     .starterBtnCompact   — square icon-only button, sits in RIGHT column
+                            under the sound button. */
 .starterBtn {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px 5px 8px;
-  background: linear-gradient(135deg, rgba(255,170,40,0.25), rgba(138,92,246,0.25));
-  border: 1px solid rgba(255,190,60,0.6);
-  border-radius: 999px;
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.15s;
   flex-shrink: 0;
   box-shadow: 0 0 0 rgba(255,190,60,0.7);
   animation: starterHudPulse 1.8s ease-in-out infinite;
+  background: linear-gradient(135deg, rgba(255,170,40,0.25), rgba(138,92,246,0.25));
+  border: 1px solid rgba(255,190,60,0.6);
   color: #fde68a;
+}
+.starterBtn:active { transform: scale(0.94); }
+
+.starterBtnWithTimer {
+  gap: 6px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 999px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 700;
 }
-.starterBtn:active { transform: scale(0.94); }
+
+.starterBtnCompact {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 13px;
+  justify-content: center;
+}
 
 .starterBtnIcon {
   position: relative;

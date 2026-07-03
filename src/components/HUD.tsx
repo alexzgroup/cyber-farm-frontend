@@ -32,6 +32,30 @@ export function HUD() {
     ? (Number.isInteger(regenPerMin) ? regenPerMin : regenPerMin.toFixed(1))
     : ''
 
+  // Starter chip — moves between LEFT column (under coupon) and RIGHT column
+  // (under sound) depending on whether the timer is showing. With the timer
+  // the chip is wide and would clash with sound; without it, it's a compact
+  // star icon that balances nicely on the right.
+  const renderStarterChip = () => (
+    <button
+      className={`${styles.starterBtn} ${starterCountdown ? styles.starterBtnWithTimer : styles.starterBtnCompact}`}
+      onClick={() => setScreen('topup')}
+      aria-label={t('starter.hudLabel')}
+      data-testid="hud-starter-icon"
+      type="button"
+    >
+      <span className={styles.starterBtnIcon}>
+        ⭐
+        <span className={styles.starterBtnDot} />
+      </span>
+      {starterCountdown && (
+        <span className={styles.starterBtnTimer}>{starterCountdown}</span>
+      )}
+    </button>
+  )
+  const starterOnLeft  = showStarterOffer && !!starterCountdown
+  const starterOnRight = showStarterOffer && !starterCountdown
+
   return (
     <>
       <div className={styles.topbar}>
@@ -48,6 +72,7 @@ export function HUD() {
             <span className={styles.amt}>{fmtGold(balance)}</span>
           </div>
           <CouponChip />
+          {starterOnLeft && renderStarterChip()}
         </div>
 
         {/* ── Center: energy panel — 3 rows ── */}
@@ -102,24 +127,7 @@ export function HUD() {
             )}
           </button>
 
-          {showStarterOffer && (
-            <button
-              className={styles.starterBtn}
-              onClick={() => setScreen('topup')}
-              aria-label={t('starter.hudLabel')}
-              data-testid="hud-starter-icon"
-              type="button"
-            >
-              <span className={styles.starterBtnIcon}>
-                ⭐
-                {/* Red notification dot sits on the star, not the whole pill. */}
-                <span className={styles.starterBtnDot} />
-              </span>
-              {starterCountdown && (
-                <span className={styles.starterBtnTimer}>{starterCountdown}</span>
-              )}
-            </button>
-          )}
+          {starterOnRight && renderStarterChip()}
         </div>
       </div>
 
