@@ -57,8 +57,11 @@ export function HUD() {
       )}
     </button>
   )
-  const starterOnLeft  = showStarterOffer && !!starterCountdown
-  const starterOnRight = showStarterOffer && !starterCountdown
+  // Star chip always lives in the right column (under sound). The pill
+  // variant is absolute-positioned in CSS so it doesn't stretch the column
+  // and compress the energy panel.
+  const starterOnLeft  = false
+  const starterOnRight = showStarterOffer
 
   return (
     <>

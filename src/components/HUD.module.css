@@ -128,6 +128,7 @@
 /* ── Right: sound + optional starter promo ───────────────────────── */
 
 .controls {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -176,13 +177,20 @@
 }
 .starterBtn:active { transform: scale(0.94); }
 
+/* Pill variant is absolute so its extra width doesn't stretch the .controls
+   column and squeeze the energy panel to the left of it. Sits right below
+   the sound button (sound = 40px + 8px gap ≈ 48px). */
 .starterBtnWithTimer {
+  position: absolute;
+  top: 48px;
+  right: 0;
   gap: 6px;
   padding: 5px 10px 5px 8px;
   border-radius: 999px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .starterBtnCompact {
