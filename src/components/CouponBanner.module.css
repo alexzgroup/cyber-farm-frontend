@@ -106,7 +106,7 @@
   border-radius: 10px;
   background: linear-gradient(135deg, #ec4899, #f97316);
   color: #fff;
-  min-width: 84px;
+  min-width: 108px;
   box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.7);
   animation: bannerLeftPulse 2.4s ease-in-out infinite;
 }
@@ -124,11 +124,12 @@
 .timer {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   font-weight: 600;
   opacity: 0.95;
+  white-space: nowrap;
 }
 
 .text {
