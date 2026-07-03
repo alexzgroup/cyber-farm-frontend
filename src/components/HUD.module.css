@@ -182,7 +182,7 @@
    the sound button (sound = 40px + 8px gap ≈ 48px). */
 .starterBtnWithTimer {
   position: absolute;
-  top: 48px;
+  top: 74px;                          /* clears the "+N ⚡/мин" line under the energy card */
   right: 0;
   gap: 6px;
   padding: 5px 10px 5px 8px;
