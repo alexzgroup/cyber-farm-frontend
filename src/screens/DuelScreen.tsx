@@ -79,7 +79,8 @@ export function DuelScreen() {
       await startDuel(selectedPlayer, amount, currency)
     } catch (e: unknown) {
       const msg = (e as Error).message ?? ''
-      if (msg.includes('opponent') || msg.includes('defender')) setError(t('duel.opponentBusy'))
+      if (msg.includes('opponent has insufficient')) setError(t('duel.opponentInsufficient'))
+      else if (msg.includes('opponent') || msg.includes('defender')) setError(t('duel.opponentBusy'))
       else if (msg.includes('already')) setError(t('duel.youBusy'))
       else setError(t('duel.errorChallenge'))
     } finally {
@@ -163,15 +164,20 @@ export function DuelScreen() {
             const vs = (p.power ?? 0) - myPower
             const isOnline   = p.id in onlineStatus ? onlineStatus[p.id] : p.is_online
             const isOffline  = isOnline === false
+            const opponentBroke = amount > 0 && (
+              (currency === 'gold' && p.balance      < amount) ||
+              (currency === 'ton'  && p.ton_balance  < amount)
+            )
+            const disabled = !canAfford || isOffline || opponentBroke
             return (
               <div
                 key={p.id}
                 style={{
                   ...s.card,
                   ...(isSelected ? s.cardSelected : {}),
-                  ...(!canAfford || isOffline ? s.cardDisabled : {}),
+                  ...(disabled ? s.cardDisabled : {}),
                 }}
-                onClick={() => canAfford && !isOffline && setSelectedId(p.id === selectedId ? null : p.id)}
+                onClick={() => !disabled && setSelectedId(p.id === selectedId ? null : p.id)}
               >
                 {/* Avatar + name */}
                 <div style={s.cardLeft}>

@@ -560,6 +560,7 @@
     "disabledSub": "You are hidden from the duel list. Enable in profile settings to participate.",
     "enableDuels": "Enable duels",
     "opponentBusy": "Opponent is already in a duel",
+    "opponentInsufficient": "Opponent has insufficient balance for this bet",
     "youBusy": "You are already in an active duel",
     "historyBtn": "History",
     "historyTitle": "Duel History",
