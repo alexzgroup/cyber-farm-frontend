@@ -1,0 +1,55 @@
+.backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500;
+  padding: 20px;
+}
+.card {
+  background: linear-gradient(180deg, #1a1230 0%, #0f0820 100%);
+  border: 1px solid rgba(236, 72, 153, 0.4);
+  border-radius: 20px;
+  padding: 22px 20px 18px;
+  max-width: 340px;
+  width: 100%;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(236, 72, 153, 0.35);
+}
+.icon { font-size: 48px; margin-bottom: 6px; }
+.title { margin: 0 0 6px; font-size: 20px; font-weight: 700; color: #fff; }
+.body  { margin: 0 0 14px; font-size: 13px; color: #cbd5e1; line-height: 1.45; }
+.badge {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ec4899, #f97316);
+  color: #fff;
+  font-family: monospace;
+  font-size: 18px;
+  font-weight: 800;
+}
+.cta {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ec4899, #f97316);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.later {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13px;
+  cursor: pointer;
+}

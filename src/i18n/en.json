@@ -313,6 +313,35 @@
     "heroBonus_other": "+{{count}} days shield",
     "heroOnce": "This offer expires after your first purchase of any pack"
   },
+  "starterTimer": {
+    "expiresIn": "Expires in {{time}}",
+    "expired": "Offer expired"
+  },
+  "coupon": {
+    "chipTitle": "-{{pct}}% on any purchase",
+    "expiresIn": "expires in {{time}}",
+    "sourceAdStack": "🎬 For watching 5 ads",
+    "sourceWelcomeBack": "🎉 Welcome back!",
+    "sourceAdmin": "🎁 Promo code from the team"
+  },
+  "welcomeBack": {
+    "title": "🎉 Welcome back!",
+    "body": "We've prepared a <b>-30%</b> coupon for any Stars pack. Valid for 24 hours.",
+    "cta": "Go shopping",
+    "later": "Later"
+  },
+  "rescue": {
+    "cardTitle": "Rescue Bundle",
+    "cardBadge": "BONUS PACK",
+    "cardDesc": "+{{gold}} gold, +{{days}} days of shield, +1 Scout L2 drone",
+    "cardCta": "Grab it for {{stars}}⭐"
+  },
+  "almostThere": {
+    "title": "Almost there!",
+    "body": "You're <b>{{need}}</b> gold short. Grab the Starter Pack for {{stars}}⭐ — you'll get {{gold}} gold and can finish this purchase right now.",
+    "cta": "Get pack for {{stars}}⭐",
+    "cancel": "Cancel"
+  },
   "withdrawal": {
     "title": "Withdraw TON",
     "available": "Available",

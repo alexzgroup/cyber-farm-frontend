@@ -12,6 +12,8 @@ import { ReferralEarnedToast } from './components/ReferralEarnedToast'
 import { DailyBonusModal } from './components/DailyBonusModal'
 import { NotificationPermissionToast } from './components/NotificationPermissionToast'
 import { DistressOfferModal } from './components/DistressOfferModal'
+import { WelcomeBackModal } from './components/WelcomeBackModal'
+import { AlmostThereModal } from './components/AlmostThereModal'
 import { CaptchaModal } from './components/CaptchaModal'
 import { Confetti } from './components/Confetti'
 import { FarmScreen } from './screens/FarmScreen'
@@ -48,6 +50,7 @@ export function App() {
   const language      = useGameStore((s) => s.language)
   const shieldModalOpen  = useGameStore((s) => s.shieldModalOpen)
   const closeShieldModal = useGameStore((s) => s.closeShieldModal)
+  const almostThereNeed  = useGameStore((s) => s.almostThereNeed)
 
   useEffect(() => { loadGameState() }, [loadGameState])
 
@@ -148,10 +151,14 @@ export function App() {
       <RaidAlert />
       <RaidDefendPrompt />
       <ShieldModal open={shieldModalOpen} onClose={closeShieldModal} />
+      {almostThereNeed !== null && (
+        <AlmostThereModal need={almostThereNeed} onClose={() => useGameStore.setState({ almostThereNeed: null })} />
+      )}
       <TonDepositToast />
       <MarketSoldToast />
       <ReferralEarnedToast />
       <DailyBonusModal />
+      <WelcomeBackModal />
       <NotificationPermissionToast />
       <DistressOfferModal />
       <CaptchaModal />

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
 import { SettingsModal } from './SettingsModal'
+import { CouponChip } from './CouponChip'
 import styles from './HUD.module.css'
 
 export function HUD() {
@@ -15,10 +16,12 @@ export function HUD() {
   const soundEnabled   = useGameStore((s) => s.soundEnabled)
   const isLoaded          = useGameStore((s) => s.isLoaded)
   const hasStarsPurchase  = useGameStore((s) => s.hasStarsPurchase)
+  const starterExpiresAt  = useGameStore((s) => s.starterExpiresAt)
   const setScreen         = useGameStore((s) => s.setScreen)
 
   const [showSettings, setShowSettings] = useState(false)
-  const showStarterOffer = isLoaded && !hasStarsPurchase
+  const starterActive = starterExpiresAt === null || starterExpiresAt > Date.now()
+  const showStarterOffer = isLoaded && !hasStarsPurchase && starterActive
 
   const isRegening = energy < maxEnergy
   const fillPct    = ((energy + energyProgress) / maxEnergy) * 100
@@ -33,6 +36,7 @@ export function HUD() {
         <div className={styles.balance}>
           <span className={styles.coinIcon}>⬡</span>
           <span className={styles.balanceValue}>{fmtGold(balance)}</span>
+          <CouponChip />
         </div>
 
         <div className={styles.right}>

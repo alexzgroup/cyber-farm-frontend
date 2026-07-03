@@ -315,6 +315,35 @@
     "heroBonus_many": "+{{count}} дней щита",
     "heroOnce": "Предложение сгорит после первой покупки любого пакета"
   },
+  "starterTimer": {
+    "expiresIn": "Сгорит через {{time}}",
+    "expired": "Предложение истекло"
+  },
+  "coupon": {
+    "chipTitle": "-{{pct}}% на любую покупку",
+    "expiresIn": "истекает через {{time}}",
+    "sourceAdStack": "🎬 За просмотр 5 реклам",
+    "sourceWelcomeBack": "🎉 С возвращением!",
+    "sourceAdmin": "🎁 Промокод от команды"
+  },
+  "welcomeBack": {
+    "title": "🎉 С возвращением!",
+    "body": "Мы приготовили тебе купон <b>-30%</b> на любой Stars-пак. Действует 24 часа.",
+    "cta": "К покупкам",
+    "later": "Позже"
+  },
+  "rescue": {
+    "cardTitle": "Rescue Bundle",
+    "cardBadge": "БОНУС-ПАК",
+    "cardDesc": "+{{gold}} gold, +{{days}} дня щита, +1 Scout L2 дрон",
+    "cardCta": "Забрать за {{stars}}⭐"
+  },
+  "almostThere": {
+    "title": "Почти всё!",
+    "body": "До покупки не хватает <b>{{need}}</b> gold. Возьми Starter Pack за {{stars}}⭐ — получишь {{gold}} gold и продолжишь прямо сейчас.",
+    "cta": "Взять пак за {{stars}}⭐",
+    "cancel": "Отмена"
+  },
   "withdrawal": {
     "title": "Вывод TON",
     "available": "Доступно",

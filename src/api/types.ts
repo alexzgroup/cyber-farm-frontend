@@ -86,6 +86,9 @@ export interface ApiUser {
   allow_duel:          boolean  // false = hidden from duel list, cannot receive challenges
   has_stars_purchase:  boolean  // true after the user's first completed Stars pack purchase
   distress_offer?:     { active: boolean; reason: 'raids' | 'low_balance'; stars_price: number; gold_amount: number } | null
+  starter_expires_at?: string | null   // ISO — Starter Pack FOMO deadline (48h from first auth)
+  active_coupon?:      { discount_pct: number; source: 'ad_stack' | 'welcome_back' | 'admin'; valid_until: string } | null
+  ad_watch_streak?:    number           // 0..4 — progress towards next -30% coupon (5 rewards → coupon)
   created_at:          string
 }
 

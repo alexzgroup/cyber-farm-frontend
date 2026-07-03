@@ -58,6 +58,11 @@ export function buyDistressPack(): Promise<{ invoice_url: string; stars: number;
   return apiFetch('/api/distress/buy', { method: 'POST' })
 }
 
+// Rescue Bundle — 30⭐ post-Starter upsell (gold + shield days + free drone).
+export function buyRescuePack(): Promise<{ invoice_url: string; stars: number; gold: number; shield_days: number }> {
+  return apiFetch('/api/rescue/buy', { method: 'POST' })
+}
+
 export function syncPositions(
   drones:  UnitPosition[],
   turrets: UnitPosition[],

@@ -1,0 +1,46 @@
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  margin: 12px 0;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(168, 85, 247, 0.10));
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 6px 24px -6px rgba(56, 189, 248, 0.35);
+}
+.card:hover  { transform: translateY(-1px); }
+.card:active { transform: translateY(0); }
+.card:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.badge {
+  position: absolute; top: -8px; right: 14px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #38bdf8, #a855f7);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  box-shadow: 0 4px 12px -4px rgba(56, 189, 248, 0.7);
+}
+.icon  { font-size: 32px; }
+.body  { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.title { font-size: 14px; font-weight: 700; letter-spacing: 0.3px; }
+.desc  { font-size: 11px; color: #cbd5e1; line-height: 1.35; }
+.cta {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #38bdf8, #a855f7);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+  white-space: nowrap;
+}

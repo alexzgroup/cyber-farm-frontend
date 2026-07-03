@@ -5,6 +5,8 @@ import { STARTER_PACK, starterDiscountPct } from '../constants/starter'
 import { fmtGold } from '../utils/format'
 import { DroneIcon, TurretIcon, UnitCircle, WrenchIcon } from '../components/UnitIcons'
 import { ShieldModal } from '../components/ShieldModal'
+import { RescueBundleCard } from '../components/RescueBundleCard'
+import { formatCountdown, useNowSecond } from '../utils/countdown'
 import styles from './ShopScreen.module.css'
 
 const DRONE_COLORS: Record<number, string> = { 1: '#00ccee', 2: '#ff4400', 3: '#9900ff' }
@@ -25,6 +27,10 @@ export function ShopScreen() {
   const buyTurret    = useGameStore((s) => s.buyTurret)
   const setScreen    = useGameStore((s) => s.setScreen)
   const hasStarsPurchase = useGameStore((s) => s.hasStarsPurchase)
+  const starterExpiresAt = useGameStore((s) => s.starterExpiresAt)
+  const now = useNowSecond()
+  const starterCountdown = starterExpiresAt ? formatCountdown(starterExpiresAt, now) : ''
+  const starterExpired   = starterExpiresAt !== null && !starterCountdown
   const { t } = useTranslation()
 
   const [buyingTurret, setBuyingTurret] = useState<number | null>(null)
@@ -63,8 +69,9 @@ export function ShopScreen() {
       <h2 className={styles.title}>{t('shop.title')}</h2>
       <p className={styles.balance}>⬡ {fmtGold(balance)}</p>
 
-      {/* Starter Pack offer — highlighted for users who never bought Stars */}
-      {!hasStarsPurchase && (
+      {/* Starter Pack offer — highlighted for users who never bought Stars,
+          and only while the 48h FOMO timer is still ticking. */}
+      {!hasStarsPurchase && !starterExpired && (
         <button
           type="button"
           className={styles.starterBanner}
@@ -89,11 +96,21 @@ export function ShopScreen() {
                 components={{ b: <b /> }}
               />
             </span>
-            <span className={styles.starterBannerLimited}>{t('starter.limited')}</span>
+            {starterCountdown && (
+              <span className={styles.starterBannerLimited} data-testid="starter-timer">
+                ⏱ {t('starterTimer.expiresIn', { time: starterCountdown })}
+              </span>
+            )}
+            {!starterCountdown && (
+              <span className={styles.starterBannerLimited}>{t('starter.limited')}</span>
+            )}
           </span>
           <span className={styles.shieldBannerArrow}>→</span>
         </button>
       )}
+
+      {/* Rescue Bundle upsell — appears once the user has bought Starter. */}
+      <RescueBundleCard />
 
       {/* Shield offer banner — top, animated */}
       <button

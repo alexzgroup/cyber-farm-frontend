@@ -183,6 +183,15 @@ interface GameState {
   // when server says the modal shouldn't show (purchased, dismissed <24h, or
   // triggers not active). Populated verbatim from /api/user/me.
   distressOffer:       { active: boolean; reason: 'raids' | 'low_balance'; starsPrice: number; goldAmount: number } | null
+  // Starter Pack FOMO deadline (ms epoch). null after expiry or on legacy accounts.
+  starterExpiresAt:    number | null
+  // Active discount coupon (ad_stack / welcome_back / admin). Null when no unused coupon.
+  activeCoupon:        { discountPct: number; source: 'ad_stack' | 'welcome_back' | 'admin'; validUntil: number } | null
+  // 0..4 rewarded-ad streak progress towards next -30% coupon.
+  adWatchStreak:       number
+  // "Almost there" nudge — set to gold-gap when a buy/upgrade fails with
+  // insufficient balance so the App-level modal can open. null = hidden.
+  almostThereNeed:     number | null
   onlineStatus:        Record<number, boolean>  // live updates from player.online/offline WS events
 
   // UI
@@ -302,6 +311,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   allowDuel:           true,
   hasStarsPurchase:    false,
   distressOffer:       null,
+  starterExpiresAt:    null,
+  activeCoupon:        null,
+  adWatchStreak:       0,
+  almostThereNeed:     null,
   onlineStatus:        {},
   activeScreen:        'farm',
   selectedUnitId: null,
@@ -422,6 +435,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         distressOffer:       user.distress_offer && user.distress_offer.active
           ? { active: true, reason: user.distress_offer.reason, starsPrice: user.distress_offer.stars_price, goldAmount: user.distress_offer.gold_amount }
           : null,
+        starterExpiresAt:    user.starter_expires_at ? new Date(user.starter_expires_at).getTime() : null,
+        activeCoupon:        user.active_coupon
+          ? { discountPct: user.active_coupon.discount_pct, source: user.active_coupon.source, validUntil: new Date(user.active_coupon.valid_until).getTime() }
+          : null,
+        adWatchStreak:       user.ad_watch_streak ?? 0,
         isLoaded:            true,
         loadError:           null,
       })
@@ -482,7 +500,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       const user = await api.getMe()
       set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
       return true
-    } catch {
+    } catch (err) {
+      const need = (err as { data?: { need?: number } }).data?.need
+      if (typeof need === 'number' && need > 0) set({ almostThereNeed: need })
       return false
     }
   },
@@ -496,7 +516,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       const user = await api.getMe()
       set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
       return true
-    } catch {
+    } catch (err) {
+      const need = (err as { data?: { need?: number } }).data?.need
+      if (typeof need === 'number' && need > 0) set({ almostThereNeed: need })
       return false
     }
   },
@@ -524,7 +546,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       const user = await api.getMe()
       set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
       return true
-    } catch {
+    } catch (err) {
+      const need = (err as { data?: { need?: number } }).data?.need
+      if (typeof need === 'number' && need > 0) set({ almostThereNeed: need })
       return false
     }
   },
