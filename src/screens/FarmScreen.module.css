@@ -4,50 +4,44 @@
   position: relative;
 }
 
-.equipBtn {
+/* Row of two pill buttons hugging the bottom-left of the farm view. */
+.equipBtn, .contestBtn {
   position: absolute;
   bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
   z-index: 20;
-  background: #0d1a2a;
-  border: 1px solid #00e5ff55;
-  color: #00e5ff;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: monospace;
   font-size: 12px;
   font-weight: bold;
-  padding: 5px 16px;
-  border-radius: 16px;
-  cursor: pointer;
-  letter-spacing: 0.5px;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-
-.equipBtn:hover  { background: #112233; border-color: #00e5ff99; }
-.equipBtn:active { transform: translateX(-50%) scale(0.97); }
-
-.contestBtn {
-  position: absolute;
-  bottom: 10px;
-  left: 12px;
-  z-index: 20;
-  background: #1a1400;
-  border: 1px solid rgba(255,215,0,0.45);
-  color: #ffd700;
-  font-family: monospace;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 5px 12px;
-  border-radius: 16px;
+  padding: 5px 14px;
+  border-radius: 999px;
   cursor: pointer;
   letter-spacing: 0.3px;
   transition: background 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
 
+/* KONKURS — leftmost, gold accent. */
+.contestBtn {
+  left: 12px;
+  background: #1a1400;
+  border: 1px solid rgba(255,215,0,0.45);
+  color: #ffd700;
+}
 .contestBtn:hover  { background: #251e00; border-color: rgba(255,215,0,0.75); }
 .contestBtn:active { transform: scale(0.97); }
+
+/* OBORUDOVANIE — sits immediately to the right of Konkurs. */
+.equipBtn {
+  left: 132px;                       /* just past .contestBtn */
+  background: #0d1a2a;
+  border: 1px solid #00e5ff55;
+  color: #00e5ff;
+}
+.equipBtn:hover  { background: #112233; border-color: #00e5ff99; }
+.equipBtn:active { transform: scale(0.97); }
 
 /* Zoom controls */
 .zoomControls {
