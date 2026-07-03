@@ -41,17 +41,21 @@ export function HUD() {
 
         <div className={styles.right}>
           <div className={styles.energyWrap}>
-            <div className={styles.energy}>
-              <div className={styles.energyBar}>
-                <div
-                  className={`${styles.energyFill} ${isRegening ? styles.regening : ''}`}
-                  style={{ width: `${fillPct}%` }}
-                />
-              </div>
+            {/* Row 1 — value + regen indicator. */}
+            <div className={styles.energyTop}>
               <span className={styles.energyLabel}>
-                {energy}/{maxEnergy} ⚡{isRegening ? ' +' : ''}
+                {energy}/{maxEnergy} ⚡
               </span>
+              {isRegening && <span className={styles.energyPlus}>+</span>}
             </div>
+            {/* Row 2 — the wide thin gradient bar. */}
+            <div className={styles.energyBar}>
+              <div
+                className={`${styles.energyFill} ${isRegening ? styles.regening : ''}`}
+                style={{ width: `${fillPct}%` }}
+              />
+            </div>
+            {/* Row 3 — regen hint. */}
             {regenText && <span className={styles.energyHint}>{regenText}</span>}
           </div>
 

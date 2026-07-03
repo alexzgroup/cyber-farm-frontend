@@ -12,34 +12,29 @@
   z-index: 10;
 }
 
-/* Balance card — dark rounded panel with a glowing gold hex icon. */
+/* Balance sits without its own card — just floating gold-hex + number.
+   Only the coupon chip has visual weight next to it. */
 .balance {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  background: rgba(13, 17, 23, 0.85);
-  border: 1px solid rgba(255, 215, 0, 0.22);
-  border-radius: 14px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   pointer-events: auto;
 }
 
 .coinIcon {
-  font-size: 20px;
+  font-size: 22px;
   color: #ffd700;
-  text-shadow: 0 0 10px rgba(255,215,0,0.8);
+  text-shadow: 0 0 12px rgba(255,215,0,0.85);
   line-height: 1;
 }
 
 .balanceValue {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   font-family: monospace;
   color: #ffd700;
   text-shadow: 0 0 10px rgba(255,215,0,0.5);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
 }
 
 .right {
@@ -48,25 +43,35 @@
   gap: 10px;
 }
 
-/* Energy panel — same card treatment as .balance so they read as a pair. */
+/* Energy card — wider, three-row layout: value+regen | thin bar | hint.
+   Gradient bar takes the full width of the card so it reads as the
+   focal element (matches the reference screenshot). */
 .energyWrap {
+  min-width: 150px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   gap: 3px;
-  padding: 8px 12px;
-  background: rgba(13, 17, 23, 0.85);
+  padding: 6px 10px 5px;
+  background: rgba(13, 17, 23, 0.75);
   border: 1px solid rgba(0, 229, 255, 0.22);
-  border-radius: 14px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
   pointer-events: auto;
 }
 
-.energy {
+.energyTop {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.energyPlus {
+  font-size: 13px;
+  font-weight: 800;
+  color: #39ff14;
+  line-height: 1;
+  text-shadow: 0 0 6px rgba(57, 255, 20, 0.6);
 }
 
 .energyHint {
@@ -77,12 +82,11 @@
 }
 
 .energyBar {
-  width: 88px;
-  height: 6px;
+  width: 100%;
+  height: 5px;
   background: rgba(255,255,255,0.08);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
-  border: 1px solid rgba(0,229,255,0.2);
 }
 
 .energyFill {

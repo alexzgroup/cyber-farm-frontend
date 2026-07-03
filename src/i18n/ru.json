@@ -85,7 +85,7 @@
   "farm": {
     "droneZone": "DRONE ZONE",
     "defenseZone": "DEFENCE ZONE",
-    "equipment": "⚙ Оборудование",
+    "equipment": "✨ Оборудование",
     "lvl": "LVL {{n}}",
     "defLvl": "DEF LV{{n}}",
     "noEnergy": "Нет энергии!",
