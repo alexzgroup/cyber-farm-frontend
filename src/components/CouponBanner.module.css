@@ -99,16 +99,16 @@
 
 .left {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 3px;
   padding: 6px 12px;
   border-radius: 10px;
   background: linear-gradient(135deg, #ec4899, #f97316);
   color: #fff;
+  min-width: 84px;
   box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.7);
   animation: bannerLeftPulse 2.4s ease-in-out infinite;
-  white-space: nowrap;
 }
 @keyframes bannerLeftPulse {
   0%, 100% { box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.7); }
