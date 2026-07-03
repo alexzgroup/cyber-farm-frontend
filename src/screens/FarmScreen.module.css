@@ -4,44 +4,99 @@
   position: relative;
 }
 
-/* Row of two pill buttons hugging the bottom-left of the farm view. */
-.equipBtn, .contestBtn {
+/* Bottom-left action row — Konkurs + Oborudovanie pills.
+   Ported from assets/ferma-3d/index.html reference. */
+.actions {
   position: absolute;
-  bottom: 10px;
+  left: 14px;
+  right: 14px;
+  bottom: 96px;
   z-index: 20;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+  pointer-events: none;
+}
+.actions > * { pointer-events: auto; }
+
+.act {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-family: monospace;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 5px 14px;
+  gap: 8px;
+  padding: 10px 16px;
   border-radius: 999px;
   cursor: pointer;
-  letter-spacing: 0.3px;
-  transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
+  border: 1px solid transparent;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: 0.16s;
+}
+.act:active { transform: translateY(1px); }
+
+.actContest {
+  color: #3a2a06;
+  background: linear-gradient(120deg, #ffd970, #f6b13a);
+  box-shadow:
+    0 8px 22px -8px rgba(246, 177, 58, 0.7),
+    inset 0 0 0 1px rgba(255, 224, 150, 0.5);
 }
 
-/* KONKURS — leftmost, gold accent. */
-.contestBtn {
-  left: 12px;
-  background: #1a1400;
-  border: 1px solid rgba(255,215,0,0.45);
-  color: #ffd700;
+.actGear {
+  color: #d8ecff;
+  background: linear-gradient(120deg, rgba(38, 74, 120, 0.95), rgba(24, 48, 84, 0.95));
+  border-color: rgba(90, 170, 255, 0.4);
+  box-shadow: 0 8px 22px -10px rgba(40, 120, 220, 0.7);
 }
-.contestBtn:hover  { background: #251e00; border-color: rgba(255,215,0,0.75); }
-.contestBtn:active { transform: scale(0.97); }
 
-/* OBORUDOVANIE — sits immediately to the right of Konkurs. */
-.equipBtn {
-  left: 132px;                       /* just past .contestBtn */
-  background: #0d1a2a;
-  border: 1px solid #00e5ff55;
-  color: #00e5ff;
+/* Bottom-right FABs stack — $ (Tasks) above ? (FAQ). */
+.fabs {
+  position: absolute;
+  right: 14px;
+  bottom: 96px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  pointer-events: none;
 }
-.equipBtn:hover  { background: #112233; border-color: #00e5ff99; }
-.equipBtn:active { transform: scale(0.97); }
+.fabs > * { pointer-events: auto; }
+
+.fab {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border: none;
+  transition: 0.16s;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  padding: 0;
+}
+.fab:active { transform: scale(0.94); }
+
+.fabMoney {
+  background: radial-gradient(circle at 32% 26%, #ffe08a, #f6b13a 55%, #c9821f);
+  color: #5a3c05;
+  font-size: 24px;
+  box-shadow:
+    0 10px 26px -8px rgba(246, 177, 58, 0.8),
+    inset 0 0 0 1px rgba(255, 220, 140, 0.5);
+}
+
+.fabHelp {
+  background: radial-gradient(circle at 32% 26%, #7fdcff, #2aa9f0 55%, #1670c4);
+  color: #04283f;
+  font-size: 24px;
+  box-shadow:
+    0 10px 26px -8px rgba(42, 169, 240, 0.8),
+    inset 0 0 0 1px rgba(150, 220, 255, 0.5);
+}
 
 /* Zoom controls */
 .zoomControls {
@@ -122,62 +177,5 @@
 .resetPosBtn:hover  { background: #2a1010; border-color: rgba(255,100,100,0.65); }
 .resetPosBtn:active { transform: scale(0.92); }
 
-/* FAQ help button — floating circle, right side just above the bottom nav. */
-.faqBtn {
-  position: absolute;
-  right: 12px;
-  bottom: 10px;
-  z-index: 20;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(56,189,248,0.35), rgba(15,23,42,0.95));
-  border: 1px solid rgba(56,189,248,0.55);
-  color: #38bdf8;
-  font-family: monospace;
-  font-size: 20px;
-  font-weight: 800;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  line-height: 1;
-  box-shadow: 0 4px 14px rgba(56,189,248,0.25);
-  transition: transform 0.12s, box-shadow 0.2s, border-color 0.2s;
-  user-select: none;
-}
-.faqBtn:hover  { box-shadow: 0 4px 22px rgba(56,189,248,0.5); border-color: #38bdf8; }
-.faqBtn:active { transform: scale(0.92); }
-
-/* Tasks (earn) button — gold circle stacked above the FAQ button. */
-.tasksBtn {
-  position: absolute;
-  right: 12px;
-  bottom: 56px;
-  z-index: 20;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(246,197,68,0.55), rgba(40,20,0,0.95));
-  border: 1px solid rgba(246,197,68,0.7);
-  color: #fde68a;
-  font-family: 'Manrope', sans-serif;
-  font-size: 17px;
-  font-weight: 900;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  line-height: 1;
-  box-shadow: 0 4px 16px rgba(246,197,68,0.35);
-  transition: transform 0.12s, box-shadow 0.2s, border-color 0.2s;
-  user-select: none;
-  animation: tasksBtnPulse 2.2s ease-in-out infinite;
-}
-.tasksBtn:hover  { box-shadow: 0 4px 24px rgba(246,197,68,0.65); border-color: #ffd255; }
-.tasksBtn:active { transform: scale(0.92); }
-
-@keyframes tasksBtnPulse {
-  0%, 100% { box-shadow: 0 4px 16px rgba(246,197,68,0.35), 0 0 0 0 rgba(246,197,68,0.55); }
-  50%      { box-shadow: 0 4px 16px rgba(246,197,68,0.35), 0 0 0 10px rgba(246,197,68,0); }
-}
+/* Legacy .faqBtn / .tasksBtn removed — replaced by .fab / .fabMoney / .fabHelp
+   above. Selectors are unreferenced now; kept out of the stylesheet. */

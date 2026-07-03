@@ -39,28 +39,39 @@ export function FarmScreen() {
   return (
     <div className={styles.wrap}>
       <HUD />
-      <button className={styles.equipBtn} onClick={() => setScreen('equipment')}>
-        {t('farm.equipment')}
-      </button>
-      <button className={styles.contestBtn} onClick={() => setScreen('contest')}>
-        {t('contest.farmBtn')}
-      </button>
+      {/* Bottom-left action row — Konkurs (gold pill) + Oborudovanie (blue pill).
+          Styles ported from assets/ferma-3d/index.html. */}
+      <div className={styles.actions}>
+        <button className={`${styles.act} ${styles.actContest}`} onClick={() => setScreen('contest')}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M6 3h12v3h3v2a4 4 0 0 1-4 4h-.4A6 6 0 0 1 13 17.9V20h3v2H8v-2h3v-2.1A6 6 0 0 1 7.4 15H7a4 4 0 0 1-4-4V6h3V3Zm0 5H5v3a2 2 0 0 0 2 2V8Zm12 5a2 2 0 0 0 2-2V8h-2v5Z"/>
+          </svg>
+          {t('contest.farmBtn')}
+        </button>
+        <button className={`${styles.act} ${styles.actGear}`} onClick={() => setScreen('equipment')}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>
+          </svg>
+          {t('farm.equipment')}
+        </button>
+      </div>
 
-      {/* Earn-gold shortcut — gold circle above the FAQ button. Opens Tasks. */}
-      <button
-        className={styles.tasksBtn}
-        onClick={() => setScreen('tasks')}
-        aria-label={t('tasks.title')}
-        title={t('tasks.title')}
-      >$</button>
-
-      {/* Floating help button — bottom-right above the bottom nav. Opens the FAQ. */}
-      <button
-        className={styles.faqBtn}
-        onClick={() => setScreen('faq')}
-        aria-label={t('faq.title')}
-        title={t('faq.title')}
-      >?</button>
+      {/* Bottom-right FABs — $ (Tasks) above ? (FAQ). Radial gradient circles. */}
+      <div className={styles.fabs}>
+        <button
+          className={`${styles.fab} ${styles.fabMoney}`}
+          onClick={() => setScreen('tasks')}
+          aria-label={t('tasks.title')}
+          title={t('tasks.title')}
+        >$</button>
+        <button
+          className={`${styles.fab} ${styles.fabHelp}`}
+          onClick={() => setScreen('faq')}
+          aria-label={t('faq.title')}
+          title={t('faq.title')}
+        >?</button>
+      </div>
 
       {/* Zoom controls */}
       <div className={styles.zoomControls}>

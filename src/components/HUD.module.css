@@ -1,150 +1,157 @@
-.hud {
+/* HUD topbar — ported from assets/ferma-3d/index.html reference.
+   Font stack: Manrope base with Oswald for numbers/labels and
+   JetBrains Mono for the energy N/M cap. */
+
+.topbar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 14px 14px 0;
   gap: 10px;
   pointer-events: none;
   z-index: 10;
 }
+.topbar > * { pointer-events: auto; }
 
-/* Balance sits without its own card — just floating gold-hex + number.
-   Only the coupon chip has visual weight next to it. */
-.balance {
+/* ── Left: gold hex + amount ─────────────────────────────────────── */
+
+.coin {
   display: flex;
   align-items: center;
-  gap: 8px;
-  pointer-events: auto;
+  gap: 9px;
 }
 
-.coinIcon {
-  font-size: 22px;
-  color: #ffd700;
-  text-shadow: 0 0 12px rgba(255,215,0,0.85);
+.hexwrap {
+  filter: drop-shadow(0 0 10px rgba(246, 197, 68, 0.5));
+  line-height: 0;
+}
+
+.amt {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  letter-spacing: 0.01em;
+  color: #ffe39a;
+  text-shadow: 0 0 14px rgba(246, 197, 68, 0.35);
   line-height: 1;
 }
 
-.balanceValue {
-  font-size: 22px;
-  font-weight: 700;
-  font-family: monospace;
-  color: #ffd700;
-  text-shadow: 0 0 10px rgba(255,215,0,0.5);
-  letter-spacing: 0.5px;
-}
+/* ── Center: energy panel (three rows) ───────────────────────────── */
 
-.right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Energy card — wider, three-row layout: value+regen | thin bar | hint.
-   Gradient bar takes the full width of the card so it reads as the
-   focal element (matches the reference screenshot). */
-.energyWrap {
-  min-width: 150px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 6px 10px 5px;
-  background: rgba(13, 17, 23, 0.75);
-  border: 1px solid rgba(0, 229, 255, 0.22);
-  border-radius: 12px;
-  backdrop-filter: blur(4px);
-  pointer-events: auto;
+.energy {
+  flex: 1 1 auto;
+  max-width: 150px;
+  margin-top: 5px;
 }
 
 .energyTop {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 6px;
-}
-
-.energyPlus {
-  font-size: 13px;
-  font-weight: 800;
-  color: #39ff14;
+  font-size: 12px;
+  color: #cfe0f5;
+  font-weight: 700;
   line-height: 1;
-  text-shadow: 0 0 6px rgba(57, 255, 20, 0.6);
 }
 
-.energyHint {
-  font-size: 10px;
-  color: #6b7280;
-  font-family: monospace;
-  letter-spacing: 0.02em;
+.cap {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
 }
 
-.energyBar {
-  width: 100%;
-  height: 5px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 3px;
+.plus {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  background: rgba(130, 200, 255, 0.14);
+  border: 1px solid rgba(130, 200, 255, 0.30);
+  color: #bfe6ff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+}
+.plus:hover { background: rgba(130, 200, 255, 0.24); }
+
+.bar {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
+  margin-top: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.energyFill {
+.barFill {
+  display: block;
   height: 100%;
-  background: linear-gradient(90deg, #00e5ff, #39ff14);
-  border-radius: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #28e0ff, #2ee6a6);
+  box-shadow: 0 0 12px rgba(40, 224, 255, 0.6);
   transition: width 0.8s linear;
-  box-shadow: 0 0 6px #00e5ff;
 }
 
 @keyframes regenPulse {
-  0%, 100% { box-shadow: 0 0 4px #00e5ff; }
-  50%       { box-shadow: 0 0 12px #00e5ff, 0 0 20px #39ff1466; }
+  0%, 100% { box-shadow: 0 0 8px rgba(40, 224, 255, 0.5); }
+  50%       { box-shadow: 0 0 16px rgba(40, 224, 255, 0.9), 0 0 22px rgba(46, 230, 166, 0.4); }
 }
 
-.regening {
-  animation: regenPulse 2s ease-in-out infinite;
-}
+.regening { animation: regenPulse 2s ease-in-out infinite; }
 
-.energyLabel {
-  font-size: 13px;
-  color: #8b949e;
-  font-family: monospace;
-}
-
-.settingsBtn {
-  pointer-events: auto;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  width: 34px;
-  height: 34px;
+.rate {
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.15s, transform 0.1s;
-  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 10.5px;
+  color: #8fb7d8;
+  margin-top: 4px;
+  font-weight: 600;
+  font-family: 'Manrope', sans-serif;
 }
 
-.settingsBtn:hover  { background: rgba(255,255,255,0.13); }
-.settingsBtn:active { transform: scale(0.9); }
+/* ── Right: sound + optional starter promo ───────────────────────── */
 
-/* Column stack: sound on top, starter promo below */
 .controls {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
-  pointer-events: none;
+  gap: 8px;
 }
-.controls > * { pointer-events: auto; }
+
+.sound {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  color: #bfe6ff;
+  cursor: pointer;
+  transition: 0.18s;
+  padding: 0;
+}
+.sound:hover {
+  color: #28e0ff;
+  border-color: rgba(130, 200, 255, 0.30);
+  box-shadow: 0 0 16px -4px rgba(40, 224, 255, 0.5);
+}
+.sound:active { transform: scale(0.94); }
 
 /* Starter Pack promo icon in HUD — pulses to attract attention */
 .starterBtn {
   position: relative;
-  pointer-events: auto;
   background: linear-gradient(135deg, rgba(255,170,40,0.25), rgba(138,92,246,0.25));
   border: 1px solid rgba(255,190,60,0.6);
   border-radius: 8px;
@@ -159,7 +166,6 @@
   box-shadow: 0 0 0 rgba(255,190,60,0.7);
   animation: starterHudPulse 1.8s ease-in-out infinite;
 }
-
 .starterBtn:active { transform: scale(0.9); }
 
 .starterBtnIcon {

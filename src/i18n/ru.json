@@ -13,7 +13,9 @@
     "retry": "Повторить"
   },
   "hud": {
-    "energyRegen": "+{{rate}} ⚡/мин"
+    "energyRegen": "+{{rate}} ⚡/мин",
+    "perMin": "мин",
+    "settings": "Настройки"
   },
   "notif": {
     "promptTitle": "Не пропусти главное",
@@ -85,7 +87,7 @@
   "farm": {
     "droneZone": "DRONE ZONE",
     "defenseZone": "DEFENCE ZONE",
-    "equipment": "✨ Оборудование",
+    "equipment": "Оборудование",
     "lvl": "LVL {{n}}",
     "defLvl": "DEF LV{{n}}",
     "noEnergy": "Нет энергии!",
@@ -285,7 +287,7 @@
     "contribution": "3% от продаж за TON на P2P рынке идёт в пул",
     "rules": "Побеждает тот, кто больше заработал за неделю: доход дронов + трофеи рейдов. Розыгрыш каждый понедельник.",
     "emptyLeaderboard": "Пока нет участников",
-    "farmBtn": "🏆 Конкурс"
+    "farmBtn": "Конкурс"
   },
   "topup": {
     "title": "Пополнить золото",

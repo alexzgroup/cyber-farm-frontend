@@ -25,61 +25,89 @@ export function HUD() {
 
   const isRegening = energy < maxEnergy
   const fillPct    = ((energy + energyProgress) / maxEnergy) * 100
-  // Hint shown under the energy bar. Round to 1 decimal, drop the .0 for whole numbers.
-  const regenText = regenPerMin > 0
-    ? t('hud.energyRegen', { rate: Number.isInteger(regenPerMin) ? regenPerMin : regenPerMin.toFixed(1) })
+  const rateNumber = regenPerMin > 0
+    ? (Number.isInteger(regenPerMin) ? regenPerMin : regenPerMin.toFixed(1))
     : ''
 
   return (
     <>
-      <div className={styles.hud}>
-        <div className={styles.balance}>
-          <span className={styles.coinIcon}>⬡</span>
-          <span className={styles.balanceValue}>{fmtGold(balance)}</span>
+      <div className={styles.topbar}>
+        {/* ── Left: hex icon + gold amount + optional coupon chip ── */}
+        <div className={styles.coin}>
+          <span className={styles.hexwrap} aria-hidden="true">
+            <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
+              <path d="M13 1.5 24 8v12L13 26.5 2 20V8L13 1.5Z" fill="#0c1424" stroke="#f6c544" strokeWidth="1.6"/>
+              <path d="M13 6 19.5 9.8v8L13 21.5 6.5 17.8v-8L13 6Z" fill="none" stroke="#f6c544" strokeWidth="1.3" opacity=".55"/>
+            </svg>
+          </span>
+          <span className={styles.amt}>{fmtGold(balance)}</span>
           <CouponChip />
         </div>
 
-        <div className={styles.right}>
-          <div className={styles.energyWrap}>
-            {/* Row 1 — value + regen indicator. */}
-            <div className={styles.energyTop}>
-              <span className={styles.energyLabel}>
-                {energy}/{maxEnergy} ⚡
-              </span>
-              {isRegening && <span className={styles.energyPlus}>+</span>}
-            </div>
-            {/* Row 2 — the wide thin gradient bar. */}
-            <div className={styles.energyBar}>
-              <div
-                className={`${styles.energyFill} ${isRegening ? styles.regening : ''}`}
-                style={{ width: `${fillPct}%` }}
-              />
-            </div>
-            {/* Row 3 — regen hint. */}
-            {regenText && <span className={styles.energyHint}>{regenText}</span>}
-          </div>
-
-          <div className={styles.controls}>
+        {/* ── Center: energy panel — 3 rows ── */}
+        <div className={styles.energy}>
+          <div className={styles.energyTop}>
+            <span className={styles.cap}>{energy}/{maxEnergy}</span>
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="#f6c544" aria-hidden="true">
+              <path d="M7 0 0 8h4l-1 6 8-9H6l1-5Z"/>
+            </svg>
             <button
-              className={styles.settingsBtn}
-              onClick={() => setShowSettings(true)}
-              aria-label="Настройки"
-            >
-              {soundEnabled ? '🔊' : '🔇'}
-            </button>
-
-            {showStarterOffer && (
-              <button
-                className={styles.starterBtn}
-                onClick={() => setScreen('topup')}
-                aria-label={t('starter.hudLabel')}
-                data-testid="hud-starter-icon"
-              >
-                <span className={styles.starterBtnIcon}>⭐</span>
-                <span className={styles.starterBtnDot} />
-              </button>
-            )}
+              className={styles.plus}
+              onClick={() => setScreen('topup')}
+              aria-label="Top up energy"
+              type="button"
+            >+</button>
           </div>
+          <div className={styles.bar}>
+            <i
+              className={`${styles.barFill} ${isRegening ? styles.regening : ''}`}
+              style={{ width: `${fillPct}%` }}
+            />
+          </div>
+          {rateNumber !== '' && (
+            <div className={styles.rate}>
+              <span>+{rateNumber}</span>
+              <svg width="9" height="11" viewBox="0 0 12 14" fill="#f6c544" aria-hidden="true">
+                <path d="M7 0 0 8h4l-1 6 8-9H6l1-5Z"/>
+              </svg>
+              <span>/{t('hud.perMin')}</span>
+            </div>
+          )}
+        </div>
+
+        {/* ── Right: sound + optional starter promo star ── */}
+        <div className={styles.controls}>
+          <button
+            className={styles.sound}
+            onClick={() => setShowSettings(true)}
+            aria-label={t('hud.settings')}
+            type="button"
+          >
+            {soundEnabled ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor" stroke="none"/>
+                <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor" stroke="none"/>
+                <path d="M16 9l6 6M22 9l-6 6"/>
+              </svg>
+            )}
+          </button>
+
+          {showStarterOffer && (
+            <button
+              className={styles.starterBtn}
+              onClick={() => setScreen('topup')}
+              aria-label={t('starter.hudLabel')}
+              data-testid="hud-starter-icon"
+              type="button"
+            >
+              <span className={styles.starterBtnIcon}>⭐</span>
+              <span className={styles.starterBtnDot} />
+            </button>
+          )}
         </div>
       </div>
 

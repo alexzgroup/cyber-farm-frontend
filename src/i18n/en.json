@@ -13,7 +13,9 @@
     "retry": "Retry"
   },
   "hud": {
-    "energyRegen": "+{{rate}} ⚡/min"
+    "energyRegen": "+{{rate}} ⚡/min",
+    "perMin": "min",
+    "settings": "Settings"
   },
   "notif": {
     "promptTitle": "Don't miss the action",
@@ -85,7 +87,7 @@
   "farm": {
     "droneZone": "DRONE ZONE",
     "defenseZone": "DEFENCE ZONE",
-    "equipment": "✨ Equipment",
+    "equipment": "Equipment",
     "lvl": "LVL {{n}}",
     "defLvl": "DEF LV{{n}}",
     "noEnergy": "No energy!",
@@ -286,7 +288,7 @@
     "contribution": "3% of TON sales on P2P market goes to the pool",
     "rules": "The winner earns the most per week: drone income + raid trophies. Draw every Monday.",
     "emptyLeaderboard": "No participants yet",
-    "farmBtn": "🏆 Contest"
+    "farmBtn": "Contest"
   },
   "topup": {
     "title": "Top Up Gold",
