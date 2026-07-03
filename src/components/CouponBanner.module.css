@@ -99,16 +99,16 @@
 
 .left {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 3px;
+  gap: 8px;
   padding: 6px 12px;
   border-radius: 10px;
   background: linear-gradient(135deg, #ec4899, #f97316);
   color: #fff;
-  min-width: 74px;
   box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.7);
   animation: bannerLeftPulse 2.4s ease-in-out infinite;
+  white-space: nowrap;
 }
 @keyframes bannerLeftPulse {
   0%, 100% { box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.7); }
@@ -122,9 +122,13 @@
   letter-spacing: 0.5px;
 }
 .timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10.5px;
-  opacity: 0.9;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.95;
 }
 
 .text {
