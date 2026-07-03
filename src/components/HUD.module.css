@@ -19,7 +19,14 @@
 
 /* ── Left: gold hex + amount ─────────────────────────────────────── */
 
+/* Two-row stack — hex+amount on top, coupon chip below when active. */
 .coin {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.coinRow {
   display: flex;
   align-items: center;
   gap: 9px;
