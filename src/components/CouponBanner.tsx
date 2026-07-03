@@ -23,17 +23,22 @@ export function CouponBanner() {
     :                                   'coupon.sourceAdmin'
 
   return (
-    <div className={styles.banner} data-testid="coupon-banner">
-      <div className={styles.left}>
-        <div className={styles.pct}>−{coupon.discountPct}%</div>
-        <div className={styles.timer}>⏱ {remaining}</div>
+    <>
+      <div className={styles.headline} data-testid="coupon-headline">
+        🎫 {t('coupon.headline', { pct: coupon.discountPct })}
       </div>
-      <div className={styles.text}>
-        <div className={styles.title}>{t(sourceKey)}</div>
-        <div className={styles.body}>
-          <Trans i18nKey="coupon.bannerBody" values={{ pct: coupon.discountPct }} components={{ b: <b /> }} />
+      <div className={styles.banner} data-testid="coupon-banner">
+        <div className={styles.left}>
+          <div className={styles.pct}>−{coupon.discountPct}%</div>
+          <div className={styles.timer}>⏱ {remaining}</div>
+        </div>
+        <div className={styles.text}>
+          <div className={styles.title}>{t(sourceKey)}</div>
+          <div className={styles.body}>
+            <Trans i18nKey="coupon.bannerBody" values={{ pct: coupon.discountPct }} components={{ b: <b /> }} />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

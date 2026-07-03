@@ -325,7 +325,8 @@
     "sourceAdStack": "🎬 For watching 5 ads",
     "sourceWelcomeBack": "🎉 Welcome back!",
     "sourceAdmin": "🎁 Promo code from the team",
-    "bannerBody": "The coupon auto-applies to any Stars pack: the price in stars drops by <b>{{pct}}%</b>. One-shot — it burns after your first purchase."
+    "bannerBody": "The coupon auto-applies to any Stars pack: the price in stars drops by <b>{{pct}}%</b>. One-shot — it burns after your first purchase.",
+    "headline": "You have an active −{{pct}}% coupon"
   },
   "welcomeBack": {
     "title": "🎉 Welcome back!",

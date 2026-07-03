@@ -1,3 +1,19 @@
+/* Bold one-liner above the banner — "У вас действует купон -30%". */
+.headline {
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(236, 72, 153, 0.22), rgba(249, 115, 22, 0.12));
+  border: 1px solid rgba(236, 72, 153, 0.5);
+  color: #fda4c1;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(236, 72, 153, 0.5);
+}
+
 .banner {
   display: flex;
   align-items: center;

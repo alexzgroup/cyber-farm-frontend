@@ -5,6 +5,7 @@ import { STARTER_PACK } from '../constants/starter'
 import { getShopProducts, buyProduct } from '../api'
 import type { ApiProduct } from '../api/types'
 import { fmtGold } from '../utils/format'
+import { CouponBanner } from '../components/CouponBanner'
 import styles from './TopUpScreen.module.css'
 
 declare global {
@@ -116,6 +117,8 @@ export function TopUpScreen() {
           {toast.msg}
         </div>
       )}
+
+      <CouponBanner />
 
       {!hasStarsPurchase && (
         <div className={styles.starterHero} data-testid="starter-hero">
