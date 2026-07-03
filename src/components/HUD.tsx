@@ -4,6 +4,7 @@ import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
 import { SettingsModal } from './SettingsModal'
 import { CouponChip } from './CouponChip'
+import { formatCountdown, useNowSecond } from '../utils/countdown'
 import styles from './HUD.module.css'
 
 export function HUD() {
@@ -20,8 +21,10 @@ export function HUD() {
   const setScreen         = useGameStore((s) => s.setScreen)
 
   const [showSettings, setShowSettings] = useState(false)
-  const starterActive = starterExpiresAt === null || starterExpiresAt > Date.now()
+  const nowMs = useNowSecond()
+  const starterActive = starterExpiresAt === null || starterExpiresAt > nowMs
   const showStarterOffer = isLoaded && !hasStarsPurchase && starterActive
+  const starterCountdown = starterExpiresAt ? formatCountdown(starterExpiresAt, nowMs) : ''
 
   const isRegening = energy < maxEnergy
   const fillPct    = ((energy + energyProgress) / maxEnergy) * 100
@@ -104,8 +107,14 @@ export function HUD() {
               data-testid="hud-starter-icon"
               type="button"
             >
-              <span className={styles.starterBtnIcon}>⭐</span>
-              <span className={styles.starterBtnDot} />
+              <span className={styles.starterBtnIcon}>
+                ⭐
+                {/* Red notification dot sits on the star, not the whole pill. */}
+                <span className={styles.starterBtnDot} />
+              </span>
+              {starterCountdown && (
+                <span className={styles.starterBtnTimer}>{starterCountdown}</span>
+              )}
             </button>
           )}
         </div>

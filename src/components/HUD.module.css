@@ -149,42 +149,63 @@
 }
 .sound:active { transform: scale(0.94); }
 
-/* Starter Pack promo icon in HUD — pulses to attract attention */
+/* Starter Pack promo chip in HUD — pulses to attract attention.
+   Shows the countdown to the 48h FOMO deadline right next to the star. */
 .starterBtn {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 8px;
   background: linear-gradient(135deg, rgba(255,170,40,0.25), rgba(138,92,246,0.25));
   border: 1px solid rgba(255,190,60,0.6);
-  border-radius: 8px;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 999px;
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.15s;
   flex-shrink: 0;
   box-shadow: 0 0 0 rgba(255,190,60,0.7);
   animation: starterHudPulse 1.8s ease-in-out infinite;
+  color: #fde68a;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
 }
-.starterBtn:active { transform: scale(0.9); }
+.starterBtn:active { transform: scale(0.94); }
 
 .starterBtnIcon {
-  font-size: 18px;
+  position: relative;
+  font-size: 15px;
+  line-height: 1;
   filter: drop-shadow(0 1px 4px rgba(255,190,60,0.9));
 }
 
+.starterBtnTimer {
+  letter-spacing: 0.3px;
+  text-shadow: 0 0 6px rgba(255, 200, 80, 0.5);
+  /* Turn amber as the timer runs out: last-line urgency. */
+  animation: starterTimerColor 4s ease-in-out infinite alternate;
+}
+
+/* Red notification dot — hugs the top-right corner of the STAR itself,
+   not the whole pill. Placing it inside the icon span keeps it visually
+   attached to the emoji regardless of how wide the timer text gets. */
 .starterBtnDot {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 8px;
-  height: 8px;
+  top: -2px;
+  right: -3px;
+  width: 6px;
+  height: 6px;
   background: #ff3d55;
   border-radius: 50%;
-  box-shadow: 0 0 6px rgba(255,61,85,0.9);
+  box-shadow: 0 0 6px rgba(255, 61, 85, 0.9);
 }
 
 @keyframes starterHudPulse {
   0%, 100% { box-shadow: 0 0 0 rgba(255,190,60,0.0); }
   50%      { box-shadow: 0 0 16px rgba(255,190,60,0.7); }
+}
+
+@keyframes starterTimerColor {
+  0%   { color: #fde68a; }
+  100% { color: #ffb84d; }
 }
