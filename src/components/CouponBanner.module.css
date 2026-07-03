@@ -3,11 +3,10 @@
    whole promo stack reads as a consistent list. */
 .headline {
   display: flex;
-  width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 0 0 12px;
+  margin: 12px 1em 12px;    /* side gutters match .starterHero (1em) */
   padding: 10px 14px;
   border-radius: 14px;
   background: linear-gradient(90deg, rgba(236, 72, 153, 0.22), rgba(249, 115, 22, 0.12));
