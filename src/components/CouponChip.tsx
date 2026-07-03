@@ -12,22 +12,14 @@ import styles from './CouponChip.module.css'
 // keeps the HUD readable. The coupon still applies to every purchase; it
 // gets a dedicated banner on the Shop screen instead.
 export function CouponChip() {
-  const { t } = useTranslation()
-  const coupon    = useGameStore((s) => s.activeCoupon)
-  const setScreen = useGameStore((s) => s.setScreen)
-  const hasStarsPurchase = useGameStore((s) => s.hasStarsPurchase)
-  const starterExpiresAt = useGameStore((s) => s.starterExpiresAt)
-  const now       = useNowSecond()
+  const { t }        = useTranslation()
+  const coupon       = useGameStore((s) => s.activeCoupon)
+  const openModal    = useGameStore((s) => s.openCouponModal)
+  const now          = useNowSecond()
 
   if (!coupon) return null
   const remaining = formatCountdown(coupon.validUntil, now)
   if (!remaining) return null
-
-  // Star chip always sits in the right column now, so it can't collide
-  // with the coupon chip on the left — no need for the old hide-on-starter
-  // guard. Leave hasStarsPurchase/starterExpiresAt reads in case future
-  // rules need them.
-  void hasStarsPurchase; void starterExpiresAt;
 
   const sourceKey =
     coupon.source === 'ad_stack'      ? 'coupon.sourceAdStack'
@@ -40,7 +32,7 @@ export function CouponChip() {
       className={styles.chip}
       data-testid="coupon-chip"
       title={t(sourceKey)}
-      onClick={() => setScreen('shop')}
+      onClick={openModal}
     >
       <span className={styles.pct}>−{coupon.discountPct}%</span>
       <span className={styles.time}>⏱ {remaining}</span>

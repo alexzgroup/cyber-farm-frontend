@@ -174,6 +174,7 @@ interface GameState {
   // Global ShieldModal state so the defend-prompt can trigger the purchase
   // dialog from anywhere in the app.
   shieldModalOpen:         boolean
+  couponModalOpen:         boolean
   unitUpgrades:   UnitUpgrades
   language:            string   // current UI language (ru/en), synced from API
   allowNotification:   boolean  // synced from API allow_notification
@@ -228,6 +229,8 @@ interface GameState {
   hideDefendPrompt:          () => void
   openShieldModal:           () => void
   closeShieldModal:          () => void
+  openCouponModal:           () => void
+  closeCouponModal:          () => void
   addBalance:                (amount: number) => void
   setTonBalance:             (amount: number) => void
   tonDepositToast:           { amount: number } | null
@@ -305,6 +308,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   incomingRaidNotification: null,
   defendPromptVisible:      false,
   shieldModalOpen:          false,
+  couponModalOpen:          false,
   unitUpgrades:        {},
   language:            'ru',
   allowNotification:   true,
@@ -890,6 +894,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   hideDefendPrompt:          () => set({ defendPromptVisible: false }),
   openShieldModal:           () => set({ shieldModalOpen: true, defendPromptVisible: false }),
   closeShieldModal:          () => set({ shieldModalOpen: false }),
+  openCouponModal:           () => set({ couponModalOpen: true }),
+  closeCouponModal:          () => set({ couponModalOpen: false }),
   setScreen:       (screen) => set({ activeScreen: screen }),
   toggleSound:     () => set((s) => ({ soundEnabled: !s.soundEnabled })),
   selectUnit:      (unitId) => set({ selectedUnitId: unitId }),

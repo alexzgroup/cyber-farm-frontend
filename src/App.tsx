@@ -14,6 +14,7 @@ import { NotificationPermissionToast } from './components/NotificationPermission
 import { DistressOfferModal } from './components/DistressOfferModal'
 import { WelcomeBackModal } from './components/WelcomeBackModal'
 import { AlmostThereModal } from './components/AlmostThereModal'
+import { CouponDetailsModal } from './components/CouponDetailsModal'
 import { CaptchaModal } from './components/CaptchaModal'
 import { Confetti } from './components/Confetti'
 import { FarmScreen } from './screens/FarmScreen'
@@ -161,6 +162,7 @@ export function App() {
       <WelcomeBackModal />
       <NotificationPermissionToast />
       <DistressOfferModal />
+      <CouponDetailsModal />
       <CaptchaModal />
       {showConfetti && <Confetti onDone={hideConfetti} />}
       <DuelChallengeModal />
