@@ -23,8 +23,12 @@ export function CouponChip() {
   const remaining = formatCountdown(coupon.validUntil, now)
   if (!remaining) return null
 
-  const starterActive = !hasStarsPurchase && !!starterExpiresAt && starterExpiresAt > now
-  if (starterActive) return null
+  // Hide only when the starter TIMER chip (pill on the left) is showing —
+  // that lives in the same column as the coupon chip. When the timer is
+  // expired the star degrades to a compact icon on the right, and both
+  // promos can coexist without collision.
+  const starterTimerActive = !hasStarsPurchase && !!starterExpiresAt && starterExpiresAt > now
+  if (starterTimerActive) return null
 
   const sourceKey =
     coupon.source === 'ad_stack'      ? 'coupon.sourceAdStack'

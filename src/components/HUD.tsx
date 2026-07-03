@@ -22,9 +22,13 @@ export function HUD() {
 
   const [showSettings, setShowSettings] = useState(false)
   const nowMs = useNowSecond()
-  const starterActive = starterExpiresAt === null || starterExpiresAt > nowMs
-  const showStarterOffer = isLoaded && !hasStarsPurchase && starterActive
-  const starterCountdown = starterExpiresAt ? formatCountdown(starterExpiresAt, nowMs) : ''
+  // Star icon is a permanent shop-shortcut while the user hasn't bought a
+  // Stars pack — visibility no longer depends on the FOMO timer. The timer
+  // just decorates the chip when it's still ticking; once it expires the
+  // chip degrades to a compact icon-only button.
+  const showStarterOffer = isLoaded && !hasStarsPurchase
+  const timerActive      = !!starterExpiresAt && starterExpiresAt > nowMs
+  const starterCountdown = timerActive ? formatCountdown(starterExpiresAt!, nowMs) : ''
 
   const isRegening = energy < maxEnergy
   const fillPct    = ((energy + energyProgress) / maxEnergy) * 100
