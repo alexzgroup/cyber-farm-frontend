@@ -1,12 +1,15 @@
-/* "У вас действует купон -30% [Подробнее →]" pill — clickable button.
-   Not stretched full-width; keeps side gutters so it reads as a chip. */
+/* "У вас действует купон -30% [Подробнее →]" — clickable full-width action row.
+   Matches the width and border-radius of the pack cards below it, so the
+   whole promo stack reads as a consistent list. */
 .headline {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  margin: 0 auto 12px;
-  padding: 8px 14px;
-  border-radius: 999px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
   background: linear-gradient(90deg, rgba(236, 72, 153, 0.22), rgba(249, 115, 22, 0.12));
   border: 1px solid rgba(236, 72, 153, 0.5);
   color: #fda4c1;
@@ -19,7 +22,7 @@
   transition: transform 0.12s, box-shadow 0.15s;
 }
 .headline:hover  { box-shadow: 0 4px 16px -4px rgba(236, 72, 153, 0.6); }
-.headline:active { transform: scale(0.97); }
+.headline:active { transform: scale(0.99); }
 .headlineText { }
 .headlineMore {
   font-size: 11px;
