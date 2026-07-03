@@ -47,6 +47,11 @@
   flex-shrink: 0;
 }
 
+/* Side gutters for the coupon banner — matches .starterHero margin. */
+.couponWrap {
+  margin: 0.9em 1em 0;
+}
+
 /* First-purchase hero for Starter Pack — fluid, no fixed sizes */
 .starterHero {
   position: relative;

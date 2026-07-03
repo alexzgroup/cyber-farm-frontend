@@ -118,7 +118,9 @@ export function TopUpScreen() {
         </div>
       )}
 
-      <CouponBanner />
+      <div className={styles.couponWrap}>
+        <CouponBanner />
+      </div>
 
       {!hasStarsPurchase && (
         <div className={styles.starterHero} data-testid="starter-hero">
