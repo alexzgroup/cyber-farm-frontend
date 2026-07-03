@@ -5,11 +5,13 @@ import styles from './CouponChip.module.css'
 
 // Small HUD pill showing the active coupon and its countdown. Renders only
 // when the user has a non-expired unused coupon. Server applies the actual
-// discount at invoice creation — this chip is pure UX confirmation.
+// discount at invoice creation — clicking the chip takes the user straight
+// to the shop so they can spend the discount before it expires.
 export function CouponChip() {
   const { t } = useTranslation()
-  const coupon = useGameStore((s) => s.activeCoupon)
-  const now = useNowSecond()
+  const coupon    = useGameStore((s) => s.activeCoupon)
+  const setScreen = useGameStore((s) => s.setScreen)
+  const now       = useNowSecond()
 
   if (!coupon) return null
   const remaining = formatCountdown(coupon.validUntil, now)
@@ -21,9 +23,15 @@ export function CouponChip() {
     :                                   'coupon.sourceAdmin'
 
   return (
-    <div className={styles.chip} data-testid="coupon-chip" title={t(sourceKey)}>
+    <button
+      type="button"
+      className={styles.chip}
+      data-testid="coupon-chip"
+      title={t(sourceKey)}
+      onClick={() => setScreen('shop')}
+    >
       <span className={styles.pct}>−{coupon.discountPct}%</span>
       <span className={styles.time}>⏱ {remaining}</span>
-    </div>
+    </button>
   )
 }

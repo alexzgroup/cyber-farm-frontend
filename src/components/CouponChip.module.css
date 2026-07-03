@@ -11,8 +11,13 @@
   font-weight: 700;
   box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.6);
   animation: couponPulse 2.4s ease-in-out infinite;
-  cursor: default;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: transform 0.12s;
 }
+.chip:hover  { transform: translateY(-1px); }
+.chip:active { transform: scale(0.94); }
 @keyframes couponPulse {
   0%, 100% { box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.6); }
   50%      { box-shadow: 0 6px 18px -4px rgba(236, 72, 153, 0.9); }
