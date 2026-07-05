@@ -66,17 +66,23 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
   const { t } = useTranslation()
 
   const isDrone = item.unit_type === 'drone'
+  // Backend serializes turret level as `turret_level`; `level` is the client-side
+  // alias populated by the store, but market listings hit MarketCard raw.
+  const turretLv = item.turret?.level ?? item.turret?.turret_level ?? 1
   const meta = isDrone
     ? (DRONE_COLORS[item.drone?.drone_type ?? 'scout'] ?? DRONE_COLORS.scout)
-    : (TURRET_COLORS[(item.turret?.level ?? item.turret?.turret_level ?? 1)] ?? TURRET_COLORS[1])
+    : (TURRET_COLORS[turretLv] ?? TURRET_COLORS[1])
 
   const levelLabel = isDrone
     ? `LVL ${item.drone?.level ?? 1}`
-    : `DEF LV${item.turret?.level ?? item.turret?.turret_level ?? 1}`
+    : `DEF LV${turretLv}`
 
+  // Sum of upgrade levels — matches EquipmentScreen's countUpgrades so the
+  // same unit reads the same number on both screens. `.length` would only
+  // count distinct upgrade types (a cargo_bay LV3 would show as "1").
   const upgradeCount = isDrone
-    ? (item.drone?.upgrades?.length ?? 0)
-    : (item.turret?.upgrades?.length ?? 0)
+    ? (item.drone?.upgrades?.reduce((s, u) => s + (u.level ?? 0), 0) ?? 0)
+    : (item.turret?.upgrades?.reduce((s, u) => s + (u.level ?? 0), 0) ?? 0)
 
   const isTon = item.currency === 'ton'
   const isOwnListing = currentUserId != null && item.seller_id === currentUserId
@@ -134,7 +140,7 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
         <UnitCircle color={meta.color} size={46}>
           {isDrone
             ? <DroneIcon  color={meta.color} size={26} />
-            : <TurretIcon color={meta.color} level={(item.turret?.level ?? 1) as 1 | 2 | 3} size={26} />}
+            : <TurretIcon color={meta.color} level={turretLv as 1 | 2 | 3} size={26} />}
         </UnitCircle>
         <div className={styles.cardTitles}>
           <div className={styles.cardName}>{t(meta.key)}</div>
@@ -324,7 +330,7 @@ export function MarketScreen() {
       setBoughtIds((s) => new Set(s).add(item.id))
       const name = item.drone
         ? t(DRONE_COLORS[item.drone.drone_type]?.key ?? 'drone.scout')
-        : t(TURRET_COLORS[item.turret?.level ?? 1]?.key ?? 'turret.light')
+        : t(TURRET_COLORS[item.turret?.level ?? item.turret?.turret_level ?? 1]?.key ?? 'turret.light')
       showToast(`${name} — ${t('market.bought')}`)
       loadGameState()
       useGameStore.getState().triggerConfetti()
@@ -346,8 +352,8 @@ export function MarketScreen() {
       case 'price-asc':  return [...list].sort((a, b) => a.price - b.price)
       case 'price-desc': return [...list].sort((a, b) => b.price - a.price)
       case 'level-desc': return [...list].sort((a, b) => {
-        const la = a.drone?.level ?? a.turret?.level ?? 1
-        const lb = b.drone?.level ?? b.turret?.level ?? 1
+        const la = a.drone?.level ?? a.turret?.level ?? a.turret?.turret_level ?? 1
+        const lb = b.drone?.level ?? b.turret?.level ?? b.turret?.turret_level ?? 1
         return lb - la
       })
       default: return list
