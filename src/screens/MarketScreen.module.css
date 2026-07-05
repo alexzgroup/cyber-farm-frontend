@@ -191,6 +191,23 @@
   border-radius: 4px;
 }
 
+.detailsBtn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-transform: uppercase;
+}
+.detailsBtn:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.detailsBtn:active { transform: scale(0.96); }
+
 .timeLabel {
   font-size: 9px;
   color: #444;

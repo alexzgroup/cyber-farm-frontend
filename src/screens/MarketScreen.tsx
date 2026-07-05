@@ -5,6 +5,7 @@ import { fmtGold } from '../utils/format'
 import { getMarket, reserveListing, buyListing, getWalletRate, buyListingWithStars, getMarketFees } from '../api'
 import type { ApiMarketListing } from '../api/types'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
+import { MarketDetailsModal } from '../components/MarketDetailsModal'
 import styles from './MarketScreen.module.css'
 
 type CurrencyTab = 'gold' | 'ton'
@@ -59,8 +60,8 @@ function PriceTag({ price, currency, starsPerTon }: {
   return <span style={{ color: '#ffd700', fontWeight: 700 }}>⬡ {price.toLocaleString()}</span>
 }
 
-function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, currentUserId, isCancelled }: {
-  item: ApiMarketListing; onBuy: () => void; onBuyStars?: () => void
+function MarketCard({ item, onBuy, onBuyStars, onDetails, canBuy, starsPerTon, sellerRate, currentUserId, isCancelled }: {
+  item: ApiMarketListing; onBuy: () => void; onBuyStars?: () => void; onDetails: () => void
   canBuy: boolean; starsPerTon?: number; sellerRate?: number; currentUserId?: number; isCancelled?: boolean
 }) {
   const { t } = useTranslation()
@@ -151,11 +152,19 @@ function MarketCard({ item, onBuy, onBuyStars, canBuy, starsPerTon, sellerRate, 
         </div>
       </div>
 
-      {upgradeCount > 0 && (
-        <div className={styles.cardMeta}>
+      <div className={styles.cardMeta}>
+        {upgradeCount > 0 && (
           <span className={styles.upgBadge}>⬆ {t('market.upgrades', { count: upgradeCount })}</span>
-        </div>
-      )}
+        )}
+        <button
+          type="button"
+          className={styles.detailsBtn}
+          style={{ borderColor: meta.color + '55', color: meta.color }}
+          onClick={(e) => { e.stopPropagation(); onDetails() }}
+        >
+          {t('market.details')}
+        </button>
+      </div>
 
       <div className={styles.cardSeller}>
         {t('market.seller', { name: item.seller?.username || item.seller?.first_name || 'Игрок' })}
@@ -244,6 +253,7 @@ export function MarketScreen() {
   const [boughtIds,        setBoughtIds]        = useState<Set<number>>(new Set())
   const [insufficientItem,    setInsufficientItem]    = useState<ApiMarketListing | null>(null)
   const [insufficientTonItem, setInsufficientTonItem] = useState<ApiMarketListing | null>(null)
+  const [detailsItem,         setDetailsItem]         = useState<ApiMarketListing | null>(null)
   const [starsPerTon,     setStarsPerTon]     = useState(0)
   const [sellerRate,      setSellerRate]      = useState<number | undefined>(undefined)
 
@@ -464,6 +474,55 @@ export function MarketScreen() {
         </div>
       )}
 
+      {/* Unit details modal */}
+      {detailsItem && (
+        <MarketDetailsModal
+          item={detailsItem}
+          onClose={() => setDetailsItem(null)}
+          footer={(() => {
+            const isTon = detailsItem.currency === 'ton'
+            const isOwn = userID != null && detailsItem.seller_id === userID
+            const canAffordItem = isTon ? tonBalance >= detailsItem.price : balance >= detailsItem.price
+            const priceLabel = isTon
+              ? `◈ ${parseFloat(detailsItem.price.toFixed(4))} TON`
+              : `⬡ ${detailsItem.price.toLocaleString()}`
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ flex: 1, fontSize: 15, fontWeight: 700, color: isTon ? '#5b9cf6' : '#ffd700' }}>
+                  {priceLabel}
+                </div>
+                {isOwn ? (
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{t('market.ownListing')}</div>
+                ) : isTon ? (
+                  <>
+                    <button
+                      style={{ padding: '9px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#0088cc,#006aaa)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: canAffordItem ? 'pointer' : 'not-allowed', opacity: canAffordItem ? 1 : 0.5 }}
+                      disabled={!canAffordItem}
+                      onClick={() => { const it = detailsItem; setDetailsItem(null); handleBuy(it) }}
+                    >
+                      ◈ TON
+                    </button>
+                    <button
+                      style={{ padding: '9px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#5b21b6)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+                      onClick={() => { const it = detailsItem; setDetailsItem(null); handleBuyStars(it) }}
+                    >
+                      ⭐ Stars
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #ffd700', background: 'transparent', color: '#ffd700', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: canAffordItem ? 1 : 0.5 }}
+                    onClick={() => { const it = detailsItem; setDetailsItem(null); handleBuy(it) }}
+                  >
+                    {t('market.buy')}
+                  </button>
+                )}
+              </div>
+            )
+          })()}
+        />
+      )}
+
       {/* Header */}
       <div className={styles.header}>
         <h2 className={styles.title}>{t('market.title')}</h2>
@@ -545,6 +604,7 @@ export function MarketScreen() {
               canBuy={item.currency === 'ton' ? tonBalance >= item.price : balance >= item.price}
               onBuy={() => handleBuy(item)}
               onBuyStars={item.currency === 'ton' ? () => handleBuyStars(item) : undefined}
+              onDetails={() => setDetailsItem(item)}
               starsPerTon={starsPerTon}
               sellerRate={sellerRate}
               currentUserId={userID}

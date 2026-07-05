@@ -223,7 +223,10 @@
     "soldUnitDrone": "🚁 Дрон",
     "soldUnitTurret": "🗼 Башня",
     "boughtStars": "⭐ Куплено за Stars!",
-    "reservedWait": "Лот зарезервирован, подождите {{sec}} сек"
+    "reservedWait": "Лот зарезервирован, подождите {{sec}} сек",
+    "details": "Подробнее",
+    "detailsUpgradesHeader": "Улучшения",
+    "detailsNoUpgrades": "У этого юнита пока нет улучшений"
   },
   "equipment": {
     "title": "Оборудование",

@@ -224,7 +224,10 @@
     "soldUnitDrone": "🚁 Drone",
     "soldUnitTurret": "🗼 Turret",
     "boughtStars": "⭐ Purchased with Stars!",
-    "reservedWait": "Lot is reserved, please wait {{sec}}s"
+    "reservedWait": "Lot is reserved, please wait {{sec}}s",
+    "details": "Details",
+    "detailsUpgradesHeader": "Upgrades",
+    "detailsNoUpgrades": "This unit has no upgrades yet"
   },
   "equipment": {
     "title": "Equipment",
