@@ -290,6 +290,8 @@
     "seconds": "s",
     "contribution": "3% of TON sales on P2P market goes to the pool",
     "rules": "The winner earns the most per week: drone income + raid trophies. Draw every Monday.",
+    "rolloverAbove": "The draw happens once the pool reaches at least ◈ {{min}} TON — threshold already met.",
+    "rolloverBelow": "The pool is still below the ◈ {{min}} TON threshold — if it stays below by Monday, the draw rolls over to next week and the collected TON stays in the pool.",
     "emptyLeaderboard": "No participants yet",
     "farmBtn": "Contest"
   },

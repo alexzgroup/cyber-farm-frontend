@@ -249,6 +249,7 @@ export interface ContestLeaderboardEntry {
 
 export interface ContestCurrent {
   pool_ton:        number
+  min_pool_ton?:   number   // roll-over threshold: pool below this → weekly distribution skipped
   next_contest_at: string   // ISO timestamp — next Monday 00:00 UTC
   participants:    number
   leaderboard:     ContestLeaderboardEntry[]

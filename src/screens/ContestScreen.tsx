@@ -140,6 +140,21 @@ export function ContestScreen() {
             </div>
             <div className={styles.poolHint}>{t('contest.contribution')}</div>
             <div className={styles.poolRules}>{t('contest.rules')}</div>
+
+            {/* Roll-over threshold notice — visible only when threshold is known */}
+            {current?.min_pool_ton != null && current.min_pool_ton > 0 && (() => {
+              const below = (current.pool_ton ?? 0) < current.min_pool_ton
+              return (
+                <div className={`${styles.poolThreshold} ${below ? styles.poolThresholdBelow : ''}`}>
+                  <span className={styles.poolThresholdIcon}>{below ? '⏳' : 'ℹ'}</span>
+                  <span>
+                    {below
+                      ? t('contest.rolloverBelow', { min: current.min_pool_ton.toFixed(2) })
+                      : t('contest.rolloverAbove', { min: current.min_pool_ton.toFixed(2) })}
+                  </span>
+                </div>
+              )
+            })()}
           </div>
 
           {/* Countdown */}

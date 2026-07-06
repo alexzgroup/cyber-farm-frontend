@@ -114,6 +114,33 @@
   line-height: 1.45;
 }
 
+.poolThreshold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(0, 229, 255, 0.06);
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  color: rgba(140, 220, 240, 0.85);
+  font-size: 10px;
+  line-height: 1.35;
+  max-width: 100%;
+}
+
+.poolThresholdBelow {
+  background: rgba(255, 170, 40, 0.08);
+  border-color: rgba(255, 170, 40, 0.28);
+  color: rgba(255, 200, 100, 0.9);
+}
+
+.poolThresholdIcon {
+  font-size: 12px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
 /* ── Countdown ── */
 .countdownCard {
   background: rgba(255,255,255,0.04);
