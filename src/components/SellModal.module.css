@@ -90,6 +90,34 @@
 .hint { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 6px; }
 .hintMuted { font-size: 10px; color: rgba(255,215,0,0.45); margin-top: 4px; }
 
+.suggestionRow {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(0, 229, 255, 0.06);
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  border-radius: 8px;
+}
+.suggestionLabel { font-size: 10px; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; text-transform: uppercase; }
+.suggestionValue { font-size: 13px; font-weight: 700; margin-right: auto; }
+.suggestionApply {
+  background: transparent;
+  border: 1px solid rgba(0, 229, 255, 0.45);
+  color: #00e5ff;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.suggestionApply:hover { background: rgba(0, 229, 255, 0.12); }
+.suggestionApply:active { transform: scale(0.96); }
+
 .error {
   background: rgba(239,68,68,0.12);
   border: 1px solid rgba(239,68,68,0.3);

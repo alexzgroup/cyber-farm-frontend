@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { createListing, getMarketFees, getRaidStats } from '../api'
 import { fmtGold } from '../utils/format'
+import { suggestPrice, sumUpgradeLevels, type PricingInput } from '../utils/marketPricing'
 import styles from './SellModal.module.css'
 
 const MIN_RAIDS_FOR_P2P = 10
@@ -18,6 +19,9 @@ interface Props {
 export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props) {
   const { t }    = useTranslation()
   const balance  = useGameStore((s) => s.balance)
+  const drones   = useGameStore((s) => s.drones)
+  const turrets  = useGameStore((s) => s.turrets)
+  const unitUpgrades  = useGameStore((s) => s.unitUpgrades)
   const loadGameState = useGameStore((s) => s.loadGameState)
 
   const [price,    setPrice]    = useState('')
@@ -28,6 +32,22 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
     min_gold: 100, max_gold: 100000, min_ton: 0.1, max_ton: 1000,
   })
   const [raidsTotal, setRaidsTotal] = useState<number | null>(null)
+
+  // Suggested price — fair midpoint based on unit level + upgrade level sum.
+  // Recomputed only when the unit changes (props are stable per modal open).
+  const suggestion = useMemo(() => {
+    const idStr = String(unitId)
+    const upgSum = sumUpgradeLevels(unitUpgrades[idStr])
+    if (unitType === 'drone') {
+      const d = drones.find(x => x.id === idStr)
+      if (!d) return null
+      const input: PricingInput = { type: 'drone', level: d.level, droneType: d.droneType, upgradeLevelSum: upgSum }
+      return suggestPrice(input)
+    }
+    const tt = turrets.find(x => x.id === idStr)
+    if (!tt) return null
+    return suggestPrice({ type: 'turret', level: tt.level, upgradeLevelSum: upgSum })
+  }, [unitId, unitType, drones, turrets, unitUpgrades])
 
   useEffect(() => {
     getMarketFees()
@@ -128,6 +148,23 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
               currency: currency === 'ton' ? 'TON' : '⬡',
             })}
           </div>
+          {suggestion && (
+            <div className={styles.suggestionRow}>
+              <span className={styles.suggestionLabel}>{t('sell.suggested')}</span>
+              <span className={styles.suggestionValue} style={{ color: currency === 'ton' ? '#5b9cf6' : '#fbbf24' }}>
+                {currency === 'ton'
+                  ? `◈ ${suggestion.ton.toFixed(4)} TON`
+                  : `⬡ ${fmtGold(suggestion.gold)}`}
+              </span>
+              <button
+                type="button"
+                className={styles.suggestionApply}
+                onClick={() => setPrice(String(currency === 'ton' ? suggestion.ton : suggestion.gold))}
+              >
+                {t('sell.suggestedApply')}
+              </button>
+            </div>
+          )}
           {currency === 'gold' && priceNum > 0 && (
             <div className={styles.hint}>
               {t('sell.yourBalance')}: ⬡ {fmtGold(balance)}

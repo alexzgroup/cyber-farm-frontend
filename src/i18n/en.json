@@ -263,6 +263,8 @@
     "tonCommissionHint": "You will receive ◈ {{net}} TON ({{pct}} fee)",
     "tonPoolHint": "3% goes to the weekly prize pool 🏆",
     "range": "Allowed price: from {{min}} to {{max}} {{currency}}",
+    "suggested": "Fair price",
+    "suggestedApply": "Use",
     "errorMin": "Price must be at least {{min}} {{currency}}",
     "errorMax": "Price must be at most {{max}} {{currency}}",
     "lockedTitle": "P2P market unlocks at level 2",
