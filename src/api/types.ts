@@ -93,9 +93,10 @@ export interface ApiUser {
 }
 
 export interface ApiWalletInvoice {
-  wallet:   string   // game TON wallet address
-  comment:  string   // unique deposit comment (cf-{userId}-{ts})
-  deeplink: string   // ton://transfer/{wallet}?text={comment}
+  wallet:          string   // game TON wallet address
+  comment:         string   // unique deposit comment (cf-{userId}-{ts})
+  deeplink:        string   // ton://transfer/{wallet}?text={comment}
+  min_deposit_ton: number   // amounts below are stored for history but not credited
 }
 
 export interface ApiUserPublic {

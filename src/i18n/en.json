@@ -450,6 +450,7 @@
     "walletAddress": "Wallet address",
     "depositComment": "Transfer comment",
     "depositCommentWarning": "Without the comment your TON won't be credited!",
+    "depositMinWarn": "Minimum deposit is {{min}} TON. Anything below is stored for history but NOT credited to your balance — needed to cover wallet activation fees.",
     "openInWallet": "Open in wallet",
     "earnMore": "Earn more",
     "earnMoreSub": "Complete tasks — earn valuable rewards!"

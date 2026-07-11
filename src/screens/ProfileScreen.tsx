@@ -905,9 +905,22 @@ export function ProfileScreen() {
 
             {invoice && (
               <>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 16, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 12, lineHeight: 1.5 }}>
                   {t('profile.tonDepositDesc')}
                 </p>
+
+                {/* Minimum deposit warning */}
+                <div style={{
+                  background: 'rgba(250,204,21,0.08)',
+                  border: '1px solid rgba(250,204,21,0.35)',
+                  borderRadius: 10, padding: '9px 12px',
+                  fontSize: 12, color: '#fde68a',
+                  display: 'flex', alignItems: 'flex-start', gap: 8,
+                  marginBottom: 16, lineHeight: 1.4,
+                }}>
+                  <span style={{ fontSize: 15, lineHeight: 1 }}>⚠️</span>
+                  <span>{t('profile.depositMinWarn', { min: invoice.min_deposit_ton })}</span>
+                </div>
 
                 {/* QR code */}
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
