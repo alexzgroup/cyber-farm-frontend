@@ -905,7 +905,7 @@ export function ProfileScreen() {
 
             {invoice && (
               <>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 12, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 10, lineHeight: 1.4 }}>
                   {t('profile.tonDepositDesc')}
                 </p>
 
@@ -913,23 +913,23 @@ export function ProfileScreen() {
                 <div style={{
                   background: 'rgba(250,204,21,0.08)',
                   border: '1px solid rgba(250,204,21,0.35)',
-                  borderRadius: 10, padding: '9px 12px',
-                  fontSize: 12, color: '#fde68a',
-                  display: 'flex', alignItems: 'flex-start', gap: 8,
-                  marginBottom: 16, lineHeight: 1.4,
+                  borderRadius: 10, padding: '8px 10px',
+                  fontSize: 11, color: '#fde68a',
+                  display: 'flex', alignItems: 'flex-start', gap: 7,
+                  marginBottom: 14, lineHeight: 1.35,
                 }}>
-                  <span style={{ fontSize: 15, lineHeight: 1 }}>⚠️</span>
+                  <span style={{ fontSize: 13, lineHeight: 1 }}>⚠️</span>
                   <span>{t('profile.depositMinWarn', { min: invoice.min_deposit_ton })}</span>
                 </div>
 
-                {/* QR code */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                {/* QR code — contains full deeplink (wallet + comment prefilled) */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(invoice.deeplink)}&size=180x180&bgcolor=0f172a&color=e2e8f0&margin=10`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(invoice.deeplink)}&size=90x90&bgcolor=0f172a&color=e2e8f0&margin=8`}
                     alt="QR TON"
-                    width={180}
-                    height={180}
-                    style={{ borderRadius: 12, border: '1px solid rgba(54,179,246,0.2)' }}
+                    width={90}
+                    height={90}
+                    style={{ borderRadius: 8, border: '1px solid rgba(54,179,246,0.2)' }}
                   />
                 </div>
 

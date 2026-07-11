@@ -446,11 +446,11 @@
     "walletTgOnlyBody": "Connect only Telegram's built-in @wallet. Third-party wallets (Tonkeeper, Tonhub, etc.) are not supported — the payout will fail.",
     "topupTon": "Top up",
     "tonDeposit": "TON Top-up",
-    "tonDepositDesc": "Send TON to the address below with the required comment. Funds are credited automatically.",
+    "tonDepositDesc": "Send TON with the comment — credit is automatic.",
     "walletAddress": "Wallet address",
     "depositComment": "Transfer comment",
     "depositCommentWarning": "Without the comment your TON won't be credited!",
-    "depositMinWarn": "Minimum deposit is {{min}} TON. Anything below is stored for history but NOT credited to your balance — needed to cover wallet activation fees.",
+    "depositMinWarn": "Minimum credited deposit — {{min}} TON. Below that won't hit your balance.",
     "openInWallet": "Open in wallet",
     "earnMore": "Earn more",
     "earnMoreSub": "Complete tasks — earn valuable rewards!"
