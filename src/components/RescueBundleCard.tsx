@@ -16,6 +16,7 @@ const STARS_BASE = 30
 export function RescueBundleCard() {
   const { t } = useTranslation()
   const hasStarsPurchase = useGameStore((s) => s.hasStarsPurchase)
+  const hasRescuePack    = useGameStore((s) => s.hasRescuePack)
   const activeCoupon     = useGameStore((s) => s.activeCoupon)
   const loadGameState    = useGameStore((s) => s.loadGameState)
   const [dismissed, setDismissed] = useState(false)
@@ -23,8 +24,9 @@ export function RescueBundleCard() {
 
   useEffect(() => { setDismissed(false) }, [hasStarsPurchase])
 
-  // Hidden until the user has any prior Stars purchase.
-  if (!hasStarsPurchase || dismissed) return null
+  // Hidden until the user has any prior Stars purchase, or once the Rescue
+  // Bundle has been purchased (server-authoritative one-shot flag).
+  if (!hasStarsPurchase || hasRescuePack || dismissed) return null
 
   const stars = activeCoupon
     ? Math.max(1, Math.ceil(STARS_BASE * (100 - activeCoupon.discountPct) / 100))

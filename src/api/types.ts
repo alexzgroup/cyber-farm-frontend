@@ -85,6 +85,7 @@ export interface ApiUser {
   allow_notification:  boolean  // false = user opted out of re-engagement reminders
   allow_duel:          boolean  // false = hidden from duel list, cannot receive challenges
   has_stars_purchase:  boolean  // true after the user's first completed Stars pack purchase
+  has_rescue_pack:     boolean  // true after a completed Rescue Bundle purchase (one-shot)
   distress_offer?:     { active: boolean; reason: 'raids' | 'low_balance'; stars_price: number; gold_amount: number } | null
   starter_expires_at?: string | null   // ISO — Starter Pack FOMO deadline (48h from first auth)
   active_coupon?:      { discount_pct: number; source: 'ad_stack' | 'welcome_back' | 'admin'; valid_until: string } | null

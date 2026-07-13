@@ -220,6 +220,12 @@ function dispatch(msg: WsMessage) {
       // Shield was extended after a successful Stars purchase — refresh user
       // (v_ip_until lives on the user object) and bump shieldVersion so the
       // ShieldModal re-reads /shield/price.
+      // For Rescue Bundle: flip hasRescuePack optimistically so the upsell
+      // card disappears the instant the event arrives, without waiting for
+      // /user/me to complete.
+      if (msg.payload?.reason === 'rescue_bundle') {
+        useGameStore.setState({ hasRescuePack: true })
+      }
       store.loadGameState()
       store.bumpShieldVersion()
       break

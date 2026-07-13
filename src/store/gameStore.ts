@@ -180,6 +180,7 @@ interface GameState {
   allowNotification:   boolean  // synced from API allow_notification
   allowDuel:           boolean  // synced from API allow_duel
   hasStarsPurchase:    boolean  // true after first completed Stars pack purchase
+  hasRescuePack:       boolean  // true after Rescue Bundle purchase (one-shot, hides upsell card)
   // Triggered -50% Starter offer surfaced by the DistressOfferModal. `null`
   // when server says the modal shouldn't show (purchased, dismissed <24h, or
   // triggers not active). Populated verbatim from /api/user/me.
@@ -314,6 +315,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   allowNotification:   true,
   allowDuel:           true,
   hasStarsPurchase:    false,
+  hasRescuePack:       false,
   distressOffer:       null,
   starterExpiresAt:    null,
   activeCoupon:        null,
@@ -436,6 +438,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         allowNotification:   user.allow_notification ?? true,
         allowDuel:           user.allow_duel ?? true,
         hasStarsPurchase:    user.has_stars_purchase ?? false,
+        hasRescuePack:       user.has_rescue_pack ?? false,
         distressOffer:       user.distress_offer && user.distress_offer.active
           ? { active: true, reason: user.distress_offer.reason, starsPrice: user.distress_offer.stars_price, goldAmount: user.distress_offer.gold_amount }
           : null,
