@@ -71,7 +71,9 @@ export interface ApiUser {
   balance:            number
   balance_updated_at: string   // ISO timestamp of last balance commit
   income_rate_total:  number   // coins/second from all non-broken drones
-  ton_balance:        number   // real TON crypto balance
+  ton_balance:        number   // real TON crypto balance (total, incl. locked P2P)
+  available_ton_balance: number  // withdrawable slice — total minus P2P sales still in the lock window
+  ton_lock_days:      number   // days a P2P TON sale is held before it becomes withdrawable
   ton_wallet:         string   // connected TON wallet address (for withdrawals)
   energy:               number
   max_energy:           number

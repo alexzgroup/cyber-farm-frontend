@@ -135,7 +135,9 @@ interface GameState {
   balanceUpdatedAt: number   // ms timestamp of last server commit
   incomeRateTotal:  number   // coins/second — sum of active drone income_rate
   pendingTaps:      number   // taps accumulated since last server flush — sent as a count
-  tonBalance:       number   // real TON crypto balance
+  tonBalance:       number   // real TON crypto balance (total, incl. locked P2P sales)
+  availableTonBalance: number  // withdrawable slice — total minus P2P TON sales still in the lock window
+  tonLockDays:      number   // days a P2P TON sale is held before it becomes withdrawable
   tonWallet:        string   // connected TON wallet address (empty = not connected)
   // Telegram user profile
   userId:           number   // PostgreSQL users.id (needed to determine duel winner)
@@ -286,6 +288,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   incomeRateTotal:  0,
   pendingTaps:      0,
   tonBalance:       0,
+  availableTonBalance: 0,
+  tonLockDays:      21,
   tonWallet:        '',
   userId:           0,
   telegramId:       0,
@@ -419,6 +423,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         balanceUpdatedAt,
         incomeRateTotal:  user.income_rate_total ?? 0,
         tonBalance:       Number(user.ton_balance ?? 0),
+        availableTonBalance: Number(user.available_ton_balance ?? user.ton_balance ?? 0),
+        tonLockDays:      Number(user.ton_lock_days ?? 21),
         tonWallet:        user.ton_wallet ?? '',
         userId:           user.id,
         telegramId:       user.telegram_id,
@@ -850,6 +856,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           balanceBase:      Number(user.balance),
           balanceUpdatedAt: Date.now(),
           tonBalance:       Number(user.ton_balance ?? 0),
+          availableTonBalance: Number(user.available_ton_balance ?? user.ton_balance ?? 0),
         })
       })
       .catch(() => {

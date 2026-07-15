@@ -10,6 +10,7 @@ const ITEMS = [
   { id: 'essence',   icon: '🎯' },
   { id: 'earning',   icon: '💰' },
   { id: 'raids',     icon: '⚔️' },
+  { id: 'p2p',       icon: '🛒' },
   { id: 'referrals', icon: '🤝' },
   { id: 'staking',   icon: '🔒' },
   { id: 'battlepass', icon: '🎟' },

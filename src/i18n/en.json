@@ -74,6 +74,10 @@
         "title": "Raid rules",
         "body": "• You need working drones — broken ones can't fight.\n• Attack power = sum of (level × 10) across drones, combat type gets +20%. Defense = sum of defense_power of the target's turrets. Victory if attack > defense after a random ±20% shift.\n• Victory: take 10% of the target's balance. Defeat: you lose up to 5% of the attempted loot to the defender, and your weakest drone breaks.\n• Cooldown: you can only attack the same target once per hour.\n• Anti-farm: no attacks on accounts younger than 2 hours or with balance below 150 gold.\n• Too many raids in a row → captcha. Suspicious automated rhythm → temporary ban."
       },
+      "p2p": {
+        "title": "P2P market & TON withdrawals",
+        "body": "The P2P market lets players trade drones and turrets for gold, TON or Stars.\n\n📌 <b>P2P revenue counts toward withdrawal after 21 days.</b> When you sell a unit for TON or Stars, the amount immediately shows up in your total balance but only becomes available for withdrawal 21 days after the sale. Until then those funds are 'on hold' — you can freely spend them in-game (buy units, place duel bets, upgrade), but you can't withdraw them to your TON wallet.\n\n💎 <b>What's withdrawable right away:</b> TON earned via referrals, duels, the weekly contest and direct deposits — no delay.\n\nThe 'Withdraw TON' screen shows three lines: total balance, available for withdrawal, and (if any) on hold. Withdrawals are capped at the 'available' figure."
+      },
       "referrals": {
         "title": "Referral program",
         "body": "Three-level rewards — invite friends through your link (see the Friends section in Profile).\n• Rewards are paid ONLY for Telegram Stars purchases (Starter, Rescue, Shield, etc). TON wallet top-ups don't count.\n• % from Stars purchase (in TON equivalent): L1 — 1%, L2 — 0.5%, L3 — 0.05%.\n• Gold bonus for progress once your friend hits 20 raids + 1000 gold (or upgrades their first drone to L2): L1 — 1000 gold, L2 — 500, L3 — 250.\nNo caps, no expiration. Full payout history lives in the Friends section."
@@ -356,7 +360,9 @@
   },
   "withdrawal": {
     "title": "Withdraw TON",
-    "available": "Available",
+    "totalBalance": "Total balance",
+    "available": "Available for withdrawal",
+    "locked": "On hold (counts after {{days}}d)",
     "wallet": "Wallet",
     "noWalletWarn": "⚠️ No wallet connected. Connect it in your profile.",
     "amountLabel": "Amount to withdraw (TON)",

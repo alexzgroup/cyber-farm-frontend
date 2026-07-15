@@ -26,8 +26,11 @@ export function WithdrawalScreen() {
   const { t } = useTranslation()
   const setScreen   = useGameStore((s) => s.setScreen)
   const tonBalance  = useGameStore((s) => s.tonBalance)
+  const availableTon = useGameStore((s) => s.availableTonBalance)
+  const tonLockDays = useGameStore((s) => s.tonLockDays)
   const tonWallet   = useGameStore((s) => s.tonWallet)
   const loadGameState = useGameStore((s) => s.loadGameState)
+  const lockedTon   = Math.max(0, tonBalance - availableTon)
 
   const [data,       setData]       = useState<ApiWithdrawalsResponse | null>(null)
   const [loading,    setLoading]    = useState(true)
@@ -68,7 +71,7 @@ export function WithdrawalScreen() {
   const minAmount  = data?.min_amount ?? 1
   const fee        = numAmount * commission
   const payout     = numAmount - fee
-  const canSubmit  = numAmount >= minAmount && numAmount <= tonBalance && !submitting && !hasPending && !!tonWallet
+  const canSubmit  = numAmount >= minAmount && numAmount <= availableTon && !submitting && !hasPending && !!tonWallet
 
   const handleSubmit = async () => {
     if (!canSubmit) return
@@ -106,9 +109,19 @@ export function WithdrawalScreen() {
 
       {/* Balance row */}
       <div className={styles.balanceRow}>
-        <span className={styles.balLabel}>{t('withdrawal.available')}</span>
+        <span className={styles.balLabel}>{t('withdrawal.totalBalance')}</span>
         <span className={styles.balVal}>◈ {fmtTon(tonBalance)} TON</span>
       </div>
+      <div className={styles.balanceRow}>
+        <span className={styles.balLabel}>{t('withdrawal.available')}</span>
+        <span className={styles.balVal} style={{ color: '#22c55e' }}>◈ {fmtTon(availableTon)} TON</span>
+      </div>
+      {lockedTon > 0.0001 && (
+        <div className={styles.balanceRow}>
+          <span className={styles.balLabel}>{t('withdrawal.locked', { days: tonLockDays })}</span>
+          <span className={styles.balVal} style={{ color: '#f59e0b' }}>◈ {fmtTon(lockedTon)} TON</span>
+        </div>
+      )}
 
       {/* Wallet */}
       {tonWallet ? (
