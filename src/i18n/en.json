@@ -76,7 +76,7 @@
       },
       "p2p": {
         "title": "P2P market & TON withdrawals",
-        "body": "The P2P market lets players trade drones and turrets for gold, TON or Stars.\n\n📌 <b>P2P revenue counts toward withdrawal after 21 days.</b> When you sell a unit for TON or Stars, the amount immediately shows up in your total balance but only becomes available for withdrawal 21 days after the sale. Until then those funds are 'on hold' — you can freely spend them in-game (buy units, place duel bets, upgrade), but you can't withdraw them to your TON wallet.\n\n💎 <b>What's withdrawable right away:</b> TON earned via referrals, duels, the weekly contest and direct deposits — no delay.\n\nThe 'Withdraw TON' screen shows three lines: total balance, available for withdrawal, and (if any) on hold. Withdrawals are capped at the 'available' figure."
+        "body": "The P2P market lets players trade drones and turrets for gold, TON or Stars.\n\n📌 P2P revenue counts toward withdrawal after 21 days.\nWhen you sell a unit for TON or Stars, the amount immediately shows up in your total balance but only becomes available for withdrawal 21 days after the sale. Until then those funds are 'on hold' — you can freely spend them in-game (buy units, place duel bets, upgrade), but you can't withdraw them to your TON wallet.\n\n💎 What's withdrawable right away: TON earned via referrals, duels, the weekly contest and direct deposits — no delay.\n\nThe 'Withdraw TON' screen shows three lines: total balance, available for withdrawal, and (if any) on hold. Withdrawals are capped at the 'available' figure."
       },
       "referrals": {
         "title": "Referral program",
