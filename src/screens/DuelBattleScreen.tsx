@@ -162,7 +162,7 @@ export function DuelBattleScreen() {
             <div style={s.resultSub}>
               {result === 'win'
                 ? t('duel.wonPrize', {
-                    prize: (cfg.betAmount * 2 * 0.95).toFixed(cfg.currency === 'ton' ? 2 : 0),
+                    prize: (cfg.betAmount * 2 * 0.75).toFixed(cfg.currency === 'ton' ? 2 : 0),
                     currency: cfg.currency === 'ton' ? 'TON' : '⬡',
                   })
                 : t('duel.lostBet', {

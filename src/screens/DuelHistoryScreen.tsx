@@ -25,7 +25,7 @@ function DuelRow({ duel, myId }: { duel: ApiDuel; myId: number }) {
   const opponentName = opponent?.first_name || opponent?.username || 'Игрок'
 
   const prize   = iWon
-    ? `+${duel.currency === 'ton' ? '◈' : '⬡'} ${(duel.bet_amount * 2 * 0.95).toFixed(duel.currency === 'ton' ? 2 : 0)}`
+    ? `+${duel.currency === 'ton' ? '◈' : '⬡'} ${(duel.bet_amount * 2 * 0.75).toFixed(duel.currency === 'ton' ? 2 : 0)}`
     : `−${duel.currency === 'ton' ? '◈' : '⬡'} ${duel.bet_amount}`
 
   const currLabel = duel.currency === 'ton' ? 'TON' : t('duel.gold')

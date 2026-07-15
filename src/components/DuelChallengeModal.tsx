@@ -36,7 +36,7 @@ export function DuelChallengeModal() {
   const diff     = oppPower - myPower
 
   const sym      = challenge.currency === 'ton' ? '◈' : '⬡'
-  const prize    = (challenge.bet_amount * 2 * 0.95).toFixed(challenge.currency === 'ton' ? 2 : 0)
+  const prize    = (challenge.bet_amount * 2 * 0.75).toFixed(challenge.currency === 'ton' ? 2 : 0)
 
   const timerPct = (timeLeft / ACCEPT_TIMEOUT_SEC) * 100
 

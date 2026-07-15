@@ -47,7 +47,7 @@ export function DuelWaitingModal() {
   // Bet + prize info from pendingConfig
   const bet      = pendingConfig?.betAmount ?? 0
   const currency = pendingConfig?.currency ?? 'gold'
-  const prize    = +(bet * 2 * 0.95).toFixed(currency === 'ton' ? 2 : 0)
+  const prize    = +(bet * 2 * 0.75).toFixed(currency === 'ton' ? 2 : 0)
   const sym      = currency === 'ton' ? '◈' : '⬡'
   const betLabel   = `${sym} ${bet}`
   const prizeLabel = `${sym} ${prize}`
