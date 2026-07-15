@@ -23,9 +23,8 @@ export interface ReferralList {
 }
 
 export interface ReferralRatesLevel {
-  purchase_first_ton:  number
   purchase_pct_of_ton: number
-  progress_ton:        number
+  progress_gold:       number
 }
 
 export interface DailyBonusRewardRow {

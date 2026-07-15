@@ -240,8 +240,8 @@ interface GameState {
   setPendingRaidTarget:      (id: number | null) => void
   marketSoldToast:           { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null
   setMarketSoldToast:        (n: { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null) => void
-  referralEarnedToast:       { amount: number; name: string; total: number; level: number; trigger: string } | null
-  setReferralEarnedToast:    (n: { amount: number; name: string; total: number; level: number; trigger: string } | null) => void
+  referralEarnedToast:       { amount: number; name: string; total: number; level: number; trigger: string; currency: 'ton' | 'gold' } | null
+  setReferralEarnedToast:    (n: { amount: number; name: string; total: number; level: number; trigger: string; currency: 'ton' | 'gold' } | null) => void
   shieldVersion:             number  // bumped on shield.updated WS event so subscribers re-fetch
   bumpShieldVersion:         () => void
   cancelledListings:         Set<number>

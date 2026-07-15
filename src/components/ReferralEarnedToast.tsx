@@ -16,16 +16,24 @@ export function ReferralEarnedToast() {
 
   if (!toast) return null
 
+  const isGold = toast.currency === 'gold'
+  const amountText = isGold ? Math.round(toast.amount).toString() : toast.amount.toFixed(4)
+  const totalText  = toast.total.toFixed(4)
+
   return (
     <div className={styles.toast} onClick={() => setToast(null)} style={{ cursor: 'pointer' }}>
-      <span style={{ fontSize: 20 }}>🎁</span>
+      <span style={{ fontSize: 20 }}>{isGold ? '🪙' : '🎁'}</span>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <span style={{ fontWeight: 700, fontSize: 14, color: '#22d3ee' }}>
-          {t('referrals.earnedToast', { amount: toast.amount.toFixed(4), name: toast.name })}
+          {isGold
+            ? t('referrals.earnedToastGold', { amount: amountText, name: toast.name })
+            : t('referrals.earnedToast',     { amount: amountText, name: toast.name })}
         </span>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>
-          {t('referrals.earnedToastTotal', { total: toast.total.toFixed(4) })}
-        </span>
+        {!isGold && (
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>
+            {t('referrals.earnedToastTotal', { total: totalText })}
+          </span>
+        )}
       </div>
     </div>
   )

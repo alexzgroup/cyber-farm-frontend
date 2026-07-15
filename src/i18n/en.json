@@ -76,7 +76,7 @@
       },
       "referrals": {
         "title": "Referral program",
-        "body": "Three-level rewards — invite friends through your link (see the Friends section in Profile).\n• First purchase: L1 — 0.01 TON, L2 — 0.005, L3 — 0.001.\n• % of every following purchase: L1 — 2%, L2 — 1%, L3 — 0.2%.\n• Progress bonus when your friend completes 20 raids and reaches 1000 gold: L1 — 0.005 TON, L2 — 0.0025, L3 — 0.0005.\nNo caps, no expiration. Full payout history lives in the Friends section."
+        "body": "Three-level rewards — invite friends through your link (see the Friends section in Profile).\n• Rewards are paid ONLY for Telegram Stars purchases (Starter, Rescue, Shield, etc). TON wallet top-ups don't count.\n• % from Stars purchase (in TON equivalent): L1 — 1%, L2 — 0.5%, L3 — 0.05%.\n• Gold bonus for progress once your friend hits 20 raids + 1000 gold (or upgrades their first drone to L2): L1 — 1000 gold, L2 — 500, L3 — 250.\nNo caps, no expiration. Full payout history lives in the Friends section."
       },
       "rules": {
         "title": "Rules and bans",
@@ -488,18 +488,18 @@
     "howToEarn": "How to earn TON",
     "inviteEarnTon": "Invite a friend — get TON",
     "earnedToast": "+{{amount}} TON from {{name}}",
+    "earnedToastGold": "+{{amount}} gold from {{name}} for progress",
     "earnedToastTotal": "Total ◈ {{total}}",
     "modal": {
       "title": "Bonus conditions",
-      "intro": "Invite friends and earn TON for their activity. Bonuses go up to 3 levels deep.",
-      "purchaseFirstTitle": "💎 First purchase by your referral",
-      "purchaseFirstDesc": "One-time bonus when your referral makes their first Stars or TON payment.",
-      "purchasePctTitle": "📊 % from every following purchase",
-      "purchasePctDesc": "You earn a percentage (in TON equivalent) from every subsequent purchase of your referral.",
-      "progressTitle": "⚔️ Referral progress",
-      "progressDesc": "One-time bonus when your referral completes {{raids}} raids and accumulates {{balance}} gold.",
+      "intro": "Invite friends and earn TON from their Stars purchases. Bonuses go up to 3 levels deep. TON wallet top-ups don't count.",
+      "purchasePctTitle": "💎 % from your referral's Stars purchases",
+      "purchasePctDesc": "You earn a percentage (in TON) from every Telegram Stars purchase your referral makes (Starter, Rescue, Shield, etc).",
+      "progressTitle": "🪙 Gold for referral progress",
+      "progressDesc": "One-time gold bonus when your referral completes {{raids}} raids and accumulates {{balance}} gold (or upgrades their first drone to L2).",
       "levelLabel": "Level {{n}}",
       "tonUnit": "TON",
+      "goldUnit": "gold",
       "pctUnit": "%",
       "close": "Got it"
     }

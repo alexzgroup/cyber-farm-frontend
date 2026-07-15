@@ -46,14 +46,6 @@ export function HowToEarnTonModal({ open, onClose }: Props) {
           ) : (
             <>
               <Section
-                title={t('referrals.modal.purchaseFirstTitle')}
-                desc={t('referrals.modal.purchaseFirstDesc')}
-                rows={levels.map(({ n, l }) => ({
-                  label: t('referrals.modal.levelLabel', { n }),
-                  value: l ? `${l.purchase_first_ton} ${t('referrals.modal.tonUnit')}` : '—',
-                }))}
-              />
-              <Section
                 title={t('referrals.modal.purchasePctTitle')}
                 desc={t('referrals.modal.purchasePctDesc')}
                 rows={levels.map(({ n, l }) => ({
@@ -69,7 +61,7 @@ export function HowToEarnTonModal({ open, onClose }: Props) {
                 })}
                 rows={levels.map(({ n, l }) => ({
                   label: t('referrals.modal.levelLabel', { n }),
-                  value: l ? `${l.progress_ton} ${t('referrals.modal.tonUnit')}` : '—',
+                  value: l ? `${l.progress_gold} ${t('referrals.modal.goldUnit')}` : '—',
                 }))}
               />
             </>

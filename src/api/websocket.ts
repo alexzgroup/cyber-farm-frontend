@@ -232,15 +232,20 @@ function dispatch(msg: WsMessage) {
     }
 
     case 'referral.earned': {
-      // Referrer earned TON from their downline activity
+      // Referrer earned from downline activity — either TON (purchase_pct)
+      // or gold (progress). Payload carries `currency` so we render the
+      // right unit; `amount` is unified (falls back to legacy amount_ton).
+      const currency = msg.payload.currency === 'gold' ? 'gold' : 'ton'
+      const amount   = Number(msg.payload.amount ?? msg.payload.amount_ton ?? 0)
       store.setReferralEarnedToast({
-        amount:  Number(msg.payload.amount_ton ?? 0),
+        amount,
         name:    String(msg.payload.referred_name ?? '?'),
         total:   Number(msg.payload.total_earned ?? 0),
         level:   Number(msg.payload.level ?? 1),
         trigger: String(msg.payload.trigger ?? ''),
+        currency,
       })
-      // Refresh TON balance so the +amount is visible immediately
+      // Refresh balance/ton_balance so the +amount is visible immediately
       store.loadGameState()
       break
     }
