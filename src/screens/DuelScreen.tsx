@@ -18,6 +18,8 @@ export function DuelScreen() {
   const onlineStatus     = useGameStore((s) => s.onlineStatus)
   const updateDuelSettings = useGameStore((s) => s.updateDuelSettings)
   const startDuel        = useGameStore((s) => s.startDuelWithPlayer)
+  const pendingDuelTargetId  = useGameStore((s) => s.pendingDuelTargetId)
+  const setPendingDuelTarget = useGameStore((s) => s.setPendingDuelTarget)
 
   const PLAYERS_PER_PAGE = 8
 
@@ -52,6 +54,20 @@ export function DuelScreen() {
     }, 300)
     return () => clearTimeout(handle)
   }, [search])
+
+  // Auto-select the player from Favorites (or any other screen that set
+  // pendingDuelTargetId before navigating). Runs once per pending id after
+  // the players list is loaded; if the target sits beyond the first page,
+  // jump to its page too.
+  useEffect(() => {
+    if (!pendingDuelTargetId || loading || players.length === 0) return
+    const idx = players.findIndex((p) => p.id === pendingDuelTargetId)
+    if (idx >= 0) {
+      setSelectedId(pendingDuelTargetId)
+      setPage(Math.floor(idx / PLAYERS_PER_PAGE))
+    }
+    setPendingDuelTarget(null)
+  }, [pendingDuelTargetId, loading, players, setPendingDuelTarget])
 
   const pagedPlayers   = players.slice(page * PLAYERS_PER_PAGE, (page + 1) * PLAYERS_PER_PAGE)
   const totalPages     = Math.ceil(players.length / PLAYERS_PER_PAGE)

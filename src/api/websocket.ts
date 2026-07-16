@@ -264,5 +264,53 @@ function dispatch(msg: WsMessage) {
       }
       break
     }
+
+    case 'duel.await_verdict': {
+      // First participant submitted, waiting for the opponent to confirm.
+      // Surface a lightweight "waiting" state; balances stay untouched
+      // because escrow is not yet released.
+      store.setDuelVerdictToast({
+        kind:    'awaiting',
+        duelId:  Number(msg.payload.duel_id ?? 0),
+      })
+      break
+    }
+
+    case 'duel.disputed': {
+      // Two participants disagreed on the winner — escrow refunded to both.
+      // Refresh balance so the returned bet is visible immediately and drop
+      // the local "победа/поражение" overlay in favor of a neutral notice.
+      const canvas4 = document.querySelector('canvas[data-duel]')
+      if (canvas4) {
+        canvas4.dispatchEvent(new CustomEvent('duel-force-end', { detail: { won: false, disputed: true } }))
+      }
+      store.setDuelVerdictToast({
+        kind:     'disputed',
+        duelId:   Number(msg.payload.duel_id ?? 0),
+        refund:   Number(msg.payload.refund ?? 0),
+        currency: String(msg.payload.currency ?? 'gold'),
+      })
+      store.loadGameState()
+      break
+    }
+
+    case 'duel.abandoned': {
+      // Cleanup worker force-expired the duel and refunded escrow.
+      // Same UX as dispute — show a "refunded" toast, refresh balance,
+      // drop the battle scene if still open.
+      const canvas5 = document.querySelector('canvas[data-duel]')
+      if (canvas5) {
+        canvas5.dispatchEvent(new CustomEvent('duel-force-end', { detail: { won: false, disputed: true } }))
+      }
+      store.setDuelVerdictToast({
+        kind:     'abandoned',
+        duelId:   Number(msg.payload.duel_id ?? 0),
+        refund:   Number(msg.payload.refund ?? 0),
+        currency: String(msg.payload.currency ?? 'gold'),
+        reason:   String(msg.payload.reason ?? 'timeout'),
+      })
+      store.loadGameState()
+      break
+    }
   }
 }

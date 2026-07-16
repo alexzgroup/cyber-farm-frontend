@@ -11,6 +11,7 @@ function FavoriteRow({ item, onRemove }: { item: ApiFavorite; onRemove: (id: num
   const { t }       = useTranslation()
   const setScreen   = useGameStore((s) => s.setScreen)
   const setPendingRaidTarget = useGameStore((s) => s.setPendingRaidTarget)
+  const setPendingDuelTarget = useGameStore((s) => s.setPendingDuelTarget)
   const drones      = useGameStore((s) => s.drones)
 
   const remaining = useCountdown(item.cooldown_until)
@@ -28,6 +29,7 @@ function FavoriteRow({ item, onRemove }: { item: ApiFavorite; onRemove: (id: num
   }
 
   const handleDuel = () => {
+    setPendingDuelTarget(item.id)
     setScreen('duel')
   }
 

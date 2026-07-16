@@ -9,6 +9,7 @@ import { ShieldModal } from './components/ShieldModal'
 import { TonDepositToast } from './components/TonDepositToast'
 import { MarketSoldToast } from './components/MarketSoldToast'
 import { ReferralEarnedToast } from './components/ReferralEarnedToast'
+import { DuelVerdictToast } from './components/DuelVerdictToast'
 import { DailyBonusModal } from './components/DailyBonusModal'
 import { NotificationPermissionToast } from './components/NotificationPermissionToast'
 import { DistressOfferModal } from './components/DistressOfferModal'
@@ -158,6 +159,7 @@ export function App() {
       <TonDepositToast />
       <MarketSoldToast />
       <ReferralEarnedToast />
+      <DuelVerdictToast />
       <DailyBonusModal />
       <WelcomeBackModal />
       <NotificationPermissionToast />

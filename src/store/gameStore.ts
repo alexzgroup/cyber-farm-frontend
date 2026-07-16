@@ -257,6 +257,10 @@ interface GameState {
   setTonDepositToast:        (n: { amount: number } | null) => void
   pendingRaidTargetId:       number | null
   setPendingRaidTarget:      (id: number | null) => void
+  pendingDuelTargetId:       number | null   // preselect a player on the duel screen (e.g. from Favorites)
+  setPendingDuelTarget:      (id: number | null) => void
+  duelVerdictToast:          { kind: 'awaiting' | 'disputed' | 'abandoned'; duelId: number; refund?: number; currency?: string; reason?: string } | null
+  setDuelVerdictToast:       (t: { kind: 'awaiting' | 'disputed' | 'abandoned'; duelId: number; refund?: number; currency?: string; reason?: string } | null) => void
   marketSoldToast:           { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null
   setMarketSoldToast:        (n: { price: number; payout?: number; currency: string; unitType: string; buyerName?: string } | null) => void
   referralEarnedToast:       { amount: number; name: string; total: number; level: number; trigger: string; currency: 'ton' | 'gold' } | null
@@ -768,6 +772,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   setTonDepositToast: (n) => set({ tonDepositToast: n }),
   pendingRaidTargetId: null,
   setPendingRaidTarget: (id) => set({ pendingRaidTargetId: id }),
+  pendingDuelTargetId: null,
+  setPendingDuelTarget: (id) => set({ pendingDuelTargetId: id }),
+  duelVerdictToast: null,
+  setDuelVerdictToast: (t) => set({ duelVerdictToast: t }),
   marketSoldToast:    null,
   setMarketSoldToast: (n) => set({ marketSoldToast: n }),
   referralEarnedToast:    null,
