@@ -157,14 +157,27 @@ function dispatch(msg: WsMessage) {
       break
 
     case 'duel.abandoned': {
-      // Duel timed out (player closed browser) — clear all duel state
+      // Duel force-expired by the cleanup worker: either the opponent never
+      // showed up (ghost duel) or one side submitted their verdict and the
+      // other never confirmed (verdict_timeout). Escrow was refunded to both
+      // players — surface a toast with the refund amount and refresh balances
+      // so the returned bet is visible immediately.
       const canvas = document.querySelector('canvas[data-duel]')
       if (canvas) {
-        // If battle scene is active, force-end it as a draw/loss
-        canvas.dispatchEvent(new CustomEvent('duel-force-end', { detail: { won: false } }))
+        // If battle scene is active, force-end it as a draw so the "победа/
+        // поражение" overlay doesn't stick.
+        canvas.dispatchEvent(new CustomEvent('duel-force-end', { detail: { won: false, disputed: true } }))
       }
       store.clearDuel()
       store.setPendingDuelChallenge(null)
+      store.setDuelVerdictToast({
+        kind:     'abandoned',
+        duelId:   Number(msg.payload.duel_id ?? 0),
+        refund:   Number(msg.payload.refund ?? 0),
+        currency: String(msg.payload.currency ?? 'gold'),
+        reason:   String(msg.payload.reason ?? 'timeout'),
+      })
+      store.loadGameState()
       useGameStore.setState({
         activeScreen: 'duel',
         duelDeclined: false,
@@ -294,23 +307,7 @@ function dispatch(msg: WsMessage) {
       break
     }
 
-    case 'duel.abandoned': {
-      // Cleanup worker force-expired the duel and refunded escrow.
-      // Same UX as dispute — show a "refunded" toast, refresh balance,
-      // drop the battle scene if still open.
-      const canvas5 = document.querySelector('canvas[data-duel]')
-      if (canvas5) {
-        canvas5.dispatchEvent(new CustomEvent('duel-force-end', { detail: { won: false, disputed: true } }))
-      }
-      store.setDuelVerdictToast({
-        kind:     'abandoned',
-        duelId:   Number(msg.payload.duel_id ?? 0),
-        refund:   Number(msg.payload.refund ?? 0),
-        currency: String(msg.payload.currency ?? 'gold'),
-        reason:   String(msg.payload.reason ?? 'timeout'),
-      })
-      store.loadGameState()
-      break
-    }
+    // NOTE: 'duel.abandoned' is handled higher up (near 'duel.cancelled') so
+    // the pre-existing clearDuel + activeScreen reset stays in one place.
   }
 }

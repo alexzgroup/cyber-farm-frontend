@@ -18,7 +18,7 @@ export function DuelScreen() {
   const onlineStatus     = useGameStore((s) => s.onlineStatus)
   const updateDuelSettings = useGameStore((s) => s.updateDuelSettings)
   const startDuel        = useGameStore((s) => s.startDuelWithPlayer)
-  const pendingDuelTargetId  = useGameStore((s) => s.pendingDuelTargetId)
+  const pendingDuelTarget    = useGameStore((s) => s.pendingDuelTarget)
   const setPendingDuelTarget = useGameStore((s) => s.setPendingDuelTarget)
 
   const PLAYERS_PER_PAGE = 8
@@ -55,19 +55,30 @@ export function DuelScreen() {
     return () => clearTimeout(handle)
   }, [search])
 
-  // Auto-select the player from Favorites (or any other screen that set
-  // pendingDuelTargetId before navigating). Runs once per pending id after
-  // the players list is loaded; if the target sits beyond the first page,
-  // jump to its page too.
+  // Auto-select the player coming from Favorites (or any other screen that
+  // set pendingDuelTarget before navigating).
+  //
+  // Two-step flow:
+  //   1. Drop the search token into the search input immediately — this
+  //      triggers the players fetch above with the exact filter, so the
+  //      target lands in the top of the list even if they're not global-top.
+  //   2. Once the list is loaded, find the row by id and select it, then
+  //      clear pending. If for some reason the search returned nothing,
+  //      the user still sees an unfiltered DuelScreen after clearing search.
   useEffect(() => {
-    if (!pendingDuelTargetId || loading || players.length === 0) return
-    const idx = players.findIndex((p) => p.id === pendingDuelTargetId)
+    if (!pendingDuelTarget) return
+    setSearch(pendingDuelTarget.search)
+  }, [pendingDuelTarget])
+
+  useEffect(() => {
+    if (!pendingDuelTarget || loading) return
+    const idx = players.findIndex((p) => p.id === pendingDuelTarget.id)
     if (idx >= 0) {
-      setSelectedId(pendingDuelTargetId)
+      setSelectedId(pendingDuelTarget.id)
       setPage(Math.floor(idx / PLAYERS_PER_PAGE))
     }
     setPendingDuelTarget(null)
-  }, [pendingDuelTargetId, loading, players, setPendingDuelTarget])
+  }, [pendingDuelTarget, loading, players, setPendingDuelTarget])
 
   const pagedPlayers   = players.slice(page * PLAYERS_PER_PAGE, (page + 1) * PLAYERS_PER_PAGE)
   const totalPages     = Math.ceil(players.length / PLAYERS_PER_PAGE)

@@ -29,7 +29,10 @@ function FavoriteRow({ item, onRemove }: { item: ApiFavorite; onRemove: (id: num
   }
 
   const handleDuel = () => {
-    setPendingDuelTarget(item.id)
+    // Search token: username first (unique + short), fallback to first_name,
+    // last fallback to numeric id (backend also matches telegram_id / id).
+    const search = item.username || item.first_name || String(item.id)
+    setPendingDuelTarget({ id: item.id, search })
     setScreen('duel')
   }
 
