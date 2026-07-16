@@ -2,6 +2,23 @@ import { create } from 'zustand'
 import * as api from '../api'
 import type { ApiDrone, ApiTurret, ApiUser, ApiDuelPlayer, ApiDuelChallenge, DuelCurrency } from '../api/types'
 
+// In-flight guard for purchase / upgrade / repair actions. Fast clicks on a
+// buy button would otherwise fire the same POST several times in a row and
+// hit the server-side rate limiter (10 burst, 1/sec refill) — visible in
+// prod logs as 429-spam alerts from real players. Store the in-progress
+// keys at module scope so parallel calls from any component / screen
+// short-circuit on the second arrival.
+const inflight = new Set<string>()
+async function withInflight<T>(key: string, fn: () => Promise<T>, onReject: T): Promise<T> {
+  if (inflight.has(key)) return onReject
+  inflight.add(key)
+  try {
+    return await fn()
+  } finally {
+    inflight.delete(key)
+  }
+}
+
 // ── Constants (used by UI screens and Phaser scenes) ──────────────────────
 
 export interface DroneUpgrade {
@@ -506,65 +523,69 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // ── Drones ─────────────────────────────────────────────────────────────
 
-  buyDrone: async (droneType: import('../api/types').DroneType = 'scout') => {
-    try {
-      const drone = await api.buyDrone(droneType)
-      set((s) => ({ drones: [...s.drones, mapDrone(drone)] }))
-      const user = await api.getMe()
-      set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
-      return true
-    } catch (err) {
-      const need = (err as { data?: { need?: number } }).data?.need
-      if (typeof need === 'number' && need > 0) set({ almostThereNeed: need })
-      return false
-    }
-  },
+  buyDrone: async (droneType: import('../api/types').DroneType = 'scout') =>
+    withInflight('buy-drone', async () => {
+      try {
+        const drone = await api.buyDrone(droneType)
+        set((s) => ({ drones: [...s.drones, mapDrone(drone)] }))
+        const user = await api.getMe()
+        set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
+        return true
+      } catch (err) {
+        const need = (err as { data?: { need?: number } }).data?.need
+        if (typeof need === 'number' && need > 0) set({ almostThereNeed: need })
+        return false
+      }
+    }, false),
 
-  upgradeDrone: async (droneId) => {
-    try {
-      const upgraded = await api.upgradeDrone(Number(droneId))
-      set((s) => ({
-        drones: s.drones.map((d) => d.id === droneId ? mapDrone(upgraded) : d),
-      }))
-      const user = await api.getMe()
-      set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
-      return true
-    } catch (err) {
-      const need = (err as { data?: { need?: number } }).data?.need
-      if (typeof need === 'number' && need > 0) set({ almostThereNeed: need })
-      return false
-    }
-  },
+  upgradeDrone: async (droneId) =>
+    withInflight(`upgrade-drone:${droneId}`, async () => {
+      try {
+        const upgraded = await api.upgradeDrone(Number(droneId))
+        set((s) => ({
+          drones: s.drones.map((d) => d.id === droneId ? mapDrone(upgraded) : d),
+        }))
+        const user = await api.getMe()
+        set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
+        return true
+      } catch (err) {
+        const need = (err as { data?: { need?: number } }).data?.need
+        if (typeof need === 'number' && need > 0) set({ almostThereNeed: need })
+        return false
+      }
+    }, false),
 
-  repairDrone: async (droneId) => {
-    try {
-      await api.repairDrone(Number(droneId))
-      set((s) => ({
-        drones: s.drones.map((d) => d.id === droneId ? { ...d, isBroken: false } : d),
-      }))
-      const user = await api.getMe()
-      set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
-      return true
-    } catch {
-      return false
-    }
-  },
+  repairDrone: async (droneId) =>
+    withInflight(`repair-drone:${droneId}`, async () => {
+      try {
+        await api.repairDrone(Number(droneId))
+        set((s) => ({
+          drones: s.drones.map((d) => d.id === droneId ? { ...d, isBroken: false } : d),
+        }))
+        const user = await api.getMe()
+        set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
+        return true
+      } catch {
+        return false
+      }
+    }, false),
 
   // ── Turrets ────────────────────────────────────────────────────────────
 
-  buyTurret: async (level: 1 | 2 | 3 = 1) => {
-    try {
-      const turret = await api.buyTurret(level)
-      set((s) => ({ turrets: [...s.turrets, mapTurret(turret)] }))
-      const user = await api.getMe()
-      set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
-      return true
-    } catch (err) {
-      const need = (err as { data?: { need?: number } }).data?.need
-      if (typeof need === 'number' && need > 0) set({ almostThereNeed: need })
-      return false
-    }
-  },
+  buyTurret: async (level: 1 | 2 | 3 = 1) =>
+    withInflight('buy-turret', async () => {
+      try {
+        const turret = await api.buyTurret(level)
+        set((s) => ({ turrets: [...s.turrets, mapTurret(turret)] }))
+        const user = await api.getMe()
+        set({ balance: Number(user.balance), balanceBase: Number(user.balance), balanceUpdatedAt: Date.now() })
+        return true
+      } catch (err) {
+        const need = (err as { data?: { need?: number } }).data?.need
+        if (typeof need === 'number' && need > 0) set({ almostThereNeed: need })
+        return false
+      }
+    }, false),
 
   // ── Raids ──────────────────────────────────────────────────────────────
 
@@ -693,34 +714,38 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // ── Unit upgrades — persisted via API ─────────────────────────────────
 
-  purchaseUnitUpgrade: async (unitId, upgradeId, cost) => {
-    const { drones, turrets, unitUpgrades } = get()
-    const current = unitUpgrades[unitId]?.[upgradeId] ?? 0
-    if (current >= 10) return false
+  purchaseUnitUpgrade: async (unitId, upgradeId, cost) =>
+    withInflight(`equip:${unitId}:${upgradeId}`, async () => {
+      const { drones, turrets, unitUpgrades } = get()
+      // Note: `turrets` is destructured for the isDrone lookup below.
+      void turrets
+      void cost
+      const current = unitUpgrades[unitId]?.[upgradeId] ?? 0
+      if (current >= 10) return false
 
-    const isDrone = drones.some((d) => d.id === unitId)
-    try {
-      if (isDrone) {
-        await api.buyDroneEquipment(Number(unitId), upgradeId)
-      } else {
-        await api.buyTurretEquipment(Number(unitId), upgradeId)
+      const isDrone = drones.some((d) => d.id === unitId)
+      try {
+        if (isDrone) {
+          await api.buyDroneEquipment(Number(unitId), upgradeId)
+        } else {
+          await api.buyTurretEquipment(Number(unitId), upgradeId)
+        }
+        // Refresh balance from server (committed in transaction)
+        const user = await api.getMe()
+        set((s) => ({
+          balance:          Number(user.balance),
+          balanceBase:      Number(user.balance),
+          balanceUpdatedAt: Date.now(),
+          unitUpgrades: {
+            ...s.unitUpgrades,
+            [unitId]: { ...(s.unitUpgrades[unitId] ?? {}), [upgradeId]: current + 1 },
+          },
+        }))
+        return true
+      } catch {
+        return false
       }
-      // Refresh balance from server (committed in transaction)
-      const user = await api.getMe()
-      set((s) => ({
-        balance:          Number(user.balance),
-        balanceBase:      Number(user.balance),
-        balanceUpdatedAt: Date.now(),
-        unitUpgrades: {
-          ...s.unitUpgrades,
-          [unitId]: { ...(s.unitUpgrades[unitId] ?? {}), [upgradeId]: current + 1 },
-        },
-      }))
-      return true
-    } catch {
-      return false
-    }
-  },
+    }, false),
 
   // ── Position sync ──────────────────────────────────────────────────────
 
