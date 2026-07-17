@@ -68,11 +68,11 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
   const handleSubmit = async () => {
     if (priceNum <= 0) { setError(t('sell.errorPrice')); return }
     if (priceNum < minPrice) {
-      setError(t('sell.errorMin', { min: minPrice, currency: currency === 'ton' ? 'TON' : '⬡' }))
+      setError(t('sell.errorMin', { min: minPrice, currency: currency === 'ton' ? 'GRAM' : '⬡' }))
       return
     }
     if (priceNum > maxPrice) {
-      setError(t('sell.errorMax', { max: maxPrice, currency: currency === 'ton' ? 'TON' : '⬡' }))
+      setError(t('sell.errorMax', { max: maxPrice, currency: currency === 'ton' ? 'GRAM' : '⬡' }))
       return
     }
     setBusy(true)
@@ -122,7 +122,7 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
               style={currency === c ? { borderColor: c === 'ton' ? '#5b9cf6' : '#fbbf24', color: c === 'ton' ? '#5b9cf6' : '#fbbf24' } : {}}
               onClick={() => setCurrency(c)}
             >
-              {c === 'gold' ? `⬡ ${t('sell.gold')}` : `◈ TON`}
+              {c === 'gold' ? `⬡ ${t('sell.gold')}` : `◈ GRAM`}
             </button>
           ))}
         </div>
@@ -145,7 +145,7 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
             {t('sell.range', {
               min: minPrice,
               max: maxPrice,
-              currency: currency === 'ton' ? 'TON' : '⬡',
+              currency: currency === 'ton' ? 'GRAM' : '⬡',
             })}
           </div>
           {suggestion && (
@@ -153,7 +153,7 @@ export function SellModal({ unitId, unitType, unitName, onClose, onSold }: Props
               <span className={styles.suggestionLabel}>{t('sell.suggested')}</span>
               <span className={styles.suggestionValue} style={{ color: currency === 'ton' ? '#5b9cf6' : '#fbbf24' }}>
                 {currency === 'ton'
-                  ? `◈ ${suggestion.ton.toFixed(4)} TON`
+                  ? `◈ ${suggestion.ton.toFixed(4)} GRAM`
                   : `⬡ ${fmtGold(suggestion.gold)}`}
               </span>
               <button

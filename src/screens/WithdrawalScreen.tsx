@@ -110,16 +110,16 @@ export function WithdrawalScreen() {
       {/* Balance row */}
       <div className={styles.balanceRow}>
         <span className={styles.balLabel}>{t('withdrawal.totalBalance')}</span>
-        <span className={styles.balVal}>◈ {fmtTon(tonBalance)} TON</span>
+        <span className={styles.balVal}>◈ {fmtTon(tonBalance)} GRAM</span>
       </div>
       <div className={styles.balanceRow}>
         <span className={styles.balLabel}>{t('withdrawal.available')}</span>
-        <span className={styles.balVal} style={{ color: '#22c55e' }}>◈ {fmtTon(availableTon)} TON</span>
+        <span className={styles.balVal} style={{ color: '#22c55e' }}>◈ {fmtTon(availableTon)} GRAM</span>
       </div>
       {lockedTon > 0.0001 && (
         <div className={styles.balanceRow}>
           <span className={styles.balLabel}>{t('withdrawal.locked', { days: tonLockDays })}</span>
-          <span className={styles.balVal} style={{ color: '#f59e0b' }}>◈ {fmtTon(lockedTon)} TON</span>
+          <span className={styles.balVal} style={{ color: '#f59e0b' }}>◈ {fmtTon(lockedTon)} GRAM</span>
         </div>
       )}
 
@@ -153,15 +153,15 @@ export function WithdrawalScreen() {
             <div className={styles.breakdown}>
               <div className={styles.brow}>
                 <span>{t('withdrawal.requested')}</span>
-                <span>◈ {fmtTon(numAmount)} TON</span>
+                <span>◈ {fmtTon(numAmount)} GRAM</span>
               </div>
               <div className={styles.brow}>
                 <span>{t('withdrawal.commission', { pct: Math.round(commission * 100) })}</span>
-                <span style={{ color: '#f59e0b' }}>− ◈ {fmtTon(fee)} TON</span>
+                <span style={{ color: '#f59e0b' }}>− ◈ {fmtTon(fee)} GRAM</span>
               </div>
               <div className={`${styles.brow} ${styles.browTotal}`}>
                 <span>{t('withdrawal.youGet')}</span>
-                <span style={{ color: '#22c55e' }}>◈ {fmtTon(payout)} TON</span>
+                <span style={{ color: '#22c55e' }}>◈ {fmtTon(payout)} GRAM</span>
               </div>
             </div>
           )}
@@ -192,7 +192,7 @@ export function WithdrawalScreen() {
             </div>
             <div className={styles.condRow}>
               <span>{t('withdrawal.minAmountRow')}</span>
-              <span>◈ {minAmount} TON</span>
+              <span>◈ {minAmount} GRAM</span>
             </div>
           </div>
         </div>
@@ -221,7 +221,7 @@ function WithdrawalRow({ w, statusLabel }: { w: ApiWithdrawal; statusLabel: (s: 
   return (
     <div className={styles.row}>
       <div className={styles.rowLeft}>
-        <div className={styles.rowAmount}>◈ {fmtTon(w.amount)} TON</div>
+        <div className={styles.rowAmount}>◈ {fmtTon(w.amount)} GRAM</div>
         <div className={styles.rowSub}>
           {t('withdrawal.rowPayout', { payout: fmtTon(w.payout) })} · {fmtDate(w.created_at)}
         </div>

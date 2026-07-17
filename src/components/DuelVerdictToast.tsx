@@ -29,7 +29,7 @@ export function DuelVerdictToast() {
 
   if (!toast) return null
 
-  const currencyLabel = toast.currency === 'ton' ? 'TON' : '⬡'
+  const currencyLabel = toast.currency === 'ton' ? 'GRAM' : '⬡'
   const refundText = toast.refund != null
     ? `${toast.currency === 'ton' ? toast.refund.toFixed(4) : Math.round(toast.refund)} ${currencyLabel}`
     : ''

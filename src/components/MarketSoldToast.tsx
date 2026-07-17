@@ -19,7 +19,7 @@ export function MarketSoldToast() {
   const isTon     = toast.currency === 'ton'
   const payout    = toast.payout ?? toast.price
   const payoutStr = isTon
-    ? `◈ ${payout.toFixed(4)} TON`
+    ? `◈ ${payout.toFixed(4)} GRAM`
     : `⬡ ${Math.floor(payout).toLocaleString()}`
 
   const unitLabel = toast.unitType === 'drone'

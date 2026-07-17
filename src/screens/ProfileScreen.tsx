@@ -167,6 +167,7 @@ export function ProfileScreen() {
   const [invoice,    setInvoice]    = useState<ApiWalletInvoice | null>(null)
   const [invoiceErr, setInvoiceErr] = useState(false)
   const [copied,     setCopied]     = useState<'wallet' | 'comment' | null>(null)
+  const [limitOpen,  setLimitOpen]  = useState(false)
 
   const walletConnected = !!tcWallet?.account?.address
   const walletAddress   = tcWallet?.account?.address ?? tonWallet
@@ -349,7 +350,7 @@ export function ProfileScreen() {
                 </svg>
               </div>
               <div className={styles.balAmt}>{tonBalance.toFixed(4)}</div>
-              <div className={styles.balSub}>TON <span style={{ fontSize: 10, color: '#36b3f6', marginLeft: 4 }}>+ {t('profile.topupTon')}</span></div>
+              <div className={styles.balSub}>GRAM <span style={{ fontSize: 10, color: '#36b3f6', marginLeft: 4 }}>+ {t('profile.topupTon')}</span></div>
             </button>
           </div>
 
@@ -681,7 +682,7 @@ export function ProfileScreen() {
                   <div style={{ fontSize: 15, fontWeight: 800, color: '#38bdf8' }}>
                     ◈ {(refStats.ton_earned ?? 0).toFixed(4)}
                   </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>TON заработано</div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>GRAM заработано</div>
                 </div>
                 {/* Level counts */}
                 {refStats.by_level.map(({ level, count }) => (
@@ -878,8 +879,18 @@ export function ProfileScreen() {
           <div
             style={{
               width: '100%', maxWidth: 420,
+              // Cap height so the modal itself owns the overflow and the body
+              // (padding + border, so include them via boxSizing) scrolls when
+              // the expandable limit-warning pushes the QR + wallet fields
+              // past the viewport bottom. Keeps QR/comment reachable on small
+              // screens without collapsing the deposit UI.
+              maxHeight: 'calc(100vh - 100px)',
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+              WebkitOverflowScrolling: 'touch',
               background: '#0f172a', border: '1px solid rgba(54,179,246,0.25)',
               borderRadius: '20px 20px 0 0', padding: '24px 20px 28px',
+              boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -909,24 +920,53 @@ export function ProfileScreen() {
                   {t('profile.tonDepositDesc')}
                 </p>
 
-                {/* Minimum deposit warning */}
+                {/* Minimum deposit warning — collapsible on small screens */}
                 <div style={{
-                  background: 'rgba(250,204,21,0.08)',
-                  border: '1px solid rgba(250,204,21,0.35)',
+                  background: 'rgba(249,115,22,0.10)',
+                  border: '1px solid rgba(249,115,22,0.40)',
                   borderRadius: 10, padding: '8px 10px',
-                  fontSize: 11, color: '#fde68a',
-                  display: 'flex', alignItems: 'flex-start', gap: 7,
-                  marginBottom: 14, lineHeight: 1.35,
+                  fontSize: 12, color: '#fdba74',
+                  marginBottom: 14, lineHeight: 1.4,
                 }}>
-                  <span style={{ fontSize: 13, lineHeight: 1 }}>⚠️</span>
-                  <span>{t('profile.depositMinWarn', { min: invoice.min_deposit_ton })}</span>
+                  <button
+                    type="button"
+                    onClick={() => setLimitOpen((v) => !v)}
+                    style={{
+                      background: 'none', border: 'none', color: 'inherit',
+                      padding: 0, margin: 0, cursor: 'pointer', width: '100%',
+                      display: 'flex', alignItems: 'center', gap: 7,
+                      fontFamily: 'inherit', fontSize: 'inherit', textAlign: 'left',
+                    }}
+                    aria-expanded={limitOpen}
+                  >
+                    <span style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>⚠️</span>
+                    <span style={{ flex: 1, fontWeight: 600 }}>
+                      {t('profile.depositLimitTitle')}
+                    </span>
+                    <span style={{
+                      fontSize: 11, opacity: 0.85, flexShrink: 0,
+                      textDecoration: 'underline', textUnderlineOffset: 2,
+                    }}>
+                      {limitOpen ? t('profile.depositLimitHide') : t('profile.depositLimitMore')}
+                    </span>
+                  </button>
+                  {limitOpen && (
+                    <div style={{
+                      marginTop: 8, paddingTop: 8,
+                      borderTop: '1px solid rgba(249,115,22,0.25)',
+                      fontSize: 11, color: '#fed7aa', lineHeight: 1.5,
+                      whiteSpace: 'pre-line',
+                    }}>
+                      {t('profile.depositLimitDetails', { min: invoice.min_deposit_ton })}
+                    </div>
+                  )}
                 </div>
 
                 {/* QR code — contains full deeplink (wallet + comment prefilled) */}
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(invoice.deeplink)}&size=90x90&bgcolor=0f172a&color=e2e8f0&margin=8`}
-                    alt="QR TON"
+                    alt="QR GRAM"
                     width={90}
                     height={90}
                     style={{ borderRadius: 8, border: '1px solid rgba(54,179,246,0.2)' }}

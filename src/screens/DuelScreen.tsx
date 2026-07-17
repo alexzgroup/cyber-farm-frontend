@@ -167,7 +167,7 @@ export function DuelScreen() {
           />
           <div style={s.currencyToggle}>
             <button style={{ ...s.currBtn, ...(currency === 'gold' ? s.currActive    : {}) }} onClick={() => setCurrency('gold')}>⬡ Золото</button>
-            <button style={{ ...s.currBtn, ...(currency === 'ton'  ? s.currActiveTon : {}) }} onClick={() => setCurrency('ton') }>◈ TON</button>
+            <button style={{ ...s.currBtn, ...(currency === 'ton'  ? s.currActiveTon : {}) }} onClick={() => setCurrency('ton') }>◈ GRAM</button>
           </div>
         </div>
         {error && <div style={s.error}>{error}</div>}
@@ -225,7 +225,7 @@ export function DuelScreen() {
                     </div>
                     <div style={s.playerBalance}>⬡ {Math.floor(p.balance).toLocaleString()}</div>
                     {p.ton_balance > 0 && (
-                      <div style={s.playerTon}>◈ {p.ton_balance.toFixed(2)} TON</div>
+                      <div style={s.playerTon}>◈ {p.ton_balance.toFixed(2)} GRAM</div>
                     )}
                   </div>
                 </div>

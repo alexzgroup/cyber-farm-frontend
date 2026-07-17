@@ -19,7 +19,7 @@
   },
   "notif": {
     "promptTitle": "Don't miss the action",
-    "promptSubtitle": "Turn on alerts — be first to know about raids, rewards and TON drops.",
+    "promptSubtitle": "Turn on alerts — be first to know about raids, rewards and GRAM drops.",
     "enableBtn": "Turn on"
   },
   "distress": {
@@ -48,11 +48,11 @@
     "items": {
       "airdrop": {
         "title": "🪂 AirDrop CFM Token — Q4 2026",
-        "body": "We're launching our own CFM token on the TON network. Snapshot — Dec 31, 2026. TGE and listing on TON DEX — Q1-Q2 2027.\n\nEvery action you take in the game already accumulates allocation points:\n• Stars pack purchase — ×3 points\n• TON deposit — ×5 points\n• Drone upgrade / turret purchase — +1 point per gold spent\n• Victorious raid — +10 points\n• Referred a friend (who joined) — +50 points\n• Battle Pass / VIP — extra multipliers on top (×2 / ×3)\n\nImportant: points are calculated retroactively — all your past activity is already counted. Tiers: Bronze → Silver → Gold → Platinum → Diamond. The higher the tier, the bigger the CFM allocation at TGE.\n\n💡 Goal: be in the top tier by snapshot on Dec 31, 2026. Every gold you buy is future CFM."
+        "body": "We're launching our own CFM token on the GRAM network. Snapshot — Dec 31, 2026. TGE and listing on GRAM DEX — Q1-Q2 2027.\n\nEvery action you take in the game already accumulates allocation points:\n• Stars pack purchase — ×3 points\n• GRAM deposit — ×5 points\n• Drone upgrade / turret purchase — +1 point per gold spent\n• Victorious raid — +10 points\n• Referred a friend (who joined) — +50 points\n• Battle Pass / VIP — extra multipliers on top (×2 / ×3)\n\nImportant: points are calculated retroactively — all your past activity is already counted. Tiers: Bronze → Silver → Gold → Platinum → Diamond. The higher the tier, the bigger the CFM allocation at TGE.\n\n💡 Goal: be in the top tier by snapshot on Dec 31, 2026. Every gold you buy is future CFM."
       },
       "staking": {
         "title": "🔒 Stake Gold — coming soon",
-        "body": "Lock your gold for 1 / 7 / 30 days and receive a fixed TON payout at the end of the term. Perfect for turning accumulated gold into a real TON asset without using the P2P market.\n\nRates and parameters will be published at launch. Launch — after the AirDrop CFM announcement."
+        "body": "Lock your gold for 1 / 7 / 30 days and receive a fixed GRAM payout at the end of the term. Perfect for turning accumulated gold into a real GRAM asset without using the P2P market.\n\nRates and parameters will be published at launch. Launch — after the AirDrop CFM announcement."
       },
       "battlepass": {
         "title": "🎟 Battle Pass — coming soon",
@@ -64,23 +64,23 @@
       },
       "essence": {
         "title": "What is the game",
-        "body": "CyberFarm is a cyber drone farm inside Telegram. You collect combat and scout drones that generate passive gold every second — even when the app is closed. Defense turrets keep your farm safe from raiders, while you can raid other players and steal their coins. The endgame is converting gold to real TON via the P2P market, the weekly contest pool, and the referral network."
+        "body": "CyberFarm is a cyber drone farm inside Telegram. You collect combat and scout drones that generate passive gold every second — even when the app is closed. Defense turrets keep your farm safe from raiders, while you can raid other players and steal their coins. The endgame is converting gold to real GRAM via the P2P market, the weekly contest pool, and the referral network."
       },
       "earning": {
         "title": "How to earn",
-        "body": "Five income streams:\n• Passive — every drone produces gold each second. More drones / higher levels = more output.\n• Taps — clicking a drone gives gold at the rate of your highest drone level (L1 — 0.1, L2 — 0.3, L3 — 0.5 per tap). Costs energy.\n• Raids — attack other players and grab up to 10% of their balance.\n• Market — sell your units and equipment for gold or TON.\n• Weekly contest — the top of the weekly_earned leaderboard splits a TON prize pool.\nPlus: daily login bonus (day 7 is TON), 100 g starter pack and the referral program."
+        "body": "Five income streams:\n• Passive — every drone produces gold each second. More drones / higher levels = more output.\n• Taps — clicking a drone gives gold at the rate of your highest drone level (L1 — 0.1, L2 — 0.3, L3 — 0.5 per tap). Costs energy.\n• Raids — attack other players and grab up to 10% of their balance.\n• Market — sell your units and equipment for gold or GRAM.\n• Weekly contest — the top of the weekly_earned leaderboard splits a GRAM prize pool.\nPlus: daily login bonus (day 7 is GRAM), 100 g starter pack and the referral program."
       },
       "raids": {
         "title": "Raid rules",
         "body": "• You need working drones — broken ones can't fight.\n• Attack power = sum of (level × 10) across drones, combat type gets +20%. Defense = sum of defense_power of the target's turrets. Victory if attack > defense after a random ±20% shift.\n• Victory: take 10% of the target's balance. Defeat: you lose up to 5% of the attempted loot to the defender, and your weakest drone breaks.\n• Cooldown: you can only attack the same target once per hour.\n• Anti-farm: no attacks on accounts younger than 2 hours or with balance below 150 gold.\n• Too many raids in a row → captcha. Suspicious automated rhythm → temporary ban."
       },
       "p2p": {
-        "title": "P2P market & TON withdrawals",
-        "body": "The P2P market lets players trade drones and turrets for gold, TON or Stars.\n\n📌 P2P revenue counts toward withdrawal after 21 days.\nWhen you sell a unit for TON or Stars, the amount immediately shows up in your total balance but only becomes available for withdrawal 21 days after the sale. Until then those funds are 'on hold' — you can freely spend them in-game (buy units, place duel bets, upgrade), but you can't withdraw them to your TON wallet.\n\n💎 What's withdrawable right away: TON earned via referrals, duels, the weekly contest and direct deposits — no delay.\n\nThe 'Withdraw TON' screen shows three lines: total balance, available for withdrawal, and (if any) on hold. Withdrawals are capped at the 'available' figure."
+        "title": "P2P market & GRAM withdrawals",
+        "body": "The P2P market lets players trade drones and turrets for gold, GRAM or Stars.\n\n📌 P2P revenue counts toward withdrawal after 21 days.\nWhen you sell a unit for GRAM or Stars, the amount immediately shows up in your total balance but only becomes available for withdrawal 21 days after the sale. Until then those funds are 'on hold' — you can freely spend them in-game (buy units, place duel bets, upgrade), but you can't withdraw them to your GRAM wallet.\n\n💎 What's withdrawable right away: GRAM earned via referrals, duels, the weekly contest and direct deposits — no delay.\n\nThe 'Withdraw GRAM' screen shows three lines: total balance, available for withdrawal, and (if any) on hold. Withdrawals are capped at the 'available' figure."
       },
       "referrals": {
         "title": "Referral program",
-        "body": "Three-level rewards — invite friends through your link (see the Friends section in Profile).\n• Rewards are paid ONLY for Telegram Stars purchases (Starter, Rescue, Shield, etc). TON wallet top-ups don't count.\n• % from Stars purchase (in TON equivalent): L1 — 1%, L2 — 0.5%, L3 — 0.05%.\n• Gold bonus for progress once your friend hits 20 raids + 1000 gold (or upgrades their first drone to L2): L1 — 1000 gold, L2 — 500, L3 — 250.\nNo caps, no expiration. Full payout history lives in the Friends section."
+        "body": "Three-level rewards — invite friends through your link (see the Friends section in Profile).\n• Rewards are paid ONLY for Telegram Stars purchases (Starter, Rescue, Shield, etc). GRAM wallet top-ups don't count.\n• % from Stars purchase (in GRAM equivalent): L1 — 1%, L2 — 0.5%, L3 — 0.05%.\n• Gold bonus for progress once your friend hits 20 raids + 1000 gold (or upgrades their first drone to L2): L1 — 1000 gold, L2 — 500, L3 — 250.\nNo caps, no expiration. Full payout history lives in the Friends section."
       },
       "rules": {
         "title": "Rules and bans",
@@ -198,17 +198,17 @@
     "upgrades_other": "{{count}} upgr.",
     "seller": "by {{name}}",
     "tabGold": "Gold",
-    "tabTon": "TON",
-    "buyTon": "Buy with TON",
+    "tabTon": "GRAM",
+    "buyTon": "Buy with GRAM",
     "reserved": "Lot is reserved, try again shortly",
     "purchaseFailed": "Purchase failed",
     "insufficientTitle": "Not enough coins",
     "insufficientDesc": "Need ⬡{{need}}, you have ⬡{{have}}. Missing ⬡{{diff}}.",
     "buyGold": "Top up Gold",
     "bought": "Purchased!",
-    "insufficientTonTitle": "Insufficient TON",
-    "insufficientTonDesc": "Your balance is {{have}} TON. Required: {{need}} TON.",
-    "topupTon": "Top up TON balance",
+    "insufficientTonTitle": "Insufficient GRAM",
+    "insufficientTonDesc": "Your balance is {{have}} GRAM. Required: {{need}} GRAM.",
+    "topupTon": "Top up GRAM balance",
     "ownListing": "Your listing",
     "historyBtn": "History",
     "historyTitle": "P2P History",
@@ -264,7 +264,7 @@
     "alreadyListed": "Already listed for sale",
     "reserved": "Reserved",
     "reservedSec": "{{n}}s left",
-    "tonCommissionHint": "You will receive ◈ {{net}} TON ({{pct}} fee)",
+    "tonCommissionHint": "You will receive ◈ {{net}} GRAM ({{pct}} fee)",
     "tonPoolHint": "3% goes to the weekly prize pool 🏆",
     "range": "Allowed price: from {{min}} to {{max}} {{currency}}",
     "suggested": "Fair price",
@@ -288,16 +288,16 @@
     "place1": "🥇 1st place",
     "place2": "🥈 2nd place",
     "place3": "🥉 3rd place",
-    "prize": "◈ {{amount}} TON",
+    "prize": "◈ {{amount}} GRAM",
     "score": "Balance: {{score}}",
     "days": "d",
     "hours": "h",
     "minutes": "m",
     "seconds": "s",
-    "contribution": "3% of TON sales on P2P market goes to the pool",
+    "contribution": "3% of GRAM sales on P2P market goes to the pool",
     "rules": "The winner earns the most per week: drone income + raid trophies. Draw every Monday.",
-    "rolloverAbove": "The draw happens once the pool reaches at least ◈ {{min}} TON — threshold already met.",
-    "rolloverBelow": "The pool is still below the ◈ {{min}} TON threshold — if it stays below by Monday, the draw rolls over to next week and the collected TON stays in the pool.",
+    "rolloverAbove": "The draw happens once the pool reaches at least ◈ {{min}} GRAM — threshold already met.",
+    "rolloverBelow": "The pool is still below the ◈ {{min}} GRAM threshold — if it stays below by Monday, the draw rolls over to next week and the collected GRAM stays in the pool.",
     "emptyLeaderboard": "No participants yet",
     "farmBtn": "Contest"
   },
@@ -359,14 +359,14 @@
     "cancel": "Cancel"
   },
   "withdrawal": {
-    "title": "Withdraw TON",
+    "title": "Withdraw GRAM",
     "totalBalance": "Total balance",
     "available": "Available for withdrawal",
     "locked": "On hold (counts after {{days}}d)",
     "wallet": "Wallet",
     "noWalletWarn": "⚠️ No wallet connected. Connect it in your profile.",
-    "amountLabel": "Amount to withdraw (TON)",
-    "minPlaceholder": "Minimum {{min}} TON",
+    "amountLabel": "Amount to withdraw (GRAM)",
+    "minPlaceholder": "Minimum {{min}} GRAM",
     "requested": "Requested",
     "commission": "Fee ({{pct}}%)",
     "youGet": "You receive",
@@ -376,15 +376,15 @@
     "commissionRow": "Fee",
     "minAmountRow": "Minimum amount",
     "processingNoticeTitle": "⏱ Processed within 24 hours",
-    "processingNoticeBody": "Withdrawals are handled manually by an admin. TON usually arrives within 24 hours — often sooner.",
+    "processingNoticeBody": "Withdrawals are handled manually by an admin. GRAM usually arrives within 24 hours — often sooner.",
     "historyTitle": "Withdrawal history",
     "loading": "Loading…",
     "empty": "No requests yet",
     "rowPayout": "payout {{payout}}",
-    "toastCreated": "Request created — TON will arrive within 24 hours",
+    "toastCreated": "Request created — GRAM will arrive within 24 hours",
     "toastPending": "You already have an active request",
     "toastNoWallet": "Wallet not connected",
-    "toastNoBalance": "Not enough TON",
+    "toastNoBalance": "Not enough GRAM",
     "toastError": "Failed to create the request",
     "statusPending": "Under review",
     "statusCompleted": "Completed",
@@ -440,23 +440,27 @@
     "expTo": "XP to level {{n}}",
     "season": "SEASON {{n}}",
     "raids": "Raids",
-    "tonWallet": "TON Wallet",
+    "tonWallet": "GRAM Wallet",
     "notConnected": "Not connected",
     "connectWallet": "Connect",
     "connected": "Connected",
-    "requestWithdrawal": "Request TON Withdrawal",
+    "requestWithdrawal": "Request GRAM Withdrawal",
     "withdraw": "Withdraw",
     "disconnectWallet": "Disconnect",
     "walletWithdrawOnly": "Required for withdrawals only",
     "walletTgOnlyTitle": "⚠️ Telegram Wallet only",
     "walletTgOnlyBody": "Connect only Telegram's built-in @wallet. Third-party wallets (Tonkeeper, Tonhub, etc.) are not supported — the payout will fail.",
     "topupTon": "Top up",
-    "tonDeposit": "TON Top-up",
-    "tonDepositDesc": "Send TON with the comment — credit is automatic.",
+    "tonDeposit": "GRAM Top-up",
+    "tonDepositDesc": "GRAM credit is automatic.",
     "walletAddress": "Wallet address",
     "depositComment": "Transfer comment",
-    "depositCommentWarning": "Without the comment your TON won't be credited!",
-    "depositMinWarn": "Minimum credited deposit — {{min}} TON. Below that won't hit your balance.",
+    "depositCommentWarning": "Without the comment your GRAM won't be credited!",
+    "depositMinWarn": "Minimum credited deposit — {{min}} GRAM. Below that won't hit your balance.",
+    "depositLimitTitle": "Heads up — deposit limit in effect!",
+    "depositLimitMore": "Details",
+    "depositLimitHide": "Hide",
+    "depositLimitDetails": "Only deposits from {{min}} GRAM hit your balance. Anything smaller is stored in history as “not credited” and doesn't go through.\n\nSend from Tonkeeper directly — no service fee there.\n\nIf you use @wallet or @CryptoBot, they take a 1–3% cut, so the amount arriving here is less than what you sent. Add ~10% on top of the minimum to be safe.",
     "openInWallet": "Open in wallet",
     "earnMore": "Earn more",
     "earnMoreSub": "Complete tasks — earn valuable rewards!"
@@ -490,21 +494,21 @@
     "title": "My Referrals",
     "empty": "You haven't invited anyone yet",
     "allBtn": "All referrals",
-    "tonEarned": "◈ {{amount}} TON earned",
-    "howToEarn": "How to earn TON",
-    "inviteEarnTon": "Invite a friend — get TON",
-    "earnedToast": "+{{amount}} TON from {{name}}",
+    "tonEarned": "◈ {{amount}} GRAM earned",
+    "howToEarn": "How to earn GRAM",
+    "inviteEarnTon": "Invite a friend — get GRAM",
+    "earnedToast": "+{{amount}} GRAM from {{name}}",
     "earnedToastGold": "+{{amount}} gold from {{name}} for progress",
     "earnedToastTotal": "Total ◈ {{total}}",
     "modal": {
       "title": "Bonus conditions",
-      "intro": "Invite friends and earn TON from their Stars purchases. Bonuses go up to 3 levels deep. TON wallet top-ups don't count.",
+      "intro": "Invite friends and earn GRAM from their Stars purchases. Bonuses go up to 3 levels deep. GRAM wallet top-ups don't count.",
       "purchasePctTitle": "💎 % from your referral's Stars purchases",
-      "purchasePctDesc": "You earn a percentage (in TON) from every Telegram Stars purchase your referral makes (Starter, Rescue, Shield, etc).",
+      "purchasePctDesc": "You earn a percentage (in GRAM) from every Telegram Stars purchase your referral makes (Starter, Rescue, Shield, etc).",
       "progressTitle": "🪙 Gold for referral progress",
       "progressDesc": "One-time gold bonus when your referral completes {{raids}} raids and accumulates {{balance}} gold (or upgrades their first drone to L2).",
       "levelLabel": "Level {{n}}",
-      "tonUnit": "TON",
+      "tonUnit": "GRAM",
       "goldUnit": "gold",
       "pctUnit": "%",
       "close": "Got it"
@@ -523,7 +527,7 @@
     "today": "Today",
     "comeBack": "Come back tomorrow",
     "toastGold": "+{{amount}} gold for day {{day}}",
-    "toastTon": "+{{amount}} TON for day {{day}}!"
+    "toastTon": "+{{amount}} GRAM for day {{day}}!"
   },
   "search": {
     "placeholder": "Search by @username, Telegram ID or name"
@@ -565,7 +569,7 @@
     "lostBet": "Lost {{currency}} {{bet}}",
     "playAgain": "Play again",
     "insufficientGold": "Insufficient gold",
-    "insufficientTon": "Insufficient TON",
+    "insufficientTon": "Insufficient GRAM",
     "errorChallenge": "Challenge error",
     "waitingTitle": "Challenge sent",
     "waitingFor": "Waiting for {{name}} to respond…",

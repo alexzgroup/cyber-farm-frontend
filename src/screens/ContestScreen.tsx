@@ -87,7 +87,7 @@ function Podium({ last }: { last: ContestLast }) {
             <span className={styles.podiumMedal}>{orderMedal[i]}</span>
             <span className={styles.podiumName}>{name}</span>
             <span className={styles.podiumScore}>⬡ {Math.floor(w.score).toLocaleString('ru')}</span>
-            <span className={styles.podiumPrize}>◈ {parseFloat(w.prize_gold.toFixed(4))} TON</span>
+            <span className={styles.podiumPrize}>◈ {parseFloat(w.prize_gold.toFixed(4))} GRAM</span>
           </div>
         )
       })}
@@ -136,7 +136,7 @@ export function ContestScreen() {
             <div className={styles.poolAmount}>
               <span className={styles.poolCoin}>◈</span>
               {(current?.pool_ton ?? 0).toFixed(2)}
-              <span className={styles.poolUnit}> TON</span>
+              <span className={styles.poolUnit}> GRAM</span>
             </div>
             <div className={styles.poolHint}>{t('contest.contribution')}</div>
             <div className={styles.poolRules}>{t('contest.rules')}</div>
@@ -196,7 +196,7 @@ export function ContestScreen() {
                     <span className={styles.lbScore}>⬡ {Math.floor(entry.score).toLocaleString('ru')}</span>
                     {entry.projected_prize > 0 && (
                       <span className={styles.lbPrize}>
-                        ~◈ {parseFloat(entry.projected_prize.toFixed(4))} TON
+                        ~◈ {parseFloat(entry.projected_prize.toFixed(4))} GRAM
                       </span>
                     )}
                   </div>

@@ -18,7 +18,7 @@ export function TonDepositToast() {
     <div className={styles.toast} onClick={() => setToast(null)}>
       <span style={{ fontSize: 20 }}>◈</span>
       <span style={{ fontWeight: 700, fontSize: 15, color: '#22d3ee' }}>
-        +{toast.amount.toFixed(4)} TON
+        +{toast.amount.toFixed(4)} GRAM
       </span>
       <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
         зачислено на баланс

@@ -28,7 +28,7 @@ function DuelRow({ duel, myId }: { duel: ApiDuel; myId: number }) {
     ? `+${duel.currency === 'ton' ? '◈' : '⬡'} ${(duel.bet_amount * 2 * 0.75).toFixed(duel.currency === 'ton' ? 2 : 0)}`
     : `−${duel.currency === 'ton' ? '◈' : '⬡'} ${duel.bet_amount}`
 
-  const currLabel = duel.currency === 'ton' ? 'TON' : t('duel.gold')
+  const currLabel = duel.currency === 'ton' ? 'GRAM' : t('duel.gold')
   const roleLabel = iWasChal ? t('duel.roleChallenger') : t('duel.roleDefender')
 
   return (

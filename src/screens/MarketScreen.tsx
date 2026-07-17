@@ -47,7 +47,7 @@ function PriceTag({ price, currency, starsPerTon }: {
     return (
       <div>
         <span style={{ color: '#5b9cf6', fontWeight: 700 }}>
-          ◈ {parseFloat(price.toFixed(4))} TON
+          ◈ {parseFloat(price.toFixed(4))} GRAM
         </span>
         {stars && (
           <div style={{ fontSize: 11, color: '#a855f7', marginTop: 2 }}>
@@ -123,7 +123,7 @@ function MarketCard({ item, onBuy, onBuyStars, onDetails, canBuy, starsPerTon, s
           fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
           letterSpacing: '0.05em',
         }}>
-          TON
+          GRAM
         </div>
       )}
       {isReservedByOther && (
@@ -202,7 +202,7 @@ function MarketCard({ item, onBuy, onBuyStars, onDetails, canBuy, starsPerTon, s
                 disabled={!canBuy || isReservedByOther}
                 onClick={onBuy}
               >
-                ◈ TON
+                ◈ GRAM
               </button>
               {onBuyStars && (
                 <button
@@ -484,7 +484,7 @@ export function MarketScreen() {
             const isOwn = userID != null && detailsItem.seller_id === userID
             const canAffordItem = isTon ? tonBalance >= detailsItem.price : balance >= detailsItem.price
             const priceLabel = isTon
-              ? `◈ ${parseFloat(detailsItem.price.toFixed(4))} TON`
+              ? `◈ ${parseFloat(detailsItem.price.toFixed(4))} GRAM`
               : `⬡ ${detailsItem.price.toLocaleString()}`
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -500,7 +500,7 @@ export function MarketScreen() {
                       disabled={!canAffordItem}
                       onClick={() => { const it = detailsItem; setDetailsItem(null); handleBuy(it) }}
                     >
-                      ◈ TON
+                      ◈ GRAM
                     </button>
                     <button
                       style={{ padding: '9px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#5b21b6)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
