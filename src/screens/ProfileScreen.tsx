@@ -150,13 +150,34 @@ export function ProfileScreen() {
   const tcWallet         = useTonWallet()
   const [tonConnectUI]   = useTonConnectUI()
 
-  // Sync TON Connect wallet address → API whenever it changes
+  // Sync TON Connect wallet address → API whenever it changes.
+  //
+  // Anti-cluster: server returns 409 { error: 'wallet_taken', banned: true, banned_until }
+  // when the address is already bound to another live account. In that case we
+  // (1) disconnect the wallet on the TON Connect side so the same address
+  // isn't retried on every mount, (2) rely on api/client.ts's 403 handler to
+  // pick up the ban (server also returns 409 with banned_until — we push it
+  // in explicitly since the client-side interceptor only fires on 403).
   useEffect(() => {
     const address = tcWallet?.account?.address ?? ''
     if (address && address !== tonWallet) {
       connectWallet(address)
         .then(() => setTonWallet(address))
-        .catch(() => {/* silent — user can retry */})
+        .catch((err: { status?: number; data?: { error?: string; banned?: boolean; banned_until?: number; banned_reason?: string } }) => {
+          if (err?.status === 409 && err.data?.error === 'wallet_taken') {
+            tonConnectUI.disconnect().catch(() => {})
+            setTonWallet('')
+            if (err.data.banned && err.data.banned_until) {
+              useGameStore.setState({
+                bannedUntil:             err.data.banned_until * 1000,
+                bannedReason:            String(err.data.banned_reason ?? 'wallet_cluster'),
+                banOverlayOpen:          true,
+                banOverlayAutoDismissed: false,
+              })
+            }
+          }
+          // Other errors — user can retry
+        })
     }
     if (!address && tonWallet) {
       // Wallet disconnected on the TON Connect side
