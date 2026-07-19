@@ -19,9 +19,14 @@ export function HUD() {
   const hasStarsPurchase  = useGameStore((s) => s.hasStarsPurchase)
   const starterExpiresAt  = useGameStore((s) => s.starterExpiresAt)
   const setScreen         = useGameStore((s) => s.setScreen)
+  const batteryAvailable  = useGameStore((s) => s.batteryAvailable)
+  const openBatteryModal  = useGameStore((s) => s.openBatteryModal)
+  const bannedUntil       = useGameStore((s) => s.bannedUntil)
+  const openBanOverlay    = useGameStore((s) => s.openBanOverlay)
 
   const [showSettings, setShowSettings] = useState(false)
   const nowMs = useNowSecond()
+  const isBanned = bannedUntil != null && bannedUntil > nowMs
   // Star icon is a permanent shop-shortcut while the user hasn't bought a
   // Stars pack — visibility no longer depends on the FOMO timer. The timer
   // just decorates the chip when it's still ticking; once it expires the
@@ -95,6 +100,20 @@ export function HUD() {
               aria-label="Top up energy"
               type="button"
             >+</button>
+            {batteryAvailable && (
+              <button
+                className={styles.battery}
+                onClick={() => {
+                  useGameStore.setState({ batteryModalDismissed: false })
+                  openBatteryModal()
+                }}
+                aria-label={t('battery.title')}
+                title={t('battery.title')}
+                type="button"
+              >
+                🔋
+              </button>
+            )}
           </div>
           <div className={styles.bar}>
             <i
@@ -135,6 +154,17 @@ export function HUD() {
           </button>
 
           {starterOnRight && renderStarterChip()}
+          {isBanned && (
+            <button
+              type="button"
+              className={styles.banWarning}
+              onClick={openBanOverlay}
+              aria-label={t('ban.title')}
+              title={t('ban.title')}
+            >
+              ⚠
+            </button>
+          )}
         </div>
       </div>
 

@@ -33,6 +33,10 @@ export function PhaserGame() {
       dom: { createContainer: false },
     })
 
+    if (import.meta.env.DEV) {
+      (window as unknown as { __CF_GAME__: Phaser.Game }).__CF_GAME__ = gameRef.current
+    }
+
     return () => {
       gameRef.current?.destroy(true)
       gameRef.current = null

@@ -96,6 +96,45 @@
   overflow: hidden;
 }
 
+/* ── Ban banner — shown when the current user has an active ban. Clicking
+       opens the full BanOverlay so the player can read the full timer. ── */
+@keyframes banBannerPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35); }
+  50%      { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+.banBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(127, 29, 29, 0.24));
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  color: #fee2e2;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  animation: banBannerPulse 2s ease-out infinite;
+}
+.banBannerIcon { font-size: 22px; flex-shrink: 0; }
+.banBannerText { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.banBannerTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fecaca;
+  letter-spacing: 0.02em;
+}
+.banBannerSub {
+  font-size: 11px;
+  color: #fda4af;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.banBannerArrow { color: #fecaca; font-size: 16px; opacity: 0.7; }
+
 /* ── Hero ── */
 .hero { padding: 20px 18px 18px; }
 .heroRow { display: flex; align-items: center; gap: 16px; }

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { PvPHeader } from '../components/PvPHeader'
 import { HeartButton } from '../components/HeartButton'
+import { BanOverlay } from '../components/BanOverlay'
 import { totalPower, powerTier } from '../utils/duelPower'
 import * as api from '../api'
 import type { ApiDuelPlayer } from '../api/types'
@@ -20,6 +21,9 @@ export function DuelScreen() {
   const startDuel        = useGameStore((s) => s.startDuelWithPlayer)
   const pendingDuelTarget    = useGameStore((s) => s.pendingDuelTarget)
   const setPendingDuelTarget = useGameStore((s) => s.setPendingDuelTarget)
+  const bannedUntil          = useGameStore((s) => s.bannedUntil)
+  const bannedReason         = useGameStore((s) => s.bannedReason)
+  const isBanned = bannedUntil != null && bannedUntil > Date.now()
 
   const PLAYERS_PER_PAGE = 8
 
@@ -136,6 +140,9 @@ export function DuelScreen() {
 
   return (
     <div style={s.root}>
+      {isBanned && bannedUntil != null && (
+        <BanOverlay bannedUntilMs={bannedUntil} reason={bannedReason} />
+      )}
       <PvPHeader activeTab="duel" onHistory={() => setScreen('duel-history')} />
 
       {/* MY POWER panel */}

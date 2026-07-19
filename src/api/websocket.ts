@@ -229,6 +229,20 @@ function dispatch(msg: WsMessage) {
       break
     }
 
+    case 'user.energy': {
+      // Battery credited (or any other server-side energy top-up) — reflect it
+      // immediately without waiting for the next /user/me. `reason` disambiguates
+      // future top-ups (admin grant, event reward, ...).
+      const energy    = Number(msg.payload.energy ?? 0)
+      const maxEnergy = Number(msg.payload.max_energy ?? store.maxEnergy)
+      useGameStore.setState({ energy, maxEnergy })
+      store.refreshBatteryStatus()
+      if (msg.payload?.reason === 'battery') {
+        store.closeBatteryModal()
+      }
+      break
+    }
+
     case 'shield.updated': {
       // Shield was extended after a successful Stars purchase — refresh user
       // (v_ip_until lives on the user object) and bump shieldVersion so the

@@ -63,6 +63,21 @@ export function buyRescuePack(): Promise<{ invoice_url: string; stars: number; g
   return apiFetch('/api/rescue/buy', { method: 'POST' })
 }
 
+// Battery — 30⭐ / +50 energy / 1 purchase per 24h. Sold via a dedicated
+// endpoint (not a Product row) so we can enforce the cooldown server-side.
+export interface BatteryStatus {
+  stars_price:        number
+  energy_amount:      number
+  available:          boolean
+  next_available_at?: number   // unix seconds; only when available=false
+}
+export function getBatteryStatus(): Promise<BatteryStatus> {
+  return apiFetch('/api/battery/status')
+}
+export function buyBattery(): Promise<{ invoice_url: string; stars: number; energy_amount: number }> {
+  return apiFetch('/api/battery/buy', { method: 'POST' })
+}
+
 export function syncPositions(
   drones:  UnitPosition[],
   turrets: UnitPosition[],
@@ -77,6 +92,40 @@ export function syncPositions(
 
 export function getDrones(): Promise<ApiDrone[]> {
   return apiFetch('/api/drones')
+}
+
+export interface DroneGroup { level: number; drone_type: DroneType; count: number }
+export interface TurretGroup { level: number; count: number }
+export interface PagedDrones { items: ApiDrone[]; total: number; page: number; limit: number }
+export interface PagedTurrets { items: ApiTurret[]; total: number; page: number; limit: number }
+
+export function getDroneGroups(): Promise<DroneGroup[]> {
+  return apiFetch('/api/drones/groups')
+}
+
+export function getDronesPaged(params: {
+  level?: number; drone_type?: DroneType; page?: number; limit?: number
+} = {}): Promise<PagedDrones> {
+  const qs = new URLSearchParams()
+  if (params.level)      qs.set('level', String(params.level))
+  if (params.drone_type) qs.set('drone_type', params.drone_type)
+  qs.set('page',  String(params.page  ?? 1))
+  qs.set('limit', String(params.limit ?? 30))
+  return apiFetch(`/api/drones/paged?${qs.toString()}`)
+}
+
+export function getTurretGroups(): Promise<TurretGroup[]> {
+  return apiFetch('/api/turrets/groups')
+}
+
+export function getTurretsPaged(params: {
+  level?: number; page?: number; limit?: number
+} = {}): Promise<PagedTurrets> {
+  const qs = new URLSearchParams()
+  if (params.level) qs.set('level', String(params.level))
+  qs.set('page',  String(params.page  ?? 1))
+  qs.set('limit', String(params.limit ?? 30))
+  return apiFetch(`/api/turrets/paged?${qs.toString()}`)
 }
 
 export function buyDrone(droneType: DroneType): Promise<ApiDrone> {

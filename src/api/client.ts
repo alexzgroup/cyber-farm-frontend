@@ -184,6 +184,35 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     const err: any = new Error((body as any).error ?? `HTTP ${res.status}`)
     err.status = res.status
     err.data   = body
+
+    // Global ban detection: any mutating call from a banned user comes back
+    // as 403 { error: "banned", banned_until: unix, banned_reason }. Push it
+    // into the store AND auto-surface the overlay — but only on FIRST
+    // discovery or when the ban timestamp actually changes. Otherwise every
+    // background flushTaps (fires every 3s) would keep re-opening the
+    // overlay after the user closed it.
+    if (res.status === 403 && (body as any)?.error === 'banned') {
+      const untilUnix = Number((body as any).banned_until ?? 0)
+      if (untilUnix > 0) {
+        // Late import — client.ts must not depend on the store at module load
+        // (would break tests and re-import cycles). Dynamic import is fine
+        // because this branch is rare and off the hot path.
+        import('../store/gameStore').then(({ useGameStore }) => {
+          const state    = useGameStore.getState()
+          const nextMs   = untilUnix * 1000
+          const banChanged = state.bannedUntil !== nextMs
+          // If the ban timestamp changed (fresh ban, or extended) — reset the
+          // session-dismiss so we can auto-open. Otherwise respect the flag.
+          const autoDismissed = banChanged ? false : state.banOverlayAutoDismissed
+          useGameStore.setState({
+            bannedUntil:             nextMs,
+            bannedReason:            String((body as any).banned_reason ?? ''),
+            banOverlayOpen:          autoDismissed ? state.banOverlayOpen : true,
+            banOverlayAutoDismissed: autoDismissed,
+          })
+        }).catch(() => { /* silent */ })
+      }
+    }
     throw err
   }
 

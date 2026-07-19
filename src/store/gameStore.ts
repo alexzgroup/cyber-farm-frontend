@@ -86,7 +86,13 @@ export interface IncomingRaidEntry {
   timestamp:    number
 }
 
-export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'unit-detail' | 'purchases' | 'topup' | 'contest' | 'duel' | 'duel-battle' | 'duel-history' | 'referrals' | 'withdrawal' | 'favorites' | 'faq' | 'tasks'
+export type Screen = 'farm' | 'shop' | 'raids' | 'profile' | 'market' | 'market-history' | 'equipment' | 'equipment-level' | 'unit-detail' | 'purchases' | 'topup' | 'contest' | 'duel' | 'duel-battle' | 'duel-history' | 'referrals' | 'withdrawal' | 'favorites' | 'faq' | 'tasks'
+
+export interface EquipmentFilter {
+  kind:       'drone' | 'turret'
+  level:      number | null                    // null = все уровни
+  droneType:  import('../api/types').DroneType | null  // только для kind=drone
+}
 
 export type UnitUpgrades = Record<string, Record<string, number>>
 
@@ -194,6 +200,22 @@ interface GameState {
   // dialog from anywhere in the app.
   shieldModalOpen:         boolean
   couponModalOpen:         boolean
+  batteryModalOpen:        boolean
+  // Session-scoped dismiss: once the user closes the battery modal, don't
+  // re-open on subsequent low-energy taps until they hit /farm again after
+  // a page reload. Prevents modal spam if the player keeps tapping.
+  batteryModalDismissed:   boolean
+  // Cached "can I buy a battery right now" flag — refreshed on load, after
+  // purchase, and on the user.energy WS event (which fires the moment a
+  // battery is credited, so the icon disappears without a poll).
+  batteryAvailable:        boolean
+  // Full-screen ban overlay toggled by the HUD warning icon so the player can
+  // read the timer/reason from any screen — not just Raids/Duel.
+  banOverlayOpen:          boolean
+  // Session-scoped: once the user closes the ban overlay manually, don't
+  // auto-reopen it on every 403 (background flushTaps would spam it). Reset
+  // to false on page reload and whenever the ban actually changes.
+  banOverlayAutoDismissed: boolean
   unitUpgrades:   UnitUpgrades
   language:            string   // current UI language (ru/en), synced from API
   allowNotification:   boolean  // synced from API allow_notification
@@ -216,8 +238,10 @@ interface GameState {
   onlineStatus:        Record<number, boolean>  // live updates from player.online/offline WS events
 
   // UI
-  activeScreen:   Screen
-  selectedUnitId: string | null
+  activeScreen:      Screen
+  selectedUnitId:    string | null
+  equipmentFilter:   EquipmentFilter | null
+  setEquipmentFilter: (f: EquipmentFilter | null) => void
   soundEnabled:   boolean
   isLoaded:       boolean
   loadError:      string | null
@@ -231,7 +255,7 @@ interface GameState {
   // the server flag iff the user granted it. Returns true if both succeeded.
   requestNotifications: () => Promise<boolean>
   updateDuelSettings:   (enabled: boolean) => Promise<void>
-  tap:                () => void           // FarmScene tap mechanic
+  tap:                (count?: number) => void   // FarmScene tap mechanic; count>1 = bucket tap
   flushTaps:          () => Promise<void>  // send pendingTaps count to backend
   buyDrone:           (droneType?: import('../api/types').DroneType) => Promise<boolean>
   upgradeDrone:       (droneId: string) => Promise<boolean>
@@ -251,6 +275,11 @@ interface GameState {
   closeShieldModal:          () => void
   openCouponModal:           () => void
   closeCouponModal:          () => void
+  openBatteryModal:          () => void
+  closeBatteryModal:         () => void
+  refreshBatteryStatus:      () => Promise<void>
+  openBanOverlay:            () => void
+  closeBanOverlay:           () => void
   addBalance:                (amount: number) => void
   setTonBalance:             (amount: number) => void
   tonDepositToast:           { amount: number } | null
@@ -339,6 +368,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   defendPromptVisible:      false,
   shieldModalOpen:          false,
   couponModalOpen:          false,
+  batteryModalOpen:         false,
+  batteryModalDismissed:    false,
+  batteryAvailable:         false,
+  banOverlayOpen:           false,
+  banOverlayAutoDismissed:  false,
   unitUpgrades:        {},
   language:            'ru',
   allowNotification:   true,
@@ -353,6 +387,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   onlineStatus:        {},
   activeScreen:        'farm',
   selectedUnitId: null,
+  equipmentFilter: null,
+  setEquipmentFilter: (f) => set({ equipmentFilter: f }),
   soundEnabled:   true,
   isLoaded:       false,
   loadError:      null,
@@ -362,24 +398,35 @@ export const useGameStore = create<GameState>((set, get) => ({
   // then send the tap count to the server. The server is authoritative — it caps
   // by real energy and computes bonus from MAX(drone.level). On flush we overwrite
   // balance/energy with the server response.
-  tap: () => {
-    const { energy, balance, drones, pendingTaps } = get()
+  // Optional `count` is the number of taps to register in one shot — used by
+  // the FarmScene bucket tap to charge for every drone in the bucket at once.
+  // Clamped by available energy so a bucket of 200 doesn't drop energy below 0.
+  tap: (count = 1) => {
+    const { energy, balance, drones, pendingTaps, bannedUntil } = get()
+    // While banned, taps do nothing on the client either — otherwise the
+    // player watches their balance rise optimistically, and then it collapses
+    // back the moment the ban lifts and flushTaps syncs with the server.
+    if (bannedUntil != null && bannedUntil > Date.now()) return
     if (energy <= 0) return
+    const spend = Math.min(count, energy)
     const maxLevel = Math.max(1, ...drones.map((d) => d.level)) as DroneLevel
     const bonus = DRONE_UPGRADES[maxLevel - 1]?.tapBonus ?? 0.1
-    const newBalance = balance + bonus
+    const newBalance = balance + bonus * spend
     set({
       balance:          newBalance,
       balanceBase:      newBalance,
       balanceUpdatedAt: Date.now(),
-      pendingTaps:      pendingTaps + 1,
-      energy:           energy - 1,
+      pendingTaps:      pendingTaps + spend,
+      energy:           energy - spend,
     })
   },
 
   flushTaps: async () => {
-    const { pendingTaps } = get()
+    const { pendingTaps, bannedUntil } = get()
     if (pendingTaps <= 0) return
+    // While banned every tap flush would 403 → burn network + re-trigger the
+    // ban banner logic pointlessly. Hold the pending taps until the ban ends.
+    if (bannedUntil != null && bannedUntil > Date.now()) return
     const toFlush = pendingTaps
     set({ pendingTaps: 0 })
     try {
@@ -481,6 +528,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         isLoaded:            true,
         loadError:           null,
       })
+      // Fire-and-forget: battery availability drives the HUD icon and shop
+      // banner. Not critical to await for isLoaded=true.
+      get().refreshBatteryStatus()
     } catch (err) {
       set({ loadError: (err as Error).message, isLoaded: true })
     }
@@ -943,6 +993,16 @@ export const useGameStore = create<GameState>((set, get) => ({
   closeShieldModal:          () => set({ shieldModalOpen: false }),
   openCouponModal:           () => set({ couponModalOpen: true }),
   closeCouponModal:          () => set({ couponModalOpen: false }),
+  openBatteryModal:          () => set({ batteryModalOpen: true }),
+  closeBatteryModal:         () => set({ batteryModalOpen: false, batteryModalDismissed: true }),
+  refreshBatteryStatus:      async () => {
+    try {
+      const s = await api.getBatteryStatus()
+      set({ batteryAvailable: s.available })
+    } catch { /* silent — icon just stays hidden */ }
+  },
+  openBanOverlay:            () => set({ banOverlayOpen: true }),
+  closeBanOverlay:           () => set({ banOverlayOpen: false, banOverlayAutoDismissed: true }),
   setScreen:       (screen) => set({ activeScreen: screen }),
   toggleSound:     () => set((s) => ({ soundEnabled: !s.soundEnabled })),
   selectUnit:      (unitId) => set({ selectedUnitId: unitId }),

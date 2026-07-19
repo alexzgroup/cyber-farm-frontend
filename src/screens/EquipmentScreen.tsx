@@ -1,99 +1,50 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
-import { DRONE_UPGRADE_TEMPLATES, TURRET_UPGRADE_TEMPLATES } from '../data/unitUpgrades'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
-import { SellModal } from '../components/SellModal'
-import { getMarket, cancelListing } from '../api'
-import type { ApiMarketListing } from '../api/types'
+import { getDroneGroups, getTurretGroups } from '../api'
+import type { DroneGroup, TurretGroup } from '../api'
+import type { DroneType } from '../api/types'
 import styles from './EquipmentScreen.module.css'
 
-const DRONE_TYPE_COLORS: Record<number, string> = {
-  1: '#00ccee',
-  2: '#ff4400',
-  3: '#9900ff',
+const DRONE_TYPE_COLORS: Record<string, string> = {
+  scout: '#00ccee', combat: '#ff4400', stealth: '#9900ff',
 }
-
-const DRONE_TYPE_KEYS: Record<number, string> = {
-  1: 'drone.scout',
-  2: 'drone.combat',
-  3: 'drone.stealth',
+const DRONE_TYPE_KEYS: Record<string, string> = {
+  scout: 'drone.scout', combat: 'drone.combat', stealth: 'drone.stealth',
 }
-
-const TURRET_LEVEL_COLORS: Record<number, string> = {
-  1: '#00cc44',
-  2: '#ffaa00',
-  3: '#ff4400',
-}
-
-const TURRET_LEVEL_KEYS: Record<number, string> = {
-  1: 'turret.light',
-  2: 'turret.medium',
-  3: 'turret.heavy',
-}
+const TURRET_LEVEL_COLORS: Record<number, string> = { 1: '#00cc44', 2: '#ffaa00', 3: '#ff4400' }
+const TURRET_LEVEL_KEYS:   Record<number, string> = { 1: 'turret.light', 2: 'turret.medium', 3: 'turret.heavy' }
 
 export function EquipmentScreen() {
-  const { t }        = useTranslation()
-  const drones       = useGameStore((s) => s.drones)
-  const turrets      = useGameStore((s) => s.turrets)
-  const unitUpgrades = useGameStore((s) => s.unitUpgrades)
-  const selectUnit   = useGameStore((s) => s.selectUnit)
-  const setScreen    = useGameStore((s) => s.setScreen)
+  const { t }                = useTranslation()
+  const setScreen            = useGameStore((s) => s.setScreen)
+  const setEquipmentFilter   = useGameStore((s) => s.setEquipmentFilter)
 
-  const [sellTarget, setSellTarget] = useState<{
-    id: number; type: 'drone' | 'turret'; name: string
-  } | null>(null)
-  const [myListings, setMyListings] = useState<ApiMarketListing[]>([])
+  const [droneGroups,  setDroneGroups]  = useState<DroneGroup[]>([])
+  const [turretGroups, setTurretGroups] = useState<TurretGroup[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const fetchMyListings = useCallback(async () => {
-    try { setMyListings(await getMarket({ mine: true })) } catch { /* ignore */ }
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [d, tr] = await Promise.all([getDroneGroups(), getTurretGroups()])
+      setDroneGroups(d)
+      setTurretGroups(tr)
+    } finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { fetchMyListings() }, [fetchMyListings])
+  useEffect(() => { load() }, [load])
 
-  // Maps: unit DB id → listing id (for cancel)
-  const listedDrones  = new Map(myListings.filter(l => l.drone_id).map(l => [l.drone_id!, l.id]))
-  const listedTurrets = new Map(myListings.filter(l => l.turret_id).map(l => [l.turret_id!, l.id]))
-
-  const handleCancelListing = async (e: React.MouseEvent, listingId: number) => {
-    e.stopPropagation()
-    try {
-      await cancelListing(listingId)
-      fetchMyListings()
-    } catch { /* ignore */ }
-  }
-
-  const handleSelectDrone = (id: string) => {
-    selectUnit(id)
-    setScreen('unit-detail')
-  }
-
-  const handleSelectTurret = (id: string) => {
-    selectUnit(id)
-    setScreen('unit-detail')
-  }
-
-  const countUpgrades = (unitId: string, templates: typeof DRONE_UPGRADE_TEMPLATES) => {
-    const ups = unitUpgrades[unitId] ?? {}
-    return templates.reduce((sum, t) => sum + (ups[t.id] ?? 0), 0)
+  const openGroup = (kind: 'drone' | 'turret', level: number, droneType: DroneType | null = null) => {
+    setEquipmentFilter({ kind, level, droneType })
+    setScreen('equipment-level')
   }
 
   return (
     <div className={styles.screen}>
-      {sellTarget && (
-        <SellModal
-          unitId={sellTarget.id}
-          unitType={sellTarget.type}
-          unitName={sellTarget.name}
-          onClose={() => setSellTarget(null)}
-          onSold={() => { setSellTarget(null); setScreen('market') }}
-        />
-      )}
-      {/* Header */}
       <div className={styles.header}>
-        <button className={styles.backBtn} onClick={() => setScreen('farm')}>
-          {t('common.back')}
-        </button>
+        <button className={styles.backBtn} onClick={() => setScreen('farm')}>{t('common.back')}</button>
         <h2 className={styles.title}>{t('equipment.title')}</h2>
         <button
           style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5,
@@ -108,143 +59,91 @@ export function EquipmentScreen() {
         </button>
       </div>
 
-      {/* Drones section */}
-      <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>{t('equipment.myDrones')}</h3>
-        <div className={styles.grid}>
-          {drones.map((drone, idx) => {
-            const color = DRONE_TYPE_COLORS[drone.droneType] ?? '#00e5ff'
-            const totalUpgrades = countUpgrades(drone.id, DRONE_UPGRADE_TEMPLATES)
-            const maxUpgrades   = DRONE_UPGRADE_TEMPLATES.length * 3
+      {loading && (
+        <div style={{ padding: 20, textAlign: 'center', color: '#888', fontSize: 12 }}>
+          {t('app.loading')}
+        </div>
+      )}
 
-            const droneListingId = listedDrones.get(Number(drone.id))
-            const isListed = droneListingId !== undefined
+      {!loading && droneGroups.length === 0 && turretGroups.length === 0 && (
+        <div style={{ padding: 40, textAlign: 'center', color: '#888', fontSize: 13 }}>
+          {t('equipment.myDrones')} — 0
+        </div>
+      )}
 
-            return (
-              <div key={drone.id} className={styles.cardWrapper} style={{ '--unit-color': color } as React.CSSProperties}>
+      {droneGroups.length > 0 && (
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>{t('equipment.myDrones')}</h3>
+          <div className={styles.grid}>
+            {droneGroups.map((g) => {
+              const color = DRONE_TYPE_COLORS[g.drone_type] ?? '#00e5ff'
+              return (
                 <div
-                  role="button"
-                  tabIndex={0}
-                  className={`${styles.card} ${drone.isBroken ? styles.broken : ''} ${isListed ? styles.listed : ''}`}
-                  onClick={() => handleSelectDrone(drone.id)}
+                  key={`d-${g.level}-${g.drone_type}`}
+                  className={styles.cardWrapper}
+                  style={{ '--unit-color': color } as React.CSSProperties}
                 >
-                  <div className={styles.cardGlow} />
-                  {isListed && <div className={styles.forSaleBadge}>{t('sell.forSale')}</div>}
-                  <UnitCircle color={color} size={46}>
-                    {drone.isBroken
-                      ? <span style={{ fontSize: 20 }}>⚠</span>
-                      : <DroneIcon color={color} size={26} />}
-                  </UnitCircle>
-                  <div className={styles.cardName}>
-                    {t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #{idx + 1}
-                  </div>
-                  <div className={styles.cardLevel} style={{ color }}>
-                    LVL {drone.level}{drone.isBroken ? ' ⚠' : ''}
-                  </div>
-                  <div className={styles.upgradeBar}>
-                    <div
-                      className={styles.upgradeBarFill}
-                      style={{ width: `${(totalUpgrades / maxUpgrades) * 100}%`, background: color }}
-                    />
-                  </div>
-                  <div className={styles.upgradeCount} style={{ color }}>
-                    {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className={styles.card}
+                    onClick={() => openGroup('drone', g.level, g.drone_type)}
+                  >
+                    <div className={styles.cardGlow} />
+                    <UnitCircle color={color} size={46}>
+                      <DroneIcon color={color} size={26} />
+                    </UnitCircle>
+                    <div className={styles.cardName}>
+                      {t(DRONE_TYPE_KEYS[g.drone_type] ?? 'drone.scout')}
+                    </div>
+                    <div className={styles.cardLevel} style={{ color }}>LVL {g.level}</div>
+                    <div className={styles.upgradeCount} style={{ color, fontSize: 12, fontWeight: 700 }}>
+                      × {g.count}
+                    </div>
                   </div>
                 </div>
-                {isListed ? (
-                  <div
-                    role="button"
-                    className={styles.cancelBtn}
-                    onClick={e => { e.stopPropagation(); handleCancelListing(e, droneListingId) }}
-                  >
-                    ✕ {t('sell.cancelListing')}
-                  </div>
-                ) : (
-                  <div
-                    role="button"
-                    className={styles.sellBtn}
-                    onClick={() => setSellTarget({
-                      id: Number(drone.id),
-                      type: 'drone',
-                      name: `${t(DRONE_TYPE_KEYS[drone.droneType] ?? 'drone.scout')} #${idx + 1} LVL${drone.level}`,
-                    })}
-                  >
-                    <span style={{ opacity: 0.8 }}>◈</span>{t('sell.sellBtn')}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </section>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
-      {/* Turrets section */}
-      <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>{t('equipment.myTurrets')}</h3>
-        <div className={styles.grid}>
-          {turrets.map((turret, idx) => {
-            const color = TURRET_LEVEL_COLORS[turret.level] ?? '#00cc44'
-            const totalUpgrades = countUpgrades(turret.id, TURRET_UPGRADE_TEMPLATES)
-            const maxUpgrades   = TURRET_UPGRADE_TEMPLATES.length * 3
-
-            const turretListingId = listedTurrets.get(Number(turret.id))
-            const isListed = turretListingId !== undefined
-
-            return (
-              <div key={turret.id} className={styles.cardWrapper} style={{ '--unit-color': color } as React.CSSProperties}>
+      {turretGroups.length > 0 && (
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>{t('equipment.myTurrets')}</h3>
+          <div className={styles.grid}>
+            {turretGroups.map((g) => {
+              const color = TURRET_LEVEL_COLORS[g.level] ?? '#00cc44'
+              return (
                 <div
-                  role="button"
-                  tabIndex={0}
-                  className={`${styles.card} ${isListed ? styles.listed : ''}`}
-                  onClick={() => handleSelectTurret(turret.id)}
+                  key={`t-${g.level}`}
+                  className={styles.cardWrapper}
+                  style={{ '--unit-color': color } as React.CSSProperties}
                 >
-                  <div className={styles.cardGlow} />
-                  {isListed && <div className={styles.forSaleBadge}>{t('sell.forSale')}</div>}
-                  <UnitCircle color={color} size={46}>
-                    <TurretIcon color={color} level={turret.level} size={26} />
-                  </UnitCircle>
-                  <div className={styles.cardName}>
-                    {t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #{idx + 1}
-                  </div>
-                  <div className={styles.cardLevel} style={{ color }}>
-                    DEF LV{turret.level}
-                  </div>
-                  <div className={styles.upgradeBar}>
-                    <div
-                      className={styles.upgradeBarFill}
-                      style={{ width: `${(totalUpgrades / maxUpgrades) * 100}%`, background: color }}
-                    />
-                  </div>
-                  <div className={styles.upgradeCount} style={{ color }}>
-                    {t('equipment.upgradesOf', {done: totalUpgrades, total: maxUpgrades})}
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className={styles.card}
+                    onClick={() => openGroup('turret', g.level)}
+                  >
+                    <div className={styles.cardGlow} />
+                    <UnitCircle color={color} size={46}>
+                      <TurretIcon color={color} level={g.level} size={26} />
+                    </UnitCircle>
+                    <div className={styles.cardName}>
+                      {t(TURRET_LEVEL_KEYS[g.level] ?? 'turret.light')}
+                    </div>
+                    <div className={styles.cardLevel} style={{ color }}>DEF LV{g.level}</div>
+                    <div className={styles.upgradeCount} style={{ color, fontSize: 12, fontWeight: 700 }}>
+                      × {g.count}
+                    </div>
                   </div>
                 </div>
-                {isListed ? (
-                  <div
-                    role="button"
-                    className={styles.cancelBtn}
-                    onClick={e => { e.stopPropagation(); handleCancelListing(e, turretListingId) }}
-                  >
-                    ✕ {t('sell.cancelListing')}
-                  </div>
-                ) : (
-                  <div
-                    role="button"
-                    className={styles.sellBtn}
-                    onClick={() => setSellTarget({
-                      id: Number(turret.id),
-                      type: 'turret',
-                      name: `${t(TURRET_LEVEL_KEYS[turret.level] ?? 'turret.light')} #${idx + 1} DEF LV${turret.level}`,
-                    })}
-                  >
-                    <span style={{ opacity: 0.8 }}>◈</span>{t('sell.sellBtn')}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </section>
+              )
+            })}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

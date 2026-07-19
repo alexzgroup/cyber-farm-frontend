@@ -1,0 +1,85 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #0f1620;
+  border-bottom: 1px solid #00e5ff22;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 100px;
+  min-width: 100px;
+}
+
+.filterLabel {
+  font-size: 10px;
+  color: #7aa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.select {
+  background: #111820;
+  border: 1px solid #00e5ff33;
+  color: #cfe;
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-size: 12px;
+  font-family: monospace;
+  outline: none;
+  cursor: pointer;
+}
+
+.select:focus {
+  border-color: #00e5ff88;
+}
+
+.summary {
+  padding: 10px 14px 4px;
+  font-size: 11px;
+  color: #99a;
+  letter-spacing: 0.05em;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 14px 30px;
+}
+
+.pageBtn {
+  min-width: 40px;
+  height: 36px;
+  padding: 0 12px;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  color: #00e5ff;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: rgba(0, 229, 255, 0.18);
+}
+
+.pageBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 12px;
+  color: #cfe;
+  font-family: monospace;
+  min-width: 90px;
+  text-align: center;
+}

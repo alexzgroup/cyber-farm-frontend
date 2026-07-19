@@ -1,17 +1,34 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+// Renders a countdown as DD:HH:MM:SS. The day segment is dropped on short
+// bans (<24h) so the readout doesn't lead with "00:" for the common case.
 function format(remainingMs: number): string {
-  const s = Math.max(0, Math.ceil(remainingMs / 1000))
-  const m = Math.floor(s / 60)
-  const r = s % 60
-  return `${m}:${r.toString().padStart(2, '0')}`
+  const total = Math.max(0, Math.ceil(remainingMs / 1000))
+  const days  = Math.floor(total / 86400)
+  const hours = Math.floor((total % 86400) / 3600)
+  const mins  = Math.floor((total % 3600) / 60)
+  const secs  = total % 60
+  const pad   = (n: number) => n.toString().padStart(2, '0')
+  const hms   = `${pad(hours)}:${pad(mins)}:${pad(secs)}`
+  return days > 0 ? `${pad(days)}:${hms}` : hms
 }
 
 // Full-screen overlay shown over Raids when the user has been auto-banned for
 // suspicious raid burst patterns. Displays a countdown to ban expiry plus a
 // short policy line so the user understands what to do.
-export function BanOverlay({ bannedUntilMs, reason }: { bannedUntilMs: number; reason: string }) {
+// onClose renders an "×" in the top-right corner when the overlay is opened
+// manually (e.g. from the HUD warning icon). When omitted the overlay stays
+// modal — used by Raids/Duel screens where dismissing would defeat the point.
+export function BanOverlay({
+  bannedUntilMs,
+  reason,
+  onClose,
+}: {
+  bannedUntilMs: number
+  reason: string
+  onClose?: () => void
+}) {
   const { t } = useTranslation()
   const [now, setNow] = useState(Date.now())
 
@@ -26,6 +43,14 @@ export function BanOverlay({ bannedUntilMs, reason }: { bannedUntilMs: number; r
   return (
     <div style={s.wrap} role="dialog" aria-modal="true">
       <div style={s.card}>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="close"
+            style={s.closeBtn}
+          >×</button>
+        )}
         <div style={s.icon} aria-hidden="true">⛔</div>
         <h2 style={s.title}>{t('ban.title')}</h2>
         <p style={s.text}>{t('ban.text')}</p>
@@ -45,6 +70,7 @@ const s: Record<string, React.CSSProperties> = {
     zIndex: 80, padding: 24,
   },
   card: {
+    position: 'relative',
     maxWidth: 360, width: '100%',
     padding: '22px 22px 18px',
     borderRadius: 16,
@@ -63,4 +89,10 @@ const s: Record<string, React.CSSProperties> = {
     margin: '0 0 10px',
   },
   reason:{ fontSize: 10, color: '#94a3b8', margin: 0 },
+  closeBtn: {
+    position: 'absolute', top: 6, right: 10,
+    background: 'transparent', border: 'none',
+    color: '#fecaca', fontSize: 22, cursor: 'pointer',
+    padding: '2px 8px', lineHeight: 1,
+  },
 }

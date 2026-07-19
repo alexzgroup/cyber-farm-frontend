@@ -88,6 +88,48 @@
 }
 .plus:hover { background: rgba(130, 200, 255, 0.24); }
 
+.battery {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 200, 60, 0.14);
+  border: 1px solid rgba(255, 200, 60, 0.35);
+  color: #ffcc44;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, transform 0.1s;
+  filter: drop-shadow(0 0 4px rgba(255, 200, 60, 0.35));
+}
+.battery:hover  { background: rgba(255, 200, 60, 0.26); }
+.battery:active { transform: scale(0.92); }
+
+@keyframes banPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+.banWarning {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.28), rgba(127, 29, 29, 0.35));
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  color: #ffb8b8;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  animation: banPulse 1.6s ease-out infinite;
+}
+.banWarning:hover  { color: #ffdddd; }
+.banWarning:active { transform: scale(0.92); }
+
 .bar {
   height: 7px;
   border-radius: 999px;

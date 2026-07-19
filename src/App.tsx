@@ -6,6 +6,8 @@ import { BottomNav } from './components/BottomNav'
 import { RaidAlert } from './components/RaidAlert'
 import { RaidDefendPrompt } from './components/RaidDefendPrompt'
 import { ShieldModal } from './components/ShieldModal'
+import { BatteryModal } from './components/BatteryModal'
+import { BanOverlay } from './components/BanOverlay'
 import { TonDepositToast } from './components/TonDepositToast'
 import { MarketSoldToast } from './components/MarketSoldToast'
 import { ReferralEarnedToast } from './components/ReferralEarnedToast'
@@ -22,6 +24,7 @@ import { FarmScreen } from './screens/FarmScreen'
 import { ShopScreen } from './screens/ShopScreen'
 import { RaidsScreen } from './screens/RaidsScreen'
 import { EquipmentScreen } from './screens/EquipmentScreen'
+import { EquipmentLevelScreen } from './screens/EquipmentLevelScreen'
 import { UnitDetailScreen } from './screens/UnitDetailScreen'
 import { MarketScreen } from './screens/MarketScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
@@ -53,6 +56,10 @@ export function App() {
   const shieldModalOpen  = useGameStore((s) => s.shieldModalOpen)
   const closeShieldModal = useGameStore((s) => s.closeShieldModal)
   const almostThereNeed  = useGameStore((s) => s.almostThereNeed)
+  const banOverlayOpen   = useGameStore((s) => s.banOverlayOpen)
+  const closeBanOverlay  = useGameStore((s) => s.closeBanOverlay)
+  const bannedUntil      = useGameStore((s) => s.bannedUntil)
+  const bannedReason     = useGameStore((s) => s.bannedReason)
 
   useEffect(() => { loadGameState() }, [loadGameState])
 
@@ -153,6 +160,10 @@ export function App() {
       <RaidAlert />
       <RaidDefendPrompt />
       <ShieldModal open={shieldModalOpen} onClose={closeShieldModal} />
+      <BatteryModal />
+      {banOverlayOpen && bannedUntil != null && bannedUntil > Date.now() && (
+        <BanOverlay bannedUntilMs={bannedUntil} reason={bannedReason} onClose={closeBanOverlay} />
+      )}
       {almostThereNeed !== null && (
         <AlmostThereModal need={almostThereNeed} onClose={() => useGameStore.setState({ almostThereNeed: null })} />
       )}
@@ -177,6 +188,7 @@ export function App() {
         {screen === 'market-history' && <MarketHistoryScreen />}
         {screen === 'contest'        && <ContestScreen />}
         {screen === 'equipment'   && <EquipmentScreen />}
+        {screen === 'equipment-level' && <EquipmentLevelScreen />}
         {screen === 'unit-detail' && <UnitDetailScreen />}
         {screen === 'profile'     && <ProfileScreen />}
         {screen === 'purchases'   && <PurchaseHistoryScreen />}

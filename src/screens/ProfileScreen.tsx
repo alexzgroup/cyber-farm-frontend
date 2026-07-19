@@ -94,6 +94,9 @@ export function ProfileScreen() {
   const turrets          = useGameStore((s) => s.turrets)
   const incomeRateTotal  = useGameStore((s) => s.incomeRateTotal)
   const userId           = useGameStore((s) => s.userId)
+  const bannedUntil      = useGameStore((s) => s.bannedUntil)
+  const bannedReason     = useGameStore((s) => s.bannedReason)
+  const openBanOverlay   = useGameStore((s) => s.openBanOverlay)
   const firstName        = useGameStore((s) => s.firstName)
   const lastName         = useGameStore((s) => s.lastName)
   const username         = useGameStore((s) => s.username)
@@ -265,6 +268,26 @@ export function ProfileScreen() {
   const incomePerHour = Math.round(incomeRateTotal * 3600)
   const dronesActive  = drones.filter(d => !d.isBroken).length
 
+  // Live countdown for the ban banner. Ticks once a second only when there's
+  // an active ban so idle profiles don't force re-renders.
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    if (bannedUntil == null || bannedUntil <= Date.now()) return
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [bannedUntil])
+  const isBanned = bannedUntil != null && bannedUntil > now
+  const banRemaining = isBanned ? Math.max(0, bannedUntil! - now) : 0
+  const formatBan = (ms: number) => {
+    const total = Math.ceil(ms / 1000)
+    const d = Math.floor(total / 86400)
+    const h = Math.floor((total % 86400) / 3600)
+    const m = Math.floor((total % 3600) / 60)
+    const s = total % 60
+    const p = (n: number) => n.toString().padStart(2, '0')
+    return d > 0 ? `${p(d)}:${p(h)}:${p(m)}:${p(s)}` : `${p(h)}:${p(m)}:${p(s)}`
+  }
+
   return (
     <div className={styles.screen}>
       {/* Top bar */}
@@ -280,6 +303,24 @@ export function ProfileScreen() {
 
       <div className={styles.body}>
         <div className={styles.stack}>
+
+          {isBanned && (
+            <button
+              type="button"
+              onClick={openBanOverlay}
+              className={styles.banBanner}
+              aria-label={t('ban.title')}
+            >
+              <span className={styles.banBannerIcon}>⛔</span>
+              <span className={styles.banBannerText}>
+                <span className={styles.banBannerTitle}>{t('ban.title')}</span>
+                <span className={styles.banBannerSub}>
+                  {formatBan(banRemaining)} · {t('ban.reason', { reason: bannedReason || t('ban.reasonAuto') })}
+                </span>
+              </span>
+              <span className={styles.banBannerArrow}>→</span>
+            </button>
+          )}
 
           {/* ── Hero ── */}
           <section className={styles.card + ' ' + styles.hero}>

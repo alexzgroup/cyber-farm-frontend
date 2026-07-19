@@ -1,0 +1,98 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  position: relative;
+  background: linear-gradient(180deg, #1a2028 0%, #0d1117 100%);
+  border: 1px solid rgba(255, 200, 60, 0.35);
+  border-radius: 16px;
+  padding: 28px 22px 22px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255, 200, 60, 0.15);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.closeBtn:hover { color: #ccc; }
+
+.icon {
+  font-size: 42px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 12px rgba(255, 200, 60, 0.5));
+}
+
+.title {
+  font-size: 20px;
+  color: #ffcc44;
+  margin: 0 0 10px;
+  font-family: monospace;
+  font-weight: bold;
+}
+
+.desc {
+  color: #cfe;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+  opacity: 0.85;
+}
+
+.buyBtn {
+  width: 100%;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #ffcc44 0%, #ff8800 100%);
+  border: none;
+  border-radius: 10px;
+  color: #1a0e00;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: monospace;
+  letter-spacing: 0.03em;
+  transition: transform 0.1s, box-shadow 0.15s;
+}
+.buyBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255, 200, 60, 0.35);
+}
+.buyBtn:active:not(:disabled) { transform: translateY(0); }
+.buyBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cooldown {
+  padding: 14px 12px;
+  background: rgba(255, 200, 60, 0.08);
+  border: 1px solid rgba(255, 200, 60, 0.25);
+  border-radius: 10px;
+  color: #ffcc44;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.toast {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: monospace;
+}
+.toastOk  { background: rgba(0, 200, 100, 0.12); color: #4ee0a0; border: 1px solid rgba(0, 200, 100, 0.3); }
+.toastErr { background: rgba(255, 80, 80, 0.12); color: #ff8080; border: 1px solid rgba(255, 80, 80, 0.3); }

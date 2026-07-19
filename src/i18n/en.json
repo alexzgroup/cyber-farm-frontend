@@ -30,7 +30,7 @@
     "laterBtn": "Later"
   },
   "ban": {
-    "title": "Raids temporarily blocked",
+    "title": "Some features are blocked",
     "text": "You've been temporarily banned for breaking the rules. Raids will be available again when the timer ends.",
     "reason": "Reason: {{reason}}",
     "reasonAuto": "automatic anti-cheat"
@@ -233,6 +233,16 @@
     "detailsUpgradesHeader": "Upgrades",
     "detailsNoUpgrades": "This unit has no upgrades yet"
   },
+  "battery": {
+    "title": "Not enough energy",
+    "desc": "A battery gives +{{amount}} energy so you can tap the whole group at once. Available once a day.",
+    "buyFor": "Buy for {{stars}}⭐",
+    "cooldown": "Already used. Next available at {{time}}",
+    "processing": "Waiting for payment…",
+    "paid": "⚡ Energy refilled",
+    "cancelled": "Payment cancelled",
+    "failed": "Payment failed"
+  },
   "equipment": {
     "title": "Equipment",
     "drones": "Drones",
@@ -244,7 +254,13 @@
     "myDrones": "⚡ My Drones",
     "myTurrets": "🛡 Defense Turrets",
     "bonusLvl": "{{val}} × level",
-    "historyBtn": "History"
+    "historyBtn": "History",
+    "filterType": "Type",
+    "filterLevel": "Level",
+    "filterKind": "Kind",
+    "filterAll": "All",
+    "total": "Total: {{count}}",
+    "pageOf": "{{page}} / {{total}}"
   },
   "purchases": {
     "title": "Purchase History",

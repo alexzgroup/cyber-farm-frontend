@@ -1,11 +1,34 @@
 import Phaser from 'phaser'
 import i18n from '../../i18n'
-import { useGameStore, DRONE_UPGRADES, type Drone, type Turret } from '../../store/gameStore'
+import { useGameStore, DRONE_UPGRADES, type Drone, type Turret, type DroneType } from '../../store/gameStore'
 import { getDroneTextureName, getFarmTurretTextureName } from '../utils/droneGraphics'
 import { soundManager } from '../utils/soundManager'
-import { syncPositions as apiSyncPositions } from '../../api'
 
 interface FloatingText { text: Phaser.GameObjects.Text; vy: number; life: number }
+
+// Farm-scene units are grouped by (type × level). Each bucket becomes a single
+// sprite with a "×N" badge — indispensable when a player owns hundreds of drones,
+// because the previous "one sprite per unit" strategy hit ~300 sprites +
+// ~300 Text objects created/destroyed every second and locked mid-tier phones.
+// The badge counts are visual only; upgrades, sales, and detail views still
+// operate on individual DB units via the Equipment screen.
+interface DroneBucket {
+  key:       string      // "d:1:1"
+  droneType: DroneType
+  level:     number
+  members:   Drone[]     // healthy drones only
+}
+interface BrokenBucket {
+  count:      number
+  sampleType: DroneType   // texture picker — first broken drone's type
+}
+interface TurretBucket {
+  key:     string          // "t:1"
+  level:   number
+  members: Turret[]
+}
+
+const BROKEN_KEY = 'broken'
 
 const GRID_COLS   = 3
 const DRONE_CELL  = 200
@@ -13,16 +36,22 @@ const TURRET_CELL = 200
 const POSITIONS_KEY = 'cyber-farm-positions'
 const DRONE_START_Y = 80   // world Y where drones begin
 
+const droneBucketKey  = (d: Drone):  string => `d:${d.droneType}:${d.level}`
+const turretBucketKey = (t: Turret): string => `t:${t.level}`
+
 export class FarmScene extends Phaser.Scene {
-  private droneSprites:   Map<string, Phaser.GameObjects.Image> = new Map()
-  private turretSprites:  Map<string, Phaser.GameObjects.Image> = new Map()
-  private brokenLabels:   Map<string, Phaser.GameObjects.Text>  = new Map()
-  private levelLabels:    Map<string, Phaser.GameObjects.Text>  = new Map()
-  private turretLabels:   Map<string, Phaser.GameObjects.Text>  = new Map()
-  private hoverTweens:    Map<string, Phaser.Tweens.Tween>      = new Map()
-  private smokeTimers:    Map<string, Phaser.Time.TimerEvent>   = new Map()
-  private floatingTexts:  FloatingText[] = []
-  private emitter!:       Phaser.GameObjects.Particles.ParticleEmitter
+  private droneBuckets:      Map<string, DroneBucket>            = new Map()
+  private brokenBucket:      BrokenBucket | null                 = null
+  private turretBuckets:     Map<string, TurretBucket>           = new Map()
+  private droneSprites:      Map<string, Phaser.GameObjects.Image> = new Map()
+  private turretSprites:     Map<string, Phaser.GameObjects.Image> = new Map()
+  private levelLabels:       Map<string, Phaser.GameObjects.Text>  = new Map()
+  private turretLabels:      Map<string, Phaser.GameObjects.Text>  = new Map()
+  private brokenWrenchBadge: Phaser.GameObjects.Text | null       = null
+  private hoverTweens:       Map<string, Phaser.Tweens.Tween>      = new Map()
+  private smokeTimers:       Map<string, Phaser.Time.TimerEvent>   = new Map()
+  private floatingTexts:     FloatingText[] = []
+  private emitter!:          Phaser.GameObjects.Particles.ParticleEmitter
   private unsubscribeStore?: () => void
   private isAlive         = false
   private isDraggingUnit  = false
@@ -34,24 +63,32 @@ export class FarmScene extends Phaser.Scene {
     const { width: W, height: H } = this.scale
     const { drones, turrets } = useGameStore.getState()
 
-    this.worldH = this.calcWorldH(H, drones.length, turrets.length)
+    this.rebuildBuckets(drones, turrets)
+    // Broken bucket is a fixed screen overlay, NOT part of the drone grid —
+    // it doesn't consume a slot so healthy buckets keep their natural layout.
+    const droneBucketCount  = this.droneBuckets.size
+    const turretBucketCount = this.turretBuckets.size
 
-    this.drawBackground(W, this.worldH, drones.length)
-    // Grid removed by design — replaced with a big Matrix-style dome behind
-    // the whole scene. See createMatrixSphere() for the layers.
+    this.worldH = this.calcWorldH(H, droneBucketCount, turretBucketCount)
+
+    this.drawBackground(W, this.worldH, droneBucketCount)
     this.createMatrixSphere(W, this.worldH)
     this.createParticles()
-    this.spawnInitialDrones()
-    this.spawnInitialTurrets()
+    this.spawnDroneBucketSprites()
+    this.spawnTurretBucketSprites()
     this.setupDrag()
     this.setupCameraControls(W, this.worldH)
 
     this.isAlive = true
     this.unsubscribeStore = useGameStore.subscribe((state) => {
-      this.syncDrones(state.drones)
+      this.syncFromStore(state.drones, state.turrets)
     })
 
-    // Passive income floats — every second
+    // Keep the fixed-screen broken sprite pinned to the viewport corner when
+    // the game canvas resizes (device orientation, TMA layout shift, etc.).
+    this.scale.on('resize', this.repositionBrokenSprite, this)
+
+    // Passive income floats — every second, aggregated per bucket.
     this.time.addEvent({
       delay: 1000, repeat: -1,
       callback: this.tickPassiveFloats,
@@ -63,17 +100,54 @@ export class FarmScene extends Phaser.Scene {
       this.unsubscribeStore?.()
       this.smokeTimers.forEach((t) => t.destroy())
       this.smokeTimers.clear()
-      // Restore sprite alphas
       this.droneSprites.forEach((s) => { if (s.scene) s.setAlpha(1) })
     }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup)
     this.events.once(Phaser.Scenes.Events.DESTROY, cleanup)
   }
 
-  // ─── World height calculation ────────────────────────────────────────────────
-  private calcWorldH(H: number, droneCount: number, turretCount: number): number {
-    const dc = Math.max(droneCount, 1)
-    const tc = Math.max(turretCount, 0)
+  // ─── Bucket construction ─────────────────────────────────────────────────
+  // Healthy drones are grouped by (type × level). ALL broken drones — no
+  // matter their type or level — collapse into a single "broken" bucket
+  // that acts as a shortcut to the shop's repair section.
+  private rebuildBuckets(drones: Drone[], turrets: Turret[]) {
+    this.droneBuckets.clear()
+    let brokenCount = 0
+    let brokenSampleType: DroneType | null = null
+    for (const d of drones) {
+      if (d.isBroken) {
+        brokenCount++
+        if (brokenSampleType == null) brokenSampleType = d.droneType
+        continue
+      }
+      const key = droneBucketKey(d)
+      let bucket = this.droneBuckets.get(key)
+      if (!bucket) {
+        bucket = { key, droneType: d.droneType, level: d.level, members: [] }
+        this.droneBuckets.set(key, bucket)
+      }
+      bucket.members.push(d)
+    }
+    this.brokenBucket = brokenCount > 0 && brokenSampleType != null
+      ? { count: brokenCount, sampleType: brokenSampleType }
+      : null
+
+    this.turretBuckets.clear()
+    for (const t of turrets) {
+      const key = turretBucketKey(t)
+      let bucket = this.turretBuckets.get(key)
+      if (!bucket) {
+        bucket = { key, level: t.level, members: [] }
+        this.turretBuckets.set(key, bucket)
+      }
+      bucket.members.push(t)
+    }
+  }
+
+  // ─── World height calculation (bucket-based, not per-unit) ───────────────
+  private calcWorldH(H: number, droneBuckets: number, turretBuckets: number): number {
+    const dc = Math.max(droneBuckets, 1)
+    const tc = Math.max(turretBuckets, 0)
     const droneRows  = Math.ceil(dc / GRID_COLS)
     const turretRows = Math.ceil(tc / GRID_COLS)
     const droneZoneH  = DRONE_START_Y + droneRows * DRONE_CELL
@@ -82,35 +156,29 @@ export class FarmScene extends Phaser.Scene {
     return Math.max(H * 2.2, droneZoneH + turretZoneH)
   }
 
-  private separatorY(droneCount: number): number {
-    const rows = Math.ceil(Math.max(droneCount, 1) / GRID_COLS)
+  private separatorY(droneBuckets: number): number {
+    const rows = Math.ceil(Math.max(droneBuckets, 1) / GRID_COLS)
     return DRONE_START_Y + rows * DRONE_CELL + 177
   }
 
-  // ─── Background: dark base with subtle zone tint + neon separator. The
-  //     visual signature comes from createMatrixSphere() below. ─────────────
-  private drawBackground(W: number, worldH: number, droneCount: number) {
-    const sepY = this.separatorY(droneCount)
+  private drawBackground(W: number, worldH: number, droneBucketCount: number) {
+    const sepY = this.separatorY(droneBucketCount)
     const PAD  = 2000
 
     const bg = this.add.graphics().setDepth(-100)
-    // Base — near-black void.
     bg.fillStyle(0x02040a, 1)
     bg.fillRect(-PAD, -PAD, W + PAD * 2, worldH + PAD * 2)
 
-    // Zone tints (very subtle — the matrix sphere is the main visual).
     bg.fillStyle(0x061a2a, 0.55)
     bg.fillRect(-PAD, -PAD, W + PAD * 2, sepY + PAD)
     bg.fillStyle(0x061a10, 0.55)
     bg.fillRect(-PAD, sepY, W + PAD * 2, worldH - sepY + PAD)
 
-    // Separator between drone and defense zones.
     bg.lineStyle(6, 0x00ff88, 0.08)
     bg.lineBetween(-PAD, sepY, W + PAD, sepY)
     bg.lineStyle(2, 0x00ff88, 0.35)
     bg.lineBetween(-PAD, sepY, W + PAD, sepY)
 
-    // Zone labels.
     this.add.text(10, 68, 'DRONE ZONE', {
       fontSize: '9px', fontFamily: 'monospace', color: '#00ff88',
     }).setAlpha(0.35).setDepth(-1)
@@ -119,51 +187,32 @@ export class FarmScene extends Phaser.Scene {
     }).setAlpha(0.35).setDepth(-1)
   }
 
-  /**
-   * The scene sits inside a giant Matrix-style dome: a huge translucent sphere
-   * that fills the viewport and streams falling green kana / hex characters
-   * inside its circle. The sphere is anchored to the camera (scrollFactor: 0)
-   * so it stays behind the drones no matter how the player pans or zooms.
-   *
-   * Layers (back → front):
-   *   1) Base dark overlay (whole screen)
-   *   2) Sphere body — stack of tinted-green circles simulating a radial gradient
-   *   3) Matrix rain columns (Phaser Text objects), clipped to a circular mask
-   *   4) Bright rim ring + faint outer glow so the sphere reads as a volume
-   */
   private createMatrixSphere(W: number, _worldH: number) {
     const H = this.scale.height
     const cx = W / 2
     const cy = H / 2
     const R  = Math.max(W, H) * 0.62
 
-    // ── Sphere = just a neon rim on the dark base — no green fill layers ─────
-    // Kept as a distinct object so we can still breathe it via a tween.
     const rim = this.add.graphics().setDepth(-88).setScrollFactor(0)
-    rim.lineStyle(8, 0x00ff88, 0.06);  rim.strokeCircle(cx, cy, R * 1.02)   // wide outer haze
-    rim.lineStyle(4, 0x00ff88, 0.20);  rim.strokeCircle(cx, cy, R * 1.00)   // mid glow
-    rim.lineStyle(2, 0x66ffaa, 0.80);  rim.strokeCircle(cx, cy, R * 0.98)   // crisp neon edge
-    // Highlight arc top-left — "glass ball" cue only, very subtle.
+    rim.lineStyle(8, 0x00ff88, 0.06);  rim.strokeCircle(cx, cy, R * 1.02)
+    rim.lineStyle(4, 0x00ff88, 0.20);  rim.strokeCircle(cx, cy, R * 1.00)
+    rim.lineStyle(2, 0x66ffaa, 0.80);  rim.strokeCircle(cx, cy, R * 0.98)
     rim.lineStyle(2, 0xffffff, 0.14)
     rim.beginPath()
     rim.arc(cx, cy, R * 0.94, Math.PI * 1.15, Math.PI * 1.55, false)
     rim.strokePath()
-    // Slow neon breathing.
     this.tweens.add({
       targets: rim,
       alpha: { from: 0.7, to: 1 },
       duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     })
 
-    // ── 3) Matrix rain — vertical columns of falling green chars. Each tile
-    //       fades based on its distance from the sphere centre so the rain
-    //       naturally hugs the ball shape, no Geometry Mask needed.
     const CHARS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ0123456789ABCDEF#$%&＊+ﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓ'.split('')
     const rand = () => CHARS[Math.floor(Math.random() * CHARS.length)]
 
     interface RainTile {
       text: Phaser.GameObjects.Text
-      baseAlpha: number         // brightness driven by position in the column
+      baseAlpha: number
     }
     interface Column { tiles: RainTile[]; speed: number; colX: number; len: number }
     const columns: Column[] = []
@@ -173,11 +222,10 @@ export class FarmScene extends Phaser.Scene {
 
     for (let ci = 0; ci < nCols; ci++) {
       const colX = ci * COL_WIDTH
-      // Skip columns clearly outside the sphere.
       if (Math.abs(colX - cx) > R * 1.05) continue
 
       const columnLen = 12 + Math.floor(Math.random() * 6)
-      const speed = 34 + Math.random() * 55   // world px per second
+      const speed = 34 + Math.random() * 55
 
       const tiles: RainTile[] = []
       for (let ri = 0; ri < columnLen; ri++) {
@@ -192,15 +240,12 @@ export class FarmScene extends Phaser.Scene {
         tiles.push({ text: t, baseAlpha })
       }
 
-      // Initial vertical offset so columns don't fall in sync.
       const startOffset = -Math.random() * H
       for (const tile of tiles) tile.text.y += startOffset
 
       columns.push({ tiles, speed, colX, len: columnLen })
     }
 
-    // Single update driver that advances every column and applies radial
-    // opacity so text fades out toward the sphere edge (and vanishes outside).
     this.events.on(Phaser.Scenes.Events.PRE_UPDATE, (_time: number, deltaMs: number) => {
       const dt = deltaMs / 1000
       for (const col of columns) {
@@ -210,8 +255,6 @@ export class FarmScene extends Phaser.Scene {
           if (tile.text.y > H + 20) {
             tile.text.y -= (col.len + 2) * 20 + Math.random() * 60
           }
-          // Distance-from-sphere-centre fade — inside radius fully visible,
-          // fades to 0 across the last 25% of the radius, hidden outside.
           const dx = tile.text.x - cx
           const dy2 = tile.text.y - cy
           const d  = Math.hypot(dx, dy2)
@@ -222,102 +265,12 @@ export class FarmScene extends Phaser.Scene {
               : 0
           tile.text.setAlpha(tile.baseAlpha * fade)
         }
-        // ~4 % chance to randomise one tile per column per frame
         if (Math.random() < 0.04) {
           const idx = Math.floor(Math.random() * col.tiles.length)
           col.tiles[idx].text.setText(rand())
         }
       }
     })
-  }
-
-  /**
-   * (kept for possible future use) Farming lightning bolts — small forked
-   * strokes that briefly flash around the drones. Currently unused; the scene
-   * uses the Matrix sphere instead. See createMatrixSphere().
-   */
-  private _createLightningLayer(W: number, worldH: number) {
-    const g = this.add.graphics().setDepth(-10)
-
-    const drawBolt = (x0: number, y0: number, x1: number, y1: number, color: number) => {
-      // Split the run into 6-9 segments and jitter each vertex sideways so
-      // the bolt looks organic instead of straight.
-      const segs = Phaser.Math.Between(6, 9)
-      const dx = (x1 - x0) / segs
-      const dy = (y1 - y0) / segs
-      let px = x0, py = y0
-      g.lineStyle(3, color, 0.35)
-      for (let i = 1; i <= segs; i++) {
-        const jitter = 12
-        const nx = x0 + dx * i + Phaser.Math.Between(-jitter, jitter)
-        const ny = y0 + dy * i + Phaser.Math.Between(-jitter, jitter)
-        g.lineBetween(px, py, nx, ny)
-        // Occasional branch — shorter, softer.
-        if (Math.random() < 0.35 && i < segs) {
-          const bx = nx + Phaser.Math.Between(-24, 24)
-          const by = ny + Phaser.Math.Between(-10, 24)
-          g.lineStyle(2, color, 0.18)
-          g.lineBetween(nx, ny, bx, by)
-          g.lineStyle(3, color, 0.35)
-        }
-        px = nx; py = ny
-      }
-      // Bright core along the same path — thinner, more opaque.
-      g.lineStyle(1, 0xffffff, 0.75)
-      g.lineBetween(x0, y0, x1, y1)
-    }
-
-    const strike = () => {
-      g.clear()
-      // 3-6 bolts per strike — feels like the whole farm is crackling with
-      // mining energy instead of a single sparse zap.
-      const bolts = Phaser.Math.Between(3, 6)
-      for (let i = 0; i < bolts; i++) {
-        const x = Phaser.Math.Between(20, W - 20)
-        const y = Phaser.Math.Between(60, worldH - 60)
-        const len = Phaser.Math.Between(60, 140)
-        const dir = Math.random() < 0.5 ? -1 : 1
-        // Pick a colour that pops on the dark nebula.
-        const col = [0x00e5ff, 0xa855f7, 0x39ff14, 0xffd700][Phaser.Math.Between(0, 3)]
-        drawBolt(x, y - len / 2, x + dir * Phaser.Math.Between(20, 60), y + len / 2, col)
-      }
-      // Fade the whole flash out.
-      g.setAlpha(1)
-      this.tweens.add({
-        targets: g,
-        alpha: { from: 1, to: 0 },
-        duration: 520,
-        ease: 'Cubic.easeOut',
-      })
-    }
-
-    // Kick off first strike almost immediately and repeat frequently so the
-    // scene always has SOME lightning visible.
-    const schedule = () => {
-      this.time.delayedCall(Phaser.Math.Between(220, 700), () => {
-        if (!this.isAlive) return
-        strike()
-        schedule()
-      })
-    }
-    strike()
-    schedule()
-  }
-
-  private createGridLines(W: number, worldH: number) {
-    // Extend grid 2000px beyond world so zooming out never shows raw black.
-    // Two-tone grid: a soft base + brighter accent every 5th line for depth,
-    // sitting above the nebula but below units.
-    const PAD  = 2000
-    const step = 40
-    const grid = this.add.graphics().setDepth(-70)
-    grid.lineStyle(1, 0x00e5ff, 0.045)
-    for (let x = -PAD; x < W + PAD; x += step) grid.lineBetween(x, -PAD, x, worldH + PAD)
-    for (let y = -PAD; y < worldH + PAD; y += step) grid.lineBetween(-PAD, y, W + PAD, y)
-    // Accent grid — every 200px, slightly brighter, gives a "surface" feel.
-    grid.lineStyle(1, 0x00e5ff, 0.16)
-    for (let x = -PAD; x < W + PAD; x += step * 5) grid.lineBetween(x, -PAD, x, worldH + PAD)
-    for (let y = -PAD; y < worldH + PAD; y += step * 5) grid.lineBetween(-PAD, y, W + PAD, y)
   }
 
   private createParticles() {
@@ -335,7 +288,6 @@ export class FarmScene extends Phaser.Scene {
     let lastPinchDist = 0
 
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
-      // Pinch zoom (2 touch points)
       const ptrs = (this.input.manager.pointers as Phaser.Input.Pointer[]).filter(p => p.isDown)
       if (ptrs.length >= 2) {
         const dist = Phaser.Math.Distance.Between(ptrs[0].x, ptrs[0].y, ptrs[1].x, ptrs[1].y)
@@ -349,7 +301,6 @@ export class FarmScene extends Phaser.Scene {
       }
       lastPinchDist = 0
 
-      // Single-pointer pan (skip if dragging a unit)
       if (!ptr.isDown || this.isDraggingUnit) return
       cam.scrollX -= ptr.velocity.x / cam.zoom
       cam.scrollY -= ptr.velocity.y / cam.zoom
@@ -357,13 +308,11 @@ export class FarmScene extends Phaser.Scene {
 
     this.input.on('pointerup', () => { lastPinchDist = 0 })
 
-    // Central zoom setter — applies clamp and broadcasts zoom level to React
     const setZoom = (z: number) => {
       cam.zoom = Phaser.Math.Clamp(z, 0.2, 3.0)
       document.dispatchEvent(new CustomEvent('farm-zoom-changed', { detail: { zoom: cam.zoom } }))
     }
 
-    // Desktop wheel: scroll = pan, Ctrl+scroll = zoom
     const canvas = this.sys.canvas
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey) {
@@ -377,14 +326,12 @@ export class FarmScene extends Phaser.Scene {
     }
     canvas.addEventListener('wheel', onWheel, { passive: false })
 
-    // React zoom buttons bridge
     const onZoom = (e: Event) => {
       const { delta } = (e as CustomEvent<{ delta: number }>).detail
       setZoom(cam.zoom + delta)
     }
     canvas.addEventListener('farm-zoom', onZoom)
 
-    // React reset-view button bridge
     const onReset = () => {
       setZoom(1.0)
       cam.scrollX = 0
@@ -392,36 +339,33 @@ export class FarmScene extends Phaser.Scene {
     }
     canvas.addEventListener('farm-reset-view', onReset)
 
-    // Reset all unit positions to default grid layout
     const onResetPositions = () => {
-      const { drones, turrets } = useGameStore.getState()
+      const droneKeys  = Array.from(this.droneBuckets.keys())
+      const turretKeys = Array.from(this.turretBuckets.keys())
 
-      // Move drones back to default grid (drone zone)
-      drones.forEach((drone, i) => {
-        const sprite = this.droneSprites.get(drone.id)
+      droneKeys.forEach((key, i) => {
+        const sprite = this.droneSprites.get(key)
         if (!sprite) return
-        const pos = this.defaultDronePos(i, drones.length)
+        const pos = this.defaultDronePos(i, droneKeys.length)
         this.tweens.killTweensOf(sprite)
         sprite.setPosition(pos.x, pos.y)
         this.tweens.add({
           targets: sprite, y: pos.y - 14,
           duration: 1400 + i * 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
         })
-        this.levelLabels.get(drone.id)?.setPosition(pos.x, pos.y + 48)
-        const bl = this.brokenLabels.get(drone.id)
-        if (bl) bl.setPosition(pos.x, pos.y - 52)
+        this.levelLabels.get(key)?.setPosition(pos.x, pos.y + 48)
       })
+      // Broken sprite stays where it is — it's a fixed-screen UI element,
+      // not a grid tile, so "reset positions" doesn't move it.
 
-      // Move turrets back to default grid (defense zone)
-      turrets.forEach((turret, i) => {
-        const sprite = this.turretSprites.get(turret.id)
+      turretKeys.forEach((key, i) => {
+        const sprite = this.turretSprites.get(key)
         if (!sprite) return
-        const pos = this.defaultTurretPos(i, turrets.length, drones.length)
+        const pos = this.defaultTurretPos(i, turretKeys.length, droneKeys.length)
         sprite.setPosition(pos.x, pos.y)
-        this.levelLabels.get(turret.id)?.setPosition(pos.x, pos.y + 48)
+        this.turretLabels.get(key)?.setPosition(pos.x, pos.y + 50)
       })
 
-      // Reset camera view and save
       setZoom(1.0)
       cam.scrollX = 0
       cam.scrollY = 0
@@ -437,23 +381,38 @@ export class FarmScene extends Phaser.Scene {
     })
   }
 
-  // ─── Spawn drones ─────────────────────────────────────────────────────────
-  private spawnInitialDrones() {
-    const { drones } = useGameStore.getState()
+  // ─── Spawn drone bucket sprites (1 per (type, level) group) ─────────────
+  private spawnDroneBucketSprites() {
     const saved = this.loadPositions()
-    drones.forEach((drone, i) => {
-      // Priority: API position (positionX/Y) → localStorage → default grid
-      const apiPos = (drone.positionX && drone.positionX > 0 && drone.positionY && drone.positionY > 0)
-        ? { x: drone.positionX, y: drone.positionY }
-        : null
-      const pos = apiPos ?? saved[drone.id] ?? this.defaultDronePos(i, drones.length)
-      this.addDroneSprite(drone, pos.x, pos.y)
+    const keys  = Array.from(this.droneBuckets.keys())
+    keys.forEach((key, i) => {
+      const bucket = this.droneBuckets.get(key)!
+      const pos = saved[key] ?? this.defaultDronePos(i, keys.length)
+      this.addDroneBucketSprite(bucket, pos.x, pos.y)
     })
+    // Broken bucket lives on the camera (fixed screen overlay), not in the grid.
+    if (this.brokenBucket) this.addBrokenBucketSprite(this.brokenBucket)
+  }
+
+  // Screen-space anchor for the broken sprite: bottom-right, safely above the
+  // camera-zoom control column at the right edge (which occupies the last
+  // ~150px). Attached to the camera so it stays put when the player pans/zooms.
+  private brokenScreenPos(): { x: number; y: number } {
+    return { x: this.scale.width - 42, y: this.scale.height - 240 }
+  }
+
+  private repositionBrokenSprite() {
+    const sprite = this.droneSprites.get(BROKEN_KEY)
+    if (!sprite || !sprite.scene) return
+    const { x, y } = this.brokenScreenPos()
+    sprite.setPosition(x, y)
+    this.levelLabels.get(BROKEN_KEY)?.setPosition(x, y + 22)
+    this.brokenWrenchBadge?.setPosition(x + 14, y - 14)
   }
 
   private defaultDronePos(idx: number, total: number): { x: number, y: number } {
     const W = this.scale.width
-    const cols = Math.min(total, GRID_COLS)
+    const cols = Math.min(Math.max(total, 1), GRID_COLS)
     const cellW = W / (cols + 1)
     return {
       x: (idx % cols + 1) * cellW,
@@ -461,19 +420,16 @@ export class FarmScene extends Phaser.Scene {
     }
   }
 
-  private addDroneSprite(drone: Drone, x: number, y: number) {
-    const tex = getDroneTextureName(drone.droneType, drone.isBroken)
-    // Faux 3D perspective: squash Y so the drone reads as if viewed from
-    // slightly above (arms/props feel foreshortened, body looks like a hull
-    // instead of a flat sticker). Kept subtle so hitbox still matches.
+  private addDroneBucketSprite(bucket: DroneBucket, x: number, y: number) {
+    const tex = getDroneTextureName(bucket.droneType, false)
     const sprite = this.add.image(x, y, tex).setScale(0.85).setDepth(5)
     sprite.setInteractive({ useHandCursor: true, draggable: true })
-    sprite.setData('objectId', drone.id)
+    sprite.setData('bucketKey', bucket.key)
     sprite.setData('kind', 'drone')
-    this.droneSprites.set(drone.id, sprite)
+    this.droneSprites.set(bucket.key, sprite)
 
     sprite.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
-      this.onDroneTap(sprite, drone.id, ptr.worldX, ptr.worldY)
+      this.onDroneBucketTap(sprite, bucket.key, ptr.worldX, ptr.worldY)
     })
 
     const tween = this.tweens.add({
@@ -481,30 +437,70 @@ export class FarmScene extends Phaser.Scene {
       duration: 1400 + this.droneSprites.size * 200,
       yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
     })
-    this.hoverTweens.set(drone.id, tween)
+    this.hoverTweens.set(bucket.key, tween)
 
-    const lvlLabel = this.add.text(x, y + 48, `LVL ${drone.level}`, {
+    const lvlLabel = this.add.text(x, y + 48, this.droneLabelText(bucket), {
       fontSize: '10px', fontFamily: 'monospace', color: '#00e5ff',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(6)
-    this.levelLabels.set(drone.id, lvlLabel)
-
-    if (drone.isBroken) this.addBrokenLabel(drone.id, sprite)
+    this.levelLabels.set(bucket.key, lvlLabel)
   }
 
-  private addBrokenLabel(id: string, sprite: Phaser.GameObjects.Image) {
-    const label = this.add.text(sprite.x, sprite.y - 52, `🔧 ${i18n.t('farm.repair')}`, {
+  private droneLabelText(bucket: DroneBucket): string {
+    return `LVL ${bucket.level} ×${bucket.members.length}`
+  }
+
+  // Broken drones — one aggregated mini-sprite pinned to the camera at the
+  // bottom-right of the viewport. Small, wobbles gently, and only carries an
+  // "×N" badge underneath. Tap opens the shop's repair section; no drag, no
+  // farming animation, no hover tween.
+  private addBrokenBucketSprite(bucket: BrokenBucket) {
+    const { x, y } = this.brokenScreenPos()
+    const tex = getDroneTextureName(bucket.sampleType, true)
+    const sprite = this.add.image(x, y, tex)
+      .setScale(0.35)
+      .setDepth(50)
+      .setAlpha(0.95)
+      .setScrollFactor(0)
+    sprite.setInteractive({ useHandCursor: true })
+    sprite.setData('bucketKey', BROKEN_KEY)
+    sprite.setData('kind', 'drone')
+    this.droneSprites.set(BROKEN_KEY, sprite)
+
+    sprite.on('pointerdown', () => {
+      useGameStore.getState().setScreen('shop')
+    })
+
+    // Wobble — small side-to-side rotation, cheap and infinite.
+    const wobble = this.tweens.add({
+      targets: sprite,
+      angle: { from: -8, to: 8 },
+      duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    })
+    this.hoverTweens.set(BROKEN_KEY, wobble)
+
+    // Count badge under the sprite.
+    const label = this.add.text(x, y + 22, `×${bucket.count}`, {
       fontSize: '12px', fontFamily: 'monospace', color: '#ffaa44',
       stroke: '#000000', strokeThickness: 2,
-    }).setOrigin(0.5).setDepth(6)
-    this.brokenLabels.set(id, label)
-    this.startSmoke(id, sprite)
+    }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
+    this.levelLabels.set(BROKEN_KEY, label)
+
+    // Wrench badge — small 🔧 pinned to the top-right corner of the sprite so
+    // the icon reads as "needs repair" even at a glance.
+    this.brokenWrenchBadge = this.add.text(x + 14, y - 14, '🔧', {
+      fontSize: '13px', fontFamily: 'monospace', color: '#ffaa44',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(52).setScrollFactor(0)
+
+    // Ambient smoke/spark — pinned to the camera so it stays over the sprite
+    // when the player pans the farm.
+    this.startFixedSmoke(BROKEN_KEY, sprite)
   }
 
   private startSmoke(id: string, sprite: Phaser.GameObjects.Image) {
     if (this.smokeTimers.has(id)) return
 
-    // ── Smoke puffs — rise upward in a column ────────────────────────────
     const smokeTick = this.time.addEvent({
       delay: 260,
       loop: true,
@@ -514,18 +510,16 @@ export class FarmScene extends Phaser.Scene {
         const r2 = 6 + Math.random() * 5
         const r3 = 5 + Math.random() * 4
         const ox = (Math.random() - 0.5) * 10
-        // Position the Graphics object at sprite position, draw at local (0,0)
         const g = this.add.graphics()
           .setPosition(sprite.x + ox, sprite.y - 18)
           .setDepth(8)
-        // Fluffy cloud: three overlapping circles
         g.fillStyle(0x777777, 0.55); g.fillCircle(0,           0,      r1)
         g.fillStyle(0x999999, 0.40); g.fillCircle(r1 * 0.55,  -3,      r2)
         g.fillStyle(0x666666, 0.35); g.fillCircle(-r1 * 0.45, -2,      r3)
         g.fillStyle(0x444444, 0.25); g.fillCircle(0,           3,  r1 * 0.5)
         this.tweens.add({
           targets: g,
-          y:      sprite.y - 18 - (55 + Math.random() * 35), // rise up
+          y:      sprite.y - 18 - (55 + Math.random() * 35),
           x:      sprite.x + ox + (Math.random() - 0.5) * 16,
           scaleX: 2.6, scaleY: 2.6,
           alpha:  0,
@@ -536,7 +530,6 @@ export class FarmScene extends Phaser.Scene {
       },
     })
 
-    // ── Electric sparks (short-circuit) ─────────────────────────────────
     const sparkTick = this.time.addEvent({
       delay: 160,
       loop: true,
@@ -544,7 +537,6 @@ export class FarmScene extends Phaser.Scene {
         if (!sprite.scene) return
         const bolt = this.add.graphics().setDepth(9)
         const cx = sprite.x, cy = sprite.y
-        // Draw 2–3 random zigzag segments
         const segs = 2 + Math.floor(Math.random() * 2)
         const angle = Math.random() * Math.PI * 2
         const len = 14 + Math.random() * 10
@@ -561,7 +553,6 @@ export class FarmScene extends Phaser.Scene {
           )
         }
         bolt.strokePath()
-        // Bright tip
         bolt.fillStyle(0xffffff, 1)
         bolt.fillCircle(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len, 2)
         this.tweens.add({
@@ -570,7 +561,6 @@ export class FarmScene extends Phaser.Scene {
           onComplete: () => bolt.destroy(),
         })
 
-        // Occasional full-body flicker of the sprite
         if (Math.random() < 0.3) {
           this.tweens.add({
             targets: sprite, alpha: 0.35,
@@ -580,7 +570,66 @@ export class FarmScene extends Phaser.Scene {
       },
     })
 
-    // Store both timers under the same id using a composite key
+    this.smokeTimers.set(id, smokeTick)
+    this.smokeTimers.set(id + '_spark', sparkTick)
+  }
+
+  // Same idea as startSmoke, but every particle sits on the camera
+  // (scrollFactor 0) — used for the fixed-UI broken sprite so smoke plumes
+  // don't drift off-screen when the player pans the farm.
+  private startFixedSmoke(id: string, sprite: Phaser.GameObjects.Image) {
+    if (this.smokeTimers.has(id)) return
+
+    const smokeTick = this.time.addEvent({
+      delay: 320, loop: true,
+      callback: () => {
+        if (!sprite.scene) return
+        const r1 = 5 + Math.random() * 3
+        const r2 = 4 + Math.random() * 3
+        const ox = (Math.random() - 0.5) * 6
+        const g = this.add.graphics()
+          .setPosition(sprite.x + ox, sprite.y - 10)
+          .setDepth(49)
+          .setScrollFactor(0)
+        g.fillStyle(0x777777, 0.5); g.fillCircle(0,        0,      r1)
+        g.fillStyle(0x999999, 0.35); g.fillCircle(r1 * 0.5, -2,    r2)
+        g.fillStyle(0x555555, 0.30); g.fillCircle(-r1 * 0.4, -1,   r2 * 0.9)
+        this.tweens.add({
+          targets: g,
+          y:      sprite.y - 10 - (30 + Math.random() * 18),
+          x:      sprite.x + ox + (Math.random() - 0.5) * 10,
+          scaleX: 1.8, scaleY: 1.8,
+          alpha:  0,
+          duration: 1400 + Math.random() * 500,
+          ease:   'Sine.easeOut',
+          onComplete: () => g.destroy(),
+        })
+      },
+    })
+
+    const sparkTick = this.time.addEvent({
+      delay: 220, loop: true,
+      callback: () => {
+        if (!sprite.scene) return
+        const bolt = this.add.graphics().setDepth(50).setScrollFactor(0)
+        const cx = sprite.x, cy = sprite.y
+        const angle = Math.random() * Math.PI * 2
+        const len = 8 + Math.random() * 6
+        bolt.lineStyle(1.2, 0xffee22, 0.85)
+        bolt.beginPath()
+        bolt.moveTo(cx, cy)
+        bolt.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len)
+        bolt.strokePath()
+        bolt.fillStyle(0xffffff, 1)
+        bolt.fillCircle(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len, 1.5)
+        this.tweens.add({
+          targets: bolt, alpha: 0,
+          duration: 120,
+          onComplete: () => bolt.destroy(),
+        })
+      },
+    })
+
     this.smokeTimers.set(id, smokeTick)
     this.smokeTimers.set(id + '_spark', sparkTick)
   }
@@ -590,27 +639,40 @@ export class FarmScene extends Phaser.Scene {
     this.smokeTimers.delete(id)
     this.smokeTimers.get(id + '_spark')?.destroy()
     this.smokeTimers.delete(id + '_spark')
-    // Restore sprite alpha in case it was mid-flicker
     const sprite = this.droneSprites.get(id)
     if (sprite?.scene) sprite.setAlpha(1)
   }
 
-  // ─── Spawn turrets ─────────────────────────────────────────────────────────
-  private spawnInitialTurrets() {
-    const { turrets, drones } = useGameStore.getState()
+  // Tear down all objects owned by a drone bucket (healthy OR broken).
+  private destroyDroneSprite(key: string) {
+    this.droneSprites.get(key)?.destroy()
+    this.droneSprites.delete(key)
+    this.levelLabels.get(key)?.destroy()
+    this.levelLabels.delete(key)
+    this.stopSmoke(key)
+    this.hoverTweens.get(key)?.stop()
+    this.hoverTweens.delete(key)
+    if (key === BROKEN_KEY) {
+      this.brokenWrenchBadge?.destroy()
+      this.brokenWrenchBadge = null
+    }
+  }
+
+  // ─── Spawn turret bucket sprites ─────────────────────────────────────────
+  private spawnTurretBucketSprites() {
     const saved = this.loadPositions()
-    turrets.forEach((turret, i) => {
-      const apiPos = (turret.positionX && turret.positionX > 0 && turret.positionY && turret.positionY > 0)
-        ? { x: turret.positionX, y: turret.positionY }
-        : null
-      const pos = apiPos ?? saved[turret.id] ?? this.defaultTurretPos(i, turrets.length, drones.length)
-      this.addTurretSprite(turret, pos.x, pos.y)
+    const droneCount = this.droneBuckets.size
+    const keys = Array.from(this.turretBuckets.keys())
+    keys.forEach((key, i) => {
+      const bucket = this.turretBuckets.get(key)!
+      const pos = saved[key] ?? this.defaultTurretPos(i, keys.length, droneCount)
+      this.addTurretBucketSprite(bucket, pos.x, pos.y)
     })
   }
 
-  private defaultTurretPos(idx: number, total: number, droneCount: number): { x: number, y: number } {
+  private defaultTurretPos(idx: number, total: number, droneBucketCount: number): { x: number, y: number } {
     const W = this.scale.width
-    const sepY = this.separatorY(droneCount)
+    const sepY = this.separatorY(droneBucketCount)
     const cols = Math.min(Math.max(total, 1), GRID_COLS)
     const cellW = W / (cols + 1)
     return {
@@ -619,19 +681,19 @@ export class FarmScene extends Phaser.Scene {
     }
   }
 
-  private addTurretSprite(turret: Turret, x: number, y: number) {
-    const tex = getFarmTurretTextureName(turret.level)
+  private addTurretBucketSprite(bucket: TurretBucket, x: number, y: number) {
+    const tex = getFarmTurretTextureName(bucket.level)
     const sprite = this.add.image(x, y, tex).setScale(0.65).setDepth(5)
     sprite.setInteractive({ useHandCursor: true, draggable: true })
-    sprite.setData('objectId', turret.id)
+    sprite.setData('bucketKey', bucket.key)
     sprite.setData('kind', 'turret')
-    this.turretSprites.set(turret.id, sprite)
+    this.turretSprites.set(bucket.key, sprite)
 
-    const lbl = this.add.text(x, y + 50, `DEF LV${turret.level}`, {
+    const lbl = this.add.text(x, y + 50, `DEF LV${bucket.level} ×${bucket.members.length}`, {
       fontSize: '10px', fontFamily: 'monospace', color: '#00cc44',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(6)
-    this.turretLabels.set(turret.id, lbl)
+    this.turretLabels.set(bucket.key, lbl)
   }
 
   // ─── Drag setup ───────────────────────────────────────────────────────────
@@ -640,8 +702,8 @@ export class FarmScene extends Phaser.Scene {
 
     this.input.on('dragstart', (_ptr: Phaser.Input.Pointer, obj: Phaser.GameObjects.Image) => {
       this.isDraggingUnit = true
-      const id = obj.getData('objectId') as string
-      this.hoverTweens.get(id)?.pause()
+      const key = obj.getData('bucketKey') as string
+      this.hoverTweens.get(key)?.pause()
       obj.setDepth(20)
     })
 
@@ -653,17 +715,18 @@ export class FarmScene extends Phaser.Scene {
 
     this.input.on('dragend', (_ptr: Phaser.Input.Pointer, obj: Phaser.GameObjects.Image) => {
       this.isDraggingUnit = false
-      const id   = obj.getData('objectId') as string
+      const key  = obj.getData('bucketKey') as string
       const kind = obj.getData('kind') as string
       obj.setDepth(5)
 
-      if (kind === 'drone') {
-        this.hoverTweens.get(id)?.stop()
+      // Broken sprite doesn't hover — leave it grounded after drag.
+      if (kind === 'drone' && key !== BROKEN_KEY) {
+        this.hoverTweens.get(key)?.stop()
         const tween = this.tweens.add({
           targets: obj, y: obj.y - 14,
           duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
         })
-        this.hoverTweens.set(id, tween)
+        this.hoverTweens.set(key, tween)
       }
 
       this.savePositions()
@@ -672,37 +735,60 @@ export class FarmScene extends Phaser.Scene {
 
   // ─── Label sync ───────────────────────────────────────────────────────────
   private syncLabelsToSprites() {
-    this.droneSprites.forEach((sprite, id) => {
-      const lvl = this.levelLabels.get(id)
+    this.droneSprites.forEach((sprite, key) => {
+      // Broken sprite has its own tighter offsets and lives on the camera —
+      // don't overwrite them from the grid-drone loop.
+      if (key === BROKEN_KEY) return
+      const lvl = this.levelLabels.get(key)
       if (lvl) { lvl.x = sprite.x; lvl.y = sprite.y + 48 }
-      const brk = this.brokenLabels.get(id)
-      if (brk) { brk.x = sprite.x; brk.y = sprite.y - 52 }
     })
-    this.turretSprites.forEach((sprite, id) => {
-      const lbl = this.turretLabels.get(id)
+    this.turretSprites.forEach((sprite, key) => {
+      const lbl = this.turretLabels.get(key)
       if (lbl) { lbl.x = sprite.x; lbl.y = sprite.y + 50 }
     })
   }
 
-  // ─── Tap ─────────────────────────────────────────────────────────────────
-  private onDroneTap(sprite: Phaser.GameObjects.Image, id: string, wx: number, wy: number) {
-    const store = useGameStore.getState()
-    const drone = store.drones.find((d) => d.id === id)
-    if (drone?.isBroken) {
-      store.setScreen('shop')
+  // ─── Tap on a drone bucket ───────────────────────────────────────────────
+  // A single click represents "all healthy drones in the bucket harvesting at once":
+  // energy is charged per drone (clamped by available), gold is bonus × healthyCount.
+  // Matches the server contract (POST /user/tap accepts a `taps` count in one call).
+  private onDroneBucketTap(sprite: Phaser.GameObjects.Image, bucketKey: string, wx: number, wy: number) {
+    const store  = useGameStore.getState()
+    const bucket = this.droneBuckets.get(bucketKey)
+    if (!bucket || bucket.members.length === 0) return
+
+    // Banned players: no farming — show a red "blocked" hint and bail before
+    // any tap/sound/particle effect fires. Overlay isn't auto-reopened here
+    // (the HUD ⚠ icon is right there if they want to see the timer).
+    if (store.bannedUntil != null && store.bannedUntil > Date.now()) {
+      this.spawnFloatingText(wx, wy, i18n.t('ban.title'), '#ff6666')
       return
     }
+
     if (store.energy <= 0) {
       this.spawnFloatingText(wx, wy, i18n.t('farm.noEnergy'), '#ff6666')
       return
     }
+    // Group tap needs enough energy for every drone in the bucket. If short,
+    // upsell the Battery product — but respect the session-dismiss flag so we
+    // don't spam the modal after the user closed it once.
+    if (store.energy < bucket.members.length && !store.batteryModalDismissed) {
+      store.openBatteryModal()
+      return
+    }
+    // Bucket only contains healthy drones — broken units live in a separate
+    // aggregated bucket that opens the shop instead of farming.
+    const spend = Math.min(bucket.members.length, store.energy)
+    if (spend <= 0) return
     const maxLevel = Math.max(...store.drones.map((d) => d.level))
-    const bonus = DRONE_UPGRADES[maxLevel - 1].tapBonus
-    store.tap()
+    const bonusPer = DRONE_UPGRADES[maxLevel - 1].tapBonus
+    const totalBonus = bonusPer * spend
+
+    store.tap(spend)
     soundManager.tap()
     soundManager.coin()
     this.emitter.setPosition(wx, wy)
-    this.emitter.explode(6)
+    this.emitter.explode(Math.min(6 + Math.floor(spend / 5), 24))
 
     this.tweens.add({
       targets: sprite, scaleX: 0.86, scaleY: 0.58,
@@ -713,7 +799,14 @@ export class FarmScene extends Phaser.Scene {
       },
     })
 
-    this.spawnFloatingText(wx, wy - 20, `+${bonus.toFixed(1)}`, '#ffd700')
+    this.spawnFloatingText(wx, wy - 20, this.formatTapBonus(totalBonus, spend), '#ffd700')
+  }
+
+  private formatTapBonus(total: number, count: number): string {
+    // "+0.5" for a single-drone bucket, "+50.0 ×100" for a big harvest.
+    if (count <= 1) return `+${total.toFixed(1)}`
+    if (total >= 100) return `+${total.toFixed(0)} ×${count}`
+    return `+${total.toFixed(1)} ×${count}`
   }
 
   private spawnFloatingText(x: number, y: number, msg: string, color: string) {
@@ -724,50 +817,79 @@ export class FarmScene extends Phaser.Scene {
     this.floatingTexts.push({ text: t, vy: -1.5, life: 60 })
   }
 
-  // ─── Store sync ───────────────────────────────────────────────────────────
-  private syncDrones(drones: Drone[]) {
+  // ─── Store sync — recompute buckets when the drone/turret list changes ──
+  private syncFromStore(drones: Drone[], turrets: Turret[]) {
     if (!this.isAlive) return
-    drones.forEach((drone) => {
-      if (!this.droneSprites.has(drone.id)) {
-        const saved = this.loadPositions()
-        const total = this.droneSprites.size
-        const pos = saved[drone.id] ?? this.defaultDronePos(total, total + 1)
-        this.addDroneSprite(drone, pos.x, pos.y)
-      }
+
+    const prevDroneKeys  = new Set(this.droneBuckets.keys())
+    const prevTurretKeys = new Set(this.turretBuckets.keys())
+
+    this.rebuildBuckets(drones, turrets)
+
+    // Remove sprites for healthy buckets that no longer exist.
+    prevDroneKeys.forEach((key) => {
+      if (this.droneBuckets.has(key)) return
+      this.destroyDroneSprite(key)
+    })
+    // Remove the broken sprite if there are no broken drones anymore.
+    if (!this.brokenBucket && this.droneSprites.has(BROKEN_KEY)) {
+      this.destroyDroneSprite(BROKEN_KEY)
+    }
+    prevTurretKeys.forEach((key) => {
+      if (this.turretBuckets.has(key)) return
+      this.turretSprites.get(key)?.destroy()
+      this.turretSprites.delete(key)
+      this.turretLabels.get(key)?.destroy()
+      this.turretLabels.delete(key)
     })
 
-    drones.forEach((drone) => {
-      const sprite = this.droneSprites.get(drone.id)
-      if (!sprite || !sprite.scene) return
-      const expectedTex = getDroneTextureName(drone.droneType, drone.isBroken)
-      if (sprite.texture.key !== expectedTex) sprite.setTexture(expectedTex)
-
-      const hasLabel = this.brokenLabels.has(drone.id)
-      if (drone.isBroken && !hasLabel) {
-        this.addBrokenLabel(drone.id, sprite)
-      } else if (!drone.isBroken && hasLabel) {
-        this.brokenLabels.get(drone.id)?.destroy()
-        this.brokenLabels.delete(drone.id)
-        this.stopSmoke(drone.id)
+    // Add sprites for new healthy buckets, update labels for existing ones.
+    const saved = this.loadPositions()
+    const droneKeys = Array.from(this.droneBuckets.keys())
+    droneKeys.forEach((key, i) => {
+      const bucket = this.droneBuckets.get(key)!
+      if (!this.droneSprites.has(key)) {
+        const pos = saved[key] ?? this.defaultDronePos(i, droneKeys.length)
+        this.addDroneBucketSprite(bucket, pos.x, pos.y)
+        return
       }
+      this.levelLabels.get(key)?.setText(this.droneLabelText(bucket))
+    })
 
-      const lvlLabel = this.levelLabels.get(drone.id)
-      if (lvlLabel) lvlLabel.setText(`LVL ${drone.level}`)
+    // Broken bucket: create if missing (fixed screen slot), update badge if already there.
+    if (this.brokenBucket) {
+      if (!this.droneSprites.has(BROKEN_KEY)) {
+        this.addBrokenBucketSprite(this.brokenBucket)
+      } else {
+        this.levelLabels.get(BROKEN_KEY)?.setText(`×${this.brokenBucket.count}`)
+      }
+    }
+
+    const turretKeys = Array.from(this.turretBuckets.keys())
+    turretKeys.forEach((key, i) => {
+      const bucket = this.turretBuckets.get(key)!
+      if (!this.turretSprites.has(key)) {
+        const pos = saved[key] ?? this.defaultTurretPos(i, turretKeys.length, droneKeys.length)
+        this.addTurretBucketSprite(bucket, pos.x, pos.y)
+        return
+      }
+      this.turretLabels.get(key)?.setText(`DEF LV${bucket.level} ×${bucket.members.length}`)
     })
 
     this.syncLabelsToSprites()
   }
 
-  // ─── Passive income floats ─────────────────────────────────────────────────
+  // ─── Passive income floats — one per bucket, summed across members ──────
   private tickPassiveFloats() {
     if (!this.isAlive) return
-    const { drones } = useGameStore.getState()
-    drones.forEach((drone) => {
-      if (drone.isBroken) return
-      const sprite = this.droneSprites.get(drone.id)
+    // Only healthy buckets earn — broken bucket is not in droneBuckets.
+    this.droneBuckets.forEach((bucket, key) => {
+      const sprite = this.droneSprites.get(key)
       if (!sprite || !sprite.scene) return
-      const perSecond = drone.incomePerSec
-      this.spawnPassiveFloat(sprite.x, sprite.y, this.formatPassive(perSecond))
+      let sum = 0
+      for (const d of bucket.members) sum += d.incomePerSec
+      if (sum <= 0) return
+      this.spawnPassiveFloat(sprite.x, sprite.y, this.formatPassive(sum))
     })
   }
 
@@ -797,40 +919,25 @@ export class FarmScene extends Phaser.Scene {
     return `+${v.toFixed(4)}`
   }
 
-  // ─── localStorage ──────────────────────────────────────────────────────────
+  // ─── localStorage — keyed by bucketKey so positions survive DB drone changes ──
   private loadPositions(): Record<string, { x: number, y: number }> {
     try { return JSON.parse(localStorage.getItem(POSITIONS_KEY) || '{}') }
     catch { return {} }
   }
 
-  private _syncTimer: ReturnType<typeof setTimeout> | null = null
-
   private savePositions() {
-    const dronePos:  Array<{ id: number; position_x: number; position_y: number }> = []
-    const turretPos: Array<{ id: number; position_x: number; position_y: number }> = []
+    // Bucket positions are cosmetic and stay local. The server's per-unit
+    // position_x/y columns are only meaningful when the farm displays every
+    // unit individually — which stopped being the case once we switched to
+    // bucketed rendering, so /user/sync isn't called from here anymore.
     const localStorage_pos: Record<string, { x: number, y: number }> = {}
-
-    this.droneSprites.forEach((s, id) => {
-      const x = Math.round(s.x), y = Math.round(s.y)
-      localStorage_pos[id] = { x, y }
-      dronePos.push({ id: Number(id), position_x: x, position_y: y })
+    this.droneSprites.forEach((s, key) => {
+      localStorage_pos[key] = { x: Math.round(s.x), y: Math.round(s.y) }
     })
-    this.turretSprites.forEach((s, id) => {
-      const x = Math.round(s.x), y = Math.round(s.y)
-      localStorage_pos[id] = { x, y }
-      turretPos.push({ id: Number(id), position_x: x, position_y: y })
+    this.turretSprites.forEach((s, key) => {
+      localStorage_pos[key] = { x: Math.round(s.x), y: Math.round(s.y) }
     })
-
-    // Save to localStorage immediately (instant, offline-friendly)
     try { localStorage.setItem(POSITIONS_KEY, JSON.stringify(localStorage_pos)) } catch { /* quota */ }
-
-    // Debounce API sync: wait 1.5s after last drag before sending network request.
-    // Prevents 429 when user repositions multiple units in quick succession.
-    if (this._syncTimer) clearTimeout(this._syncTimer)
-    this._syncTimer = setTimeout(() => {
-      this._syncTimer = null
-      apiSyncPositions(dronePos, turretPos).catch(() => {/* silent — positions are cosmetic */})
-    }, 1500)
   }
 
   // ─── Update ───────────────────────────────────────────────────────────────

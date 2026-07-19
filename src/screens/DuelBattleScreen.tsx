@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useGameStore, type DuelConfig } from '../store/gameStore'
 import { DuelScene } from '../game/scenes/DuelScene'
 import { DuelCountdownOverlay } from '../components/DuelCountdownOverlay'
+import { BanOverlay } from '../components/BanOverlay'
 import { sendWsEvent } from '../api/websocket'
 
 
@@ -24,6 +25,9 @@ export function DuelBattleScreen() {
   const endDuel    = useGameStore((s) => s.endDuel)
   const clearDuel  = useGameStore((s) => s.clearDuel)
   const setScreen  = useGameStore((s) => s.setScreen)
+  const bannedUntil  = useGameStore((s) => s.bannedUntil)
+  const bannedReason = useGameStore((s) => s.bannedReason)
+  const isBanned = bannedUntil != null && bannedUntil > Date.now()
 
   if (duelConfig) frozenCfgRef.current = duelConfig
   const cfg = frozenCfgRef.current
@@ -105,6 +109,9 @@ export function DuelBattleScreen() {
 
   return (
     <div style={s.root}>
+      {isBanned && bannedUntil != null && (
+        <BanOverlay bannedUntilMs={bannedUntil} reason={bannedReason} />
+      )}
       {/* HP bar */}
       <div style={s.hpBar}>
         <div style={s.hpSide}>
