@@ -259,7 +259,7 @@ export function EquipmentLevelScreen() {
                       <div className={styles.cardGlow} />
                       {isListed && <div className={styles.forSaleBadge}>{t('sell.forSale')}</div>}
                       <UnitCircle color={color} size={46}>
-                        <TurretIcon color={color} level={lv} size={26} />
+                        <TurretIcon color={color} level={lv as 1 | 2 | 3} size={26} />
                       </UnitCircle>
                       <div className={styles.cardName}>
                         {t(TURRET_LEVEL_KEYS[lv] ?? 'turret.light')} #{(page - 1) * LIMIT + idx + 1}

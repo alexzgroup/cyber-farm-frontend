@@ -682,7 +682,7 @@ export class FarmScene extends Phaser.Scene {
   }
 
   private addTurretBucketSprite(bucket: TurretBucket, x: number, y: number) {
-    const tex = getFarmTurretTextureName(bucket.level)
+    const tex = getFarmTurretTextureName(bucket.level as 1 | 2 | 3)
     const sprite = this.add.image(x, y, tex).setScale(0.65).setDepth(5)
     sprite.setInteractive({ useHandCursor: true, draggable: true })
     sprite.setData('bucketKey', bucket.key)

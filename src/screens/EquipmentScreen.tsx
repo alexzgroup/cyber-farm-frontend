@@ -128,7 +128,7 @@ export function EquipmentScreen() {
                   >
                     <div className={styles.cardGlow} />
                     <UnitCircle color={color} size={46}>
-                      <TurretIcon color={color} level={g.level} size={26} />
+                      <TurretIcon color={color} level={g.level as 1 | 2 | 3} size={26} />
                     </UnitCircle>
                     <div className={styles.cardName}>
                       {t(TURRET_LEVEL_KEYS[g.level] ?? 'turret.light')}
