@@ -765,16 +765,20 @@ export class FarmScene extends Phaser.Scene {
       return
     }
 
-    if (store.energy <= 0) {
-      this.spawnFloatingText(wx, wy, i18n.t('farm.noEnergy'), '#ff6666')
-      return
-    }
-    // Group tap needs enough energy for every drone in the bucket. If short,
-    // upsell the Battery product — but respect the session-dismiss flag so we
-    // don't spam the modal after the user closed it once.
-    if (store.energy < bucket.members.length && !store.batteryModalDismissed) {
-      store.openBatteryModal()
-      return
+    // Energy insufficient for a full-group tap (including the zero case).
+    // First try to upsell the Battery — but respect the session-dismiss flag
+    // so we don't spam the modal after the user closed it once. If dismissed
+    // AND energy is 0, fall back to the classic "no energy" hint.
+    if (store.energy < bucket.members.length) {
+      if (!store.batteryModalDismissed) {
+        store.openBatteryModal()
+        return
+      }
+      if (store.energy <= 0) {
+        this.spawnFloatingText(wx, wy, i18n.t('farm.noEnergy'), '#ff6666')
+        return
+      }
+      // energy > 0 but < count and modal was dismissed → allow partial tap.
     }
     // Bucket only contains healthy drones — broken units live in a separate
     // aggregated bucket that opens the shop instead of farming.
