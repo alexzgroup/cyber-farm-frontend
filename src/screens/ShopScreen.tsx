@@ -40,6 +40,7 @@ export function ShopScreen() {
   const [upgradingId,  setUpgradingId]  = useState<string | null>(null)
   const [shieldOpen,   setShieldOpen]   = useState(false)
   const openBatteryModal = useGameStore((s) => s.openBatteryModal)
+  const batteryAvailable = useGameStore((s) => s.batteryAvailable)
 
   const brokenDrones   = drones.filter((d) => d.isBroken)
   const newDronePrice  = 300 + drones.length * 200
@@ -133,23 +134,27 @@ export function ShopScreen() {
         <span className={styles.shieldBannerArrow}>→</span>
       </button>
 
-      {/* Battery banner — 30⭐ / +50 energy / 1 per 24h. Also opened from
-          FarmScene when a group tap runs into low energy. */}
-      <button
-        type="button"
-        className={styles.shieldBanner}
-        onClick={() => { useGameStore.setState({ batteryModalDismissed: false }); openBatteryModal() }}
-        aria-label={t('battery.title')}
-        style={{ borderColor: 'rgba(255,200,60,0.35)' }}
-      >
-        <span className={styles.shieldBannerSheen} />
-        <span className={styles.shieldBannerIcon}>🔋</span>
-        <span className={styles.shieldBannerText}>
-          <span className={styles.shieldBannerTitle}>{t('battery.title')}</span>
-          <span className={styles.shieldBannerSub}>+50 ⚡ · 30⭐ · 1/сутки</span>
-        </span>
-        <span className={styles.shieldBannerArrow}>→</span>
-      </button>
+      {/* Battery banner — 30⭐ / +50 energy / 1 per 24h. Hidden while the
+          per-account cooldown is active so it doesn't advertise a purchase
+          that would immediately fail. Also opened from FarmScene when a
+          group tap runs into low energy. */}
+      {batteryAvailable && (
+        <button
+          type="button"
+          className={styles.shieldBanner}
+          onClick={() => { useGameStore.setState({ batteryModalDismissed: false }); openBatteryModal() }}
+          aria-label={t('battery.title')}
+          style={{ borderColor: 'rgba(255,200,60,0.35)' }}
+        >
+          <span className={styles.shieldBannerSheen} />
+          <span className={styles.shieldBannerIcon}>🔋</span>
+          <span className={styles.shieldBannerText}>
+            <span className={styles.shieldBannerTitle}>{t('battery.title')}</span>
+            <span className={styles.shieldBannerSub}>+50 ⚡ · 30⭐ · 1/сутки</span>
+          </span>
+          <span className={styles.shieldBannerArrow}>→</span>
+        </button>
+      )}
 
       {/* Repair section */}
       {brokenDrones.length > 0 && (
