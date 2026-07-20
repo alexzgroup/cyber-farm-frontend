@@ -40,6 +40,14 @@ export function DuelBattleScreen() {
   useEffect(() => {
     if (!containerRef.current || !duelConfig) return
 
+    // If the previous cleanup queued a "leave" timer (StrictMode double-run
+    // or a rerender), cancel it now that we're mounting again for real.
+    const g = window as unknown as { __duelLeaveTimer?: number }
+    if (g.__duelLeaveTimer) {
+      window.clearTimeout(g.__duelLeaveTimer)
+      g.__duelLeaveTimer = undefined
+    }
+
     const scene = new DuelScene()
     scene.setConfig({
       duelId:           duelConfig.duelId,
@@ -97,10 +105,23 @@ export function DuelBattleScreen() {
       c?.removeEventListener('duel-hp',    onHp)
       c?.removeEventListener('duel-move',  onMove)
       c?.removeEventListener('duel-shoot', onShoot)
-      // Tell the server we're leaving. If the duel already ended (result
-      // overlay reached), the session is gone and the server will drop this
-      // message. Otherwise the opponent wins by forfeit immediately.
-      sendWsEvent('duel.leave', { duel_id: duelConfig.duelId })
+      // Deferred leave: tell the server we abandoned the fight, but only if
+      // this unmount is real. React StrictMode double-invokes effects in dev
+      // (mount → cleanup → mount) — we don't want that fake cleanup to
+      // forfeit the match. Setting a short delay + cancelling on re-mount
+      // (via the shared window flag) collapses those false-positives.
+      const duelId = duelConfig.duelId
+      const leaveTimer = window.setTimeout(() => {
+        // If the store no longer has this duel active (result arrived, user
+        // clicked "again"), don't send — the session is over anyway.
+        if (useGameStore.getState().activeDuelConfig?.duelId !== duelId) return
+        sendWsEvent('duel.leave', { duel_id: duelId })
+      }, 400)
+      // Store on window so a subsequent mount (StrictMode second run) can
+      // cancel this leave before it fires.
+      const g = window as unknown as { __duelLeaveTimer?: number }
+      if (g.__duelLeaveTimer) window.clearTimeout(g.__duelLeaveTimer)
+      g.__duelLeaveTimer = leaveTimer
       gameRef.current?.destroy(true)
       gameRef.current = null
     }
