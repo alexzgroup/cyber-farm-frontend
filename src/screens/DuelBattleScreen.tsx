@@ -97,6 +97,10 @@ export function DuelBattleScreen() {
       c?.removeEventListener('duel-hp',    onHp)
       c?.removeEventListener('duel-move',  onMove)
       c?.removeEventListener('duel-shoot', onShoot)
+      // Tell the server we're leaving. If the duel already ended (result
+      // overlay reached), the session is gone and the server will drop this
+      // message. Otherwise the opponent wins by forfeit immediately.
+      sendWsEvent('duel.leave', { duel_id: duelConfig.duelId })
       gameRef.current?.destroy(true)
       gameRef.current = null
     }

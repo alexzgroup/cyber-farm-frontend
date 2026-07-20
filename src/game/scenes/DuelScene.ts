@@ -96,8 +96,9 @@ export class DuelScene extends Phaser.Scene {
   private aimCY = 0
   private aimR  = 50
 
-  // View orientation (defender's world is rotated 180°)
-  private flipped = false
+  // Arena is shared server-space, no client-side rotation. Challenger spawns
+  // bottom-left (0.25, 0.75), defender spawns top-right (0.75, 0.25). Both
+  // players watch the same layout — each spawns in their own quadrant.
 
   // WS listeners
   private onDuelStartState!:  (e: Event) => void
@@ -114,13 +115,6 @@ export class DuelScene extends Phaser.Scene {
   constructor() { super({ key: 'DuelScene' }) }
 
   setConfig(cfg: DuelSceneConfig) { this.cfg = cfg }
-
-  // ─── World ↔ Screen ────────────────────────────────────────────────────
-
-  private worldToScreenX(nx: number) { return this.flipped ? 1 - nx : nx }
-  private worldToScreenY(ny: number) { return this.flipped ? 1 - ny : ny }
-  private screenToWorldX(nx: number) { return this.flipped ? 1 - nx : nx }
-  private screenToWorldY(ny: number) { return this.flipped ? 1 - ny : ny }
 
   create() {
     const { width: W, height: H } = this.scale
@@ -159,12 +153,14 @@ export class DuelScene extends Phaser.Scene {
     div.fillStyle(0x00e5ff, 0.06); div.fillRect(W / 2 - 1, 0, 2, H)
     div.lineStyle(1, 0x00e5ff, 0.35); div.lineBetween(W / 2, 0, W / 2, H)
 
-    this.add.text(W * 0.25, 20, 'ВАШ ДРОН', {
+    // Quadrant markers: challenger always spawns bottom-left, defender top-right.
+    // Neutral labels so the same layout reads the same for both players.
+    this.add.text(W * 0.25, H - 42, 'CHALLENGER', {
       fontSize: '9px', fontFamily: 'monospace', color: '#00e5ff',
-    }).setOrigin(0.5).setAlpha(0.4).setDepth(3)
-    this.add.text(W * 0.75, 20, this.cfg.opponentName.slice(0, 12).toUpperCase(), {
+    }).setOrigin(0.5).setAlpha(0.35).setDepth(3)
+    this.add.text(W * 0.75, 42, 'DEFENDER', {
       fontSize: '9px', fontFamily: 'monospace', color: '#ff4444',
-    }).setOrigin(0.5).setAlpha(0.4).setDepth(3)
+    }).setOrigin(0.5).setAlpha(0.35).setDepth(3)
   }
 
   // ─── Drones ────────────────────────────────────────────────────────────
@@ -183,8 +179,8 @@ export class DuelScene extends Phaser.Scene {
     this.playerGunGfx  = this.add.graphics().setDepth(11)
     this.opponentGunGfx = this.add.graphics().setDepth(11)
 
-    this.tweens.add({ targets: this.playerSprite,   y: this.playerSprite.y - 6,   duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
-    this.tweens.add({ targets: this.opponentSprite, y: this.opponentSprite.y - 6, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 300 })
+    // No hover tween on Y — it fought with the server-authoritative Y and
+    // made the sprite slide down whenever the player tried to move up.
   }
 
   private drawDroneEffects(
@@ -408,16 +404,21 @@ export class DuelScene extends Phaser.Scene {
 
     this.onDuelStartState = (e: Event) => {
       const p = (e as CustomEvent<DuelStartStatePayload>).detail
-      this.flipped = p.defender_id === this.cfg.myUserId
       const me  = p.players.find((pl) => pl.user_id === this.cfg.myUserId)
       const opp = p.players.find((pl) => pl.user_id !== this.cfg.myUserId)
       if (me)  {
         this.myHP = me.hp; this.myMaxHP = me.max_hp
-        this.myServerX = this.worldToScreenX(me.x); this.myServerY = this.worldToScreenY(me.y)
+        this.myServerX = me.x; this.myServerY = me.y
+        // Snap sprite to server position immediately so we don't fly across
+        // the arena from the placeholder spawn on the first frame.
+        this.playerSprite.x = this.myServerX * this.W
+        this.playerSprite.y = this.myServerY * this.H
       }
       if (opp) {
         this.oppHP = opp.hp; this.oppMaxHP = opp.max_hp
-        this.oppTargetX = this.worldToScreenX(opp.x); this.oppTargetY = this.worldToScreenY(opp.y)
+        this.oppTargetX = opp.x; this.oppTargetY = opp.y
+        this.opponentSprite.x = this.oppTargetX * this.W
+        this.opponentSprite.y = this.oppTargetY * this.H
       }
       // Default aim points toward opponent so the barrel isn't facing self.
       this.aimAngle = Math.atan2(this.oppTargetY - this.myServerY, this.oppTargetX - this.myServerX)
@@ -429,8 +430,8 @@ export class DuelScene extends Phaser.Scene {
       const p = (e as CustomEvent<DuelStatePayload>).detail
       const me  = p.players.find((pl) => pl.user_id === this.cfg.myUserId)
       const opp = p.players.find((pl) => pl.user_id !== this.cfg.myUserId)
-      if (me)  { this.myHP  = me.hp;  this.myServerX  = this.worldToScreenX(me.x);  this.myServerY = this.worldToScreenY(me.y) }
-      if (opp) { this.oppHP = opp.hp; this.oppTargetX = this.worldToScreenX(opp.x); this.oppTargetY = this.worldToScreenY(opp.y) }
+      if (me)  { this.myHP  = me.hp;  this.myServerX  = me.x;  this.myServerY = me.y }
+      if (opp) { this.oppHP = opp.hp; this.oppTargetX = opp.x; this.oppTargetY = opp.y }
       this.emitHp()
     }
     canvas.addEventListener('duel-state', this.onDuelState)
@@ -439,11 +440,7 @@ export class DuelScene extends Phaser.Scene {
       const p = (e as CustomEvent<DuelShotPayload>).detail
       const mine = p.from === this.cfg.myUserId
       const color = mine ? 0x00e5ff : 0xff4444
-      const sx  = this.worldToScreenX(p.x)
-      const sy  = this.worldToScreenY(p.y)
-      const svx = this.flipped ? -p.vx : p.vx
-      const svy = this.flipped ? -p.vy : p.vy
-      this.spawnBullet(sx, sy, svx, svy, color)
+      this.spawnBullet(p.x, p.y, p.vx, p.vy, color)
       soundManager.laser()
     }
     canvas.addEventListener('duel-shot-fired', this.onDuelShotFired)
@@ -451,9 +448,7 @@ export class DuelScene extends Phaser.Scene {
     this.onDuelHit = (e: Event) => {
       const p = (e as CustomEvent<DuelHitPayload>).detail
       const targetIsMe = p.target === this.cfg.myUserId
-      const sx = this.worldToScreenX(p.x) * this.W
-      const sy = this.worldToScreenY(p.y) * this.H
-      this.spawnHitFX(sx, sy, targetIsMe ? 0xff4444 : 0x00e5ff)
+      this.spawnHitFX(p.x * this.W, p.y * this.H, targetIsMe ? 0xff4444 : 0x00e5ff)
       if (targetIsMe) {
         const intensity = 0.008 + (p.damage / Math.max(1, this.myMaxHP)) * 0.025
         this.cameras.main.shake(140, intensity)
@@ -463,9 +458,7 @@ export class DuelScene extends Phaser.Scene {
 
     this.onDuelDodge = (e: Event) => {
       const p = (e as CustomEvent<DuelDodgePayload>).detail
-      const sx = this.worldToScreenX(p.x) * this.W
-      const sy = this.worldToScreenY(p.y) * this.H
-      this.spawnDodgeFX(sx, sy)
+      this.spawnDodgeFX(p.x * this.W, p.y * this.H)
     }
     canvas.addEventListener('duel-dodge', this.onDuelDodge)
 
@@ -502,23 +495,21 @@ export class DuelScene extends Phaser.Scene {
     if (this.dpad.up)    dy -= 1
     if (this.dpad.down)  dy += 1
 
-    let targetScreenX: number, targetScreenY: number
+    let targetX: number, targetY: number
     if (dx === 0 && dy === 0) {
       // Standing: keep the target where we currently are so server doesn't drift.
-      targetScreenX = this.playerSprite.x / this.W
-      targetScreenY = this.playerSprite.y / this.H
+      targetX = this.playerSprite.x / this.W
+      targetY = this.playerSprite.y / this.H
     } else {
       // Aim the target far in the pressed direction; the server clamps by speed.
       const len = Math.hypot(dx, dy) || 1
       dx /= len; dy /= len
-      targetScreenX = clamp01(this.playerSprite.x / this.W + dx * 0.5)
-      targetScreenY = clamp01(this.playerSprite.y / this.H + dy * 0.5)
+      targetX = clamp01(this.playerSprite.x / this.W + dx * 0.5)
+      targetY = clamp01(this.playerSprite.y / this.H + dy * 0.5)
     }
 
-    const worldX = this.screenToWorldX(targetScreenX)
-    const worldY = this.screenToWorldY(targetScreenY)
     this.sys.canvas.dispatchEvent(new CustomEvent('duel-move', {
-      detail: { nx: +worldX.toFixed(4), ny: +worldY.toFixed(4) },
+      detail: { nx: +targetX.toFixed(4), ny: +targetY.toFixed(4) },
     }))
   }
 
@@ -527,17 +518,14 @@ export class DuelScene extends Phaser.Scene {
     if (now - this.lastShootEmit < 100) return
     this.lastShootEmit = now
 
-    // Aim direction is in screen-space (unaffected by flip since it's a vector
-    // rendered on-screen). Compute the target point along that ray so the
-    // server can spawn a bullet flying that way.
+    // Aim direction is a screen-space vector. Point the target far along
+    // that ray so the server can spawn a bullet flying that way.
     const cos = Math.cos(this.aimAngle), sin = Math.sin(this.aimAngle)
-    const originScreenX = this.playerSprite.x / this.W
-    const originScreenY = this.playerSprite.y / this.H
-    const targetScreenX = clamp01(originScreenX + cos * 1.2)
-    const targetScreenY = clamp01(originScreenY + sin * 1.2)
+    const originX = this.playerSprite.x / this.W
+    const originY = this.playerSprite.y / this.H
+    const ntx = clamp01(originX + cos * 1.2)
+    const nty = clamp01(originY + sin * 1.2)
 
-    const ntx = this.screenToWorldX(targetScreenX)
-    const nty = this.screenToWorldY(targetScreenY)
     this.sys.canvas.dispatchEvent(new CustomEvent('duel-shoot', {
       detail: { ntx: +ntx.toFixed(4), nty: +nty.toFixed(4) },
     }))
@@ -681,16 +669,18 @@ export class DuelScene extends Phaser.Scene {
     this.emitMoveTick()
 
     // Reconcile local sprites toward server snapshot (20Hz updates, 60fps render).
+    // Lerp Y with the same coefficient as X so vertical movement is smooth
+    // and the sprite doesn't jitter when the server keeps sending fresh Y.
     const lerp = 0.30
     const px = this.myServerX * this.W
     const py = this.myServerY * this.H
     this.playerSprite.x += (px - this.playerSprite.x) * lerp
-    if (Math.abs(py - this.playerSprite.y) > 40) this.playerSprite.y = py
+    this.playerSprite.y += (py - this.playerSprite.y) * lerp
 
     const ox = this.oppTargetX * this.W
     const oy = this.oppTargetY * this.H
     this.opponentSprite.x += (ox - this.opponentSprite.x) * lerp
-    if (Math.abs(oy - this.opponentSprite.y) > 40) this.opponentSprite.y = oy
+    this.opponentSprite.y += (oy - this.opponentSprite.y) * lerp
 
     this.advanceBullets(delta)
 
