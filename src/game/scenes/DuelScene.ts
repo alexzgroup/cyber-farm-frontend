@@ -19,6 +19,8 @@ export interface DuelSceneConfig {
 // duel.start_state — one-shot bootstrap from the server (MaxHP + spawn positions).
 interface DuelStartStatePayload {
   duel_id: number
+  challenger_id: number
+  defender_id: number
   tick_rate: number
   bullet_speed: number
   players: Array<{
@@ -84,6 +86,11 @@ export class DuelScene extends Phaser.Scene {
   private lastMoveEmit = 0
   private lastShootEmit = 0
 
+  // If we're the defender, world-space is rotated 180° relative to screen-
+  // space so that each player still sees themselves in the bottom-left quadrant.
+  // All position/velocity payloads go through worldToScreen / screenToWorld.
+  private flipped = false
+
   // WS listeners (unregistered on shutdown)
   private docMouseMove!:      (e: MouseEvent) => void
   private onDuelStartState!:  (e: Event) => void
@@ -100,6 +107,13 @@ export class DuelScene extends Phaser.Scene {
   constructor() { super({ key: 'DuelScene' }) }
 
   setConfig(cfg: DuelSceneConfig) { this.cfg = cfg }
+
+  // ─── World ↔ Screen (defender view is 180° rotated) ───────────────────
+
+  private worldToScreenX(nx: number) { return this.flipped ? 1 - nx : nx }
+  private worldToScreenY(ny: number) { return this.flipped ? 1 - ny : ny }
+  private screenToWorldX(nx: number) { return this.flipped ? 1 - nx : nx }
+  private screenToWorldY(ny: number) { return this.flipped ? 1 - ny : ny }
 
   create() {
     const { width: W, height: H } = this.scale
@@ -237,10 +251,21 @@ export class DuelScene extends Phaser.Scene {
 
     this.onDuelStartState = (e: Event) => {
       const p = (e as CustomEvent<DuelStartStatePayload>).detail
+      // If I'm the defender, everything the server sends is in "challenger
+      // view" coords — flip so I still see myself bottom-left.
+      this.flipped = p.defender_id === this.cfg.myUserId
       const me  = p.players.find((pl) => pl.user_id === this.cfg.myUserId)
       const opp = p.players.find((pl) => pl.user_id !== this.cfg.myUserId)
-      if (me)  { this.myHP  = me.hp;  this.myMaxHP  = me.max_hp;  this.myServerX = me.x;  this.myServerY = me.y  }
-      if (opp) { this.oppHP = opp.hp; this.oppMaxHP = opp.max_hp; this.oppTargetX = opp.x; this.oppTargetY = opp.y }
+      if (me)  {
+        this.myHP = me.hp; this.myMaxHP = me.max_hp
+        this.myServerX = this.worldToScreenX(me.x)
+        this.myServerY = this.worldToScreenY(me.y)
+      }
+      if (opp) {
+        this.oppHP = opp.hp; this.oppMaxHP = opp.max_hp
+        this.oppTargetX = this.worldToScreenX(opp.x)
+        this.oppTargetY = this.worldToScreenY(opp.y)
+      }
       this.emitHp()
     }
     canvas.addEventListener('duel-start-state', this.onDuelStartState)
@@ -249,8 +274,8 @@ export class DuelScene extends Phaser.Scene {
       const p = (e as CustomEvent<DuelStatePayload>).detail
       const me  = p.players.find((pl) => pl.user_id === this.cfg.myUserId)
       const opp = p.players.find((pl) => pl.user_id !== this.cfg.myUserId)
-      if (me)  { this.myHP  = me.hp;  this.myServerX = me.x;   this.myServerY = me.y  }
-      if (opp) { this.oppHP = opp.hp; this.oppTargetX = opp.x; this.oppTargetY = opp.y }
+      if (me)  { this.myHP  = me.hp;  this.myServerX  = this.worldToScreenX(me.x);  this.myServerY = this.worldToScreenY(me.y) }
+      if (opp) { this.oppHP = opp.hp; this.oppTargetX = this.worldToScreenX(opp.x); this.oppTargetY = this.worldToScreenY(opp.y) }
       this.emitHp()
     }
     canvas.addEventListener('duel-state', this.onDuelState)
@@ -259,7 +284,12 @@ export class DuelScene extends Phaser.Scene {
       const p = (e as CustomEvent<DuelShotPayload>).detail
       const mine = p.from === this.cfg.myUserId
       const color = mine ? 0x00e5ff : 0xff4444
-      this.spawnBullet(p.x, p.y, p.vx, p.vy, color)
+      // Position + velocity live in world space — rotate for defender view.
+      const sx  = this.worldToScreenX(p.x)
+      const sy  = this.worldToScreenY(p.y)
+      const svx = this.flipped ? -p.vx : p.vx
+      const svy = this.flipped ? -p.vy : p.vy
+      this.spawnBullet(sx, sy, svx, svy, color)
       soundManager.laser()
     }
     canvas.addEventListener('duel-shot-fired', this.onDuelShotFired)
@@ -267,7 +297,9 @@ export class DuelScene extends Phaser.Scene {
     this.onDuelHit = (e: Event) => {
       const p = (e as CustomEvent<DuelHitPayload>).detail
       const targetIsMe = p.target === this.cfg.myUserId
-      this.spawnHitFX(p.x * this.W, p.y * this.H, targetIsMe ? 0xff4444 : 0x00e5ff)
+      const sx = this.worldToScreenX(p.x) * this.W
+      const sy = this.worldToScreenY(p.y) * this.H
+      this.spawnHitFX(sx, sy, targetIsMe ? 0xff4444 : 0x00e5ff)
       if (targetIsMe) {
         const intensity = 0.008 + (p.damage / Math.max(1, this.myMaxHP)) * 0.025
         this.cameras.main.shake(140, intensity)
@@ -277,7 +309,9 @@ export class DuelScene extends Phaser.Scene {
 
     this.onDuelDodge = (e: Event) => {
       const p = (e as CustomEvent<DuelDodgePayload>).detail
-      this.spawnDodgeFX(p.x * this.W, p.y * this.H)
+      const sx = this.worldToScreenX(p.x) * this.W
+      const sy = this.worldToScreenY(p.y) * this.H
+      this.spawnDodgeFX(sx, sy)
     }
     canvas.addEventListener('duel-dodge', this.onDuelDodge)
 
@@ -307,8 +341,11 @@ export class DuelScene extends Phaser.Scene {
     const now = this.time.now
     if (now - this.lastMoveEmit < 50) return
     this.lastMoveEmit = now
+    // targetNX/NY live in screen-space; server expects world-space.
+    const wx = this.screenToWorldX(this.targetNX)
+    const wy = this.screenToWorldY(this.targetNY)
     this.sys.canvas.dispatchEvent(new CustomEvent('duel-move', {
-      detail: { nx: +this.targetNX.toFixed(4), ny: +this.targetNY.toFixed(4) },
+      detail: { nx: +wx.toFixed(4), ny: +wy.toFixed(4) },
     }))
   }
 
@@ -317,8 +354,10 @@ export class DuelScene extends Phaser.Scene {
     const now = this.time.now
     if (now - this.lastShootEmit < 100) return
     this.lastShootEmit = now
+    const wtx = this.screenToWorldX(ntx)
+    const wty = this.screenToWorldY(nty)
     this.sys.canvas.dispatchEvent(new CustomEvent('duel-shoot', {
-      detail: { ntx: +ntx.toFixed(4), nty: +nty.toFixed(4) },
+      detail: { ntx: +wtx.toFixed(4), nty: +wty.toFixed(4) },
     }))
   }
 
