@@ -929,34 +929,19 @@ export const useGameStore = create<GameState>((set, get) => ({
     })
   },
 
-  endDuel: (won) => {
-    const { activeDuelConfig, userId } = get()
-    if (!activeDuelConfig) return
-
-    const winnerId = won ? userId : activeDuelConfig.opponentId
-    // Guard against double-submit (both local detection + WS result)
-    api.submitDuelResult(activeDuelConfig.duelId, winnerId)
-      .then(() => api.getMe())
-      .then((user) => {
-        set({
-          balance:          Number(user.balance),
-          balanceBase:      Number(user.balance),
-          balanceUpdatedAt: Date.now(),
-          tonBalance:       Number(user.ton_balance ?? 0),
-          availableTonBalance: Number(user.available_ton_balance ?? user.ton_balance ?? 0),
-        })
+  endDuel: (_won) => {
+    // Winner is decided server-side (see internal/duel/Session tick loop),
+    // payout runs there in the same DB transaction as the status flip. We
+    // just need to pull the fresh balance so the UI shows the credit.
+    api.getMe().then((user) => {
+      set({
+        balance:             Number(user.balance),
+        balanceBase:         Number(user.balance),
+        balanceUpdatedAt:    Date.now(),
+        tonBalance:          Number(user.ton_balance ?? 0),
+        availableTonBalance: Number(user.available_ton_balance ?? user.ton_balance ?? 0),
       })
-      .catch(() => {
-        // 409 = result already submitted by opponent — still refresh balance
-        api.getMe().then((user) => {
-          set({
-            balance:          Number(user.balance),
-            balanceBase:      Number(user.balance),
-            balanceUpdatedAt: Date.now(),
-            tonBalance:       Number(user.ton_balance ?? 0),
-          })
-        }).catch(() => {/* silent */})
-      })
+    }).catch(() => {/* silent */})
   },
 
   clearDuel: () => set({ activeDuelConfig: null, pendingDuelConfig: null, duelWaiting: null }),

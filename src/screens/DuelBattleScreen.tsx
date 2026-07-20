@@ -25,6 +25,7 @@ export function DuelBattleScreen() {
   const endDuel    = useGameStore((s) => s.endDuel)
   const clearDuel  = useGameStore((s) => s.clearDuel)
   const setScreen  = useGameStore((s) => s.setScreen)
+  const myUserId   = useGameStore((s) => s.userId)
   const bannedUntil  = useGameStore((s) => s.bannedUntil)
   const bannedReason = useGameStore((s) => s.bannedReason)
   const isBanned = bannedUntil != null && bannedUntil > Date.now()
@@ -41,7 +42,14 @@ export function DuelBattleScreen() {
 
     const scene = new DuelScene()
     scene.setConfig({
-      ...duelConfig,
+      duelId:           duelConfig.duelId,
+      myUserId:         myUserId,
+      playerDroneType:  duelConfig.playerDroneType,
+      playerUpgrades:   duelConfig.playerUpgrades,
+      opponentUserId:   duelConfig.opponentId,
+      opponentName:     duelConfig.opponentName,
+      opponentType:     duelConfig.opponentType,
+      opponentUpgrades: duelConfig.opponentUpgrades,
       onEnd: (won) => {
         setResult(won ? 'win' : 'lose')
         setTimeout(() => endDuel(won), 500)
@@ -63,27 +71,22 @@ export function DuelBattleScreen() {
       dom: { createContainer: false },
     })
 
-    const onHp      = (e: Event) => setHp((e as CustomEvent<HpState>).detail)
-    const onMove    = (e: Event) => {
+    const onHp    = (e: Event) => setHp((e as CustomEvent<HpState>).detail)
+    const onMove  = (e: Event) => {
       const { nx, ny } = (e as CustomEvent<{nx:number;ny:number}>).detail
       sendWsEvent('duel.move', { duel_id: duelConfig.duelId, nx, ny })
     }
-    const onShoot   = (e: Event) => {
+    const onShoot = (e: Event) => {
       const { ntx, nty } = (e as CustomEvent<{ntx:number;nty:number}>).detail
       sendWsEvent('duel.shoot', { duel_id: duelConfig.duelId, ntx, nty })
-    }
-    const onHpBcast = (e: Event) => {
-      const { hp } = (e as CustomEvent<{hp:number}>).detail
-      sendWsEvent('duel.hp_sync', { duel_id: duelConfig.duelId, hp })
     }
 
     const poll = setInterval(() => {
       const c = containerRef.current?.querySelector('canvas')
       if (c) {
-        c.addEventListener('duel-hp',           onHp)
-        c.addEventListener('duel-move',         onMove)
-        c.addEventListener('duel-shoot',        onShoot)
-        c.addEventListener('duel-hp-broadcast', onHpBcast)
+        c.addEventListener('duel-hp',    onHp)
+        c.addEventListener('duel-move',  onMove)
+        c.addEventListener('duel-shoot', onShoot)
         clearInterval(poll)
       }
     }, 80)
@@ -91,10 +94,9 @@ export function DuelBattleScreen() {
     return () => {
       clearInterval(poll)
       const c = containerRef.current?.querySelector('canvas')
-      c?.removeEventListener('duel-hp',           onHp)
-      c?.removeEventListener('duel-move',         onMove)
-      c?.removeEventListener('duel-shoot',        onShoot)
-      c?.removeEventListener('duel-hp-broadcast', onHpBcast)
+      c?.removeEventListener('duel-hp',    onHp)
+      c?.removeEventListener('duel-move',  onMove)
+      c?.removeEventListener('duel-shoot', onShoot)
       gameRef.current?.destroy(true)
       gameRef.current = null
     }

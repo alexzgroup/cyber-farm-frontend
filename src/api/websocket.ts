@@ -192,29 +192,38 @@ function dispatch(msg: WsMessage) {
       useGameStore.setState({ duelDeclined: true })
       break
 
-    case 'duel.move': {
-      // Normalised position (0–1) — DuelScene denormalises to local pixels
+    case 'duel.start_state': {
+      // Server-authoritative initial state: both players, stats, MaxHP.
+      // Emitted once at the very start of a session.
       const canvas = document.querySelector('canvas[data-duel]')
-      canvas?.dispatchEvent(new CustomEvent('duel-opponent-move', {
-        detail: { nx: Number(msg.payload.nx), ny: Number(msg.payload.ny) },
-      }))
+      canvas?.dispatchEvent(new CustomEvent('duel-start-state', { detail: msg.payload }))
       break
     }
 
-    case 'duel.shoot': {
-      const canvas2 = document.querySelector('canvas[data-duel]')
-      canvas2?.dispatchEvent(new CustomEvent('duel-opponent-shoot', {
-        detail: { ntx: Number(msg.payload.ntx), nty: Number(msg.payload.nty) },
-      }))
+    case 'duel.state': {
+      // 20Hz tick from server: authoritative positions + HP.
+      const canvas = document.querySelector('canvas[data-duel]')
+      canvas?.dispatchEvent(new CustomEvent('duel-state', { detail: msg.payload }))
       break
     }
 
-    case 'duel.hp_sync': {
-      // Opponent's actual HP (they were hit, broadcasting their current HP)
-      const canvas4 = document.querySelector('canvas[data-duel]')
-      canvas4?.dispatchEvent(new CustomEvent('duel-opponent-hp-sync', {
-        detail: { hp: Number(msg.payload.hp) },
-      }))
+    case 'duel.shot_fired': {
+      // Server spawned a projectile — client only renders, doesn't simulate.
+      const canvas = document.querySelector('canvas[data-duel]')
+      canvas?.dispatchEvent(new CustomEvent('duel-shot-fired', { detail: msg.payload }))
+      break
+    }
+
+    case 'duel.hit': {
+      // Bullet connected on the server — show sparks + shake if we're the target.
+      const canvas = document.querySelector('canvas[data-duel]')
+      canvas?.dispatchEvent(new CustomEvent('duel-hit', { detail: msg.payload }))
+      break
+    }
+
+    case 'duel.dodge': {
+      const canvas = document.querySelector('canvas[data-duel]')
+      canvas?.dispatchEvent(new CustomEvent('duel-dodge', { detail: msg.payload }))
       break
     }
 
@@ -292,36 +301,11 @@ function dispatch(msg: WsMessage) {
       break
     }
 
-    case 'duel.await_verdict': {
-      // First participant submitted, waiting for the opponent to confirm.
-      // Surface a lightweight "waiting" state; balances stay untouched
-      // because escrow is not yet released.
-      store.setDuelVerdictToast({
-        kind:    'awaiting',
-        duelId:  Number(msg.payload.duel_id ?? 0),
-      })
-      break
-    }
-
-    case 'duel.disputed': {
-      // Two participants disagreed on the winner — escrow refunded to both.
-      // Refresh balance so the returned bet is visible immediately and drop
-      // the local "победа/поражение" overlay in favor of a neutral notice.
-      const canvas4 = document.querySelector('canvas[data-duel]')
-      if (canvas4) {
-        canvas4.dispatchEvent(new CustomEvent('duel-force-end', { detail: { won: false, disputed: true } }))
-      }
-      store.setDuelVerdictToast({
-        kind:     'disputed',
-        duelId:   Number(msg.payload.duel_id ?? 0),
-        refund:   Number(msg.payload.refund ?? 0),
-        currency: String(msg.payload.currency ?? 'gold'),
-      })
-      store.loadGameState()
-      break
-    }
-
-    // NOTE: 'duel.abandoned' is handled higher up (near 'duel.cancelled') so
+    // NOTE: duel.await_verdict / duel.disputed retired with the client-verdict
+    // model. The server now decides winner from the physics tick; only
+    // duel.result and duel.abandoned survive as terminal events.
+    //
+    // 'duel.abandoned' is handled higher up (near 'duel.cancelled') so
     // the pre-existing clearDuel + activeScreen reset stays in one place.
   }
 }
