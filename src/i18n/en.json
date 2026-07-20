@@ -578,7 +578,7 @@
     "accept": "Accept fight",
     "sec": "sec",
     "you": "YOU",
-    "hint": "Mouse / touchpad — move · LMB — shoot",
+    "hint": "D-pad — move · aim-stick (right) — turn barrel + tap to shoot",
     "win": "VICTORY",
     "lose": "DEFEAT",
     "wonPrize": "Won {{currency}} {{prize}}",

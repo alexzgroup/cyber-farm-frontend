@@ -16,7 +16,6 @@ export interface DuelSceneConfig {
   onEnd: (won: boolean) => void
 }
 
-// duel.start_state — one-shot bootstrap from the server (MaxHP + spawn positions).
 interface DuelStartStatePayload {
   duel_id: number
   challenger_id: number
@@ -35,7 +34,6 @@ interface DuelStartStatePayload {
   }>
 }
 
-// duel.state — 20Hz tick with authoritative positions + HP.
 interface DuelStatePayload {
   duel_id: number
   t: number
@@ -49,50 +47,59 @@ interface DuelDodgePayload { target: number; x: number; y: number }
 interface Bullet {
   gfx: Phaser.GameObjects.Graphics
   trail: Phaser.GameObjects.Graphics
-  vx: number    // in NORMALISED units/sec (server-space)
+  vx: number
   vy: number
   color: number
 }
+
+type DpadDir = 'up' | 'down' | 'left' | 'right'
 
 // ─── Scene ────────────────────────────────────────────────────────────────
 
 export class DuelScene extends Phaser.Scene {
   private cfg!: DuelSceneConfig
 
-  // Sprites + overlay graphics
-  private playerSprite!:  Phaser.GameObjects.Image
-  private playerGfx!:     Phaser.GameObjects.Graphics
+  // Sprites
+  private playerSprite!:   Phaser.GameObjects.Image
   private opponentSprite!: Phaser.GameObjects.Image
+  private playerGfx!:      Phaser.GameObjects.Graphics
   private opponentGfx!:    Phaser.GameObjects.Graphics
+  private playerGunGfx!:   Phaser.GameObjects.Graphics
+  private opponentGunGfx!: Phaser.GameObjects.Graphics
 
-  // Cursor / touch target — normalised 0..1, sent on every frame (throttled)
-  private targetNX = 0.25
-  private targetNY = 0.75
-
-  // Server-authoritative snapshot (updated on duel.state / duel.start_state)
+  // Server-authoritative snapshot
   private myHP = 100
   private myMaxHP = 100
   private oppHP = 100
   private oppMaxHP = 100
-  private oppTargetX = 0.75  // last known server position (normalised)
+  private oppTargetX = 0.75
   private oppTargetY = 0.25
-  private myServerX  = 0.25  // used to reconcile local prediction drift
+  private myServerX  = 0.25
   private myServerY  = 0.75
 
-  // Bullets — spawned only when the server emits duel.shot_fired
+  // Bullets
   private bullets: Bullet[] = []
 
-  // Throttling of client-originated inputs
+  // Input state — D-pad and aim
+  private dpad: Record<DpadDir, boolean> = { up: false, down: false, left: false, right: false }
+  private aimAngle = -Math.PI / 4 // radians, 0=right, points toward opponent by default (up-right)
   private lastMoveEmit = 0
   private lastShootEmit = 0
 
-  // If we're the defender, world-space is rotated 180° relative to screen-
-  // space so that each player still sees themselves in the bottom-left quadrant.
-  // All position/velocity payloads go through worldToScreen / screenToWorld.
+  // HUD graphics
+  private dpadGfx!:      Phaser.GameObjects.Graphics
+  private aimGfx!:       Phaser.GameObjects.Graphics
+  private hudInteractive: Array<Phaser.GameObjects.Zone> = []
+
+  // Aim-stick center in screen px + radius
+  private aimCX = 0
+  private aimCY = 0
+  private aimR  = 50
+
+  // View orientation (defender's world is rotated 180°)
   private flipped = false
 
-  // WS listeners (unregistered on shutdown)
-  private docMouseMove!:      (e: MouseEvent) => void
+  // WS listeners
   private onDuelStartState!:  (e: Event) => void
   private onDuelState!:       (e: Event) => void
   private onDuelShotFired!:   (e: Event) => void
@@ -108,7 +115,7 @@ export class DuelScene extends Phaser.Scene {
 
   setConfig(cfg: DuelSceneConfig) { this.cfg = cfg }
 
-  // ─── World ↔ Screen (defender view is 180° rotated) ───────────────────
+  // ─── World ↔ Screen ────────────────────────────────────────────────────
 
   private worldToScreenX(nx: number) { return this.flipped ? 1 - nx : nx }
   private worldToScreenY(ny: number) { return this.flipped ? 1 - ny : ny }
@@ -122,9 +129,9 @@ export class DuelScene extends Phaser.Scene {
     this.generateTextures()
     this.drawArena(W, H)
     this.spawnDrones(W, H)
-    this.setupInput(W, H)
+    this.setupHUD(W, H)
+    this.setupInput()
 
-    // Optimistic default HP so the UI has numbers before duel.start_state lands.
     this.emitHp()
     this.sys.canvas.setAttribute('data-duel', '1')
   }
@@ -171,11 +178,11 @@ export class DuelScene extends Phaser.Scene {
     this.opponentSprite = this.add.image(W * 0.75, H * 0.25, oKey)
       .setScale(0.72).setDepth(10).setFlipX(true)
 
-    this.playerGfx   = this.add.graphics().setDepth(9)
-    this.opponentGfx = this.add.graphics().setDepth(9)
+    this.playerGfx     = this.add.graphics().setDepth(9)
+    this.opponentGfx   = this.add.graphics().setDepth(9)
+    this.playerGunGfx  = this.add.graphics().setDepth(11)
+    this.opponentGunGfx = this.add.graphics().setDepth(11)
 
-    // Idle hover — server position updates coexist with these tweens; the
-    // reconciler snaps to server X only, letting Y hover freely.
     this.tweens.add({ targets: this.playerSprite,   y: this.playerSprite.y - 6,   duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
     this.tweens.add({ targets: this.opponentSprite, y: this.opponentSprite.y - 6, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 300 })
   }
@@ -215,57 +222,205 @@ export class DuelScene extends Phaser.Scene {
     }
   }
 
-  // ─── Input ─────────────────────────────────────────────────────────────
+  /** Small red barrel sticking out of a drone in the aim direction. */
+  private drawGunBarrel(g: Phaser.GameObjects.Graphics, sprite: Phaser.GameObjects.Image, angle: number) {
+    g.clear()
+    const cx = sprite.x, cy = sprite.y
+    const len = 22
+    const w = 5
+    // Rectangle rotated by `angle`, pivoting on the drone centre.
+    const cos = Math.cos(angle), sin = Math.sin(angle)
+    const tip = { x: cx + cos * len,        y: cy + sin * len }
+    const px  = { x: cx + cos * 6,          y: cy + sin * 6 } // barrel base 6px from centre
+    const nl  = { x: -sin * (w / 2),        y: cos * (w / 2) }
+    // Body
+    g.fillStyle(0xff2222, 0.95)
+    g.beginPath()
+    g.moveTo(px.x - nl.x, px.y - nl.y)
+    g.lineTo(px.x + nl.x, px.y + nl.y)
+    g.lineTo(tip.x + nl.x, tip.y + nl.y)
+    g.lineTo(tip.x - nl.x, tip.y - nl.y)
+    g.closePath()
+    g.fillPath()
+    // Muzzle glow
+    g.fillStyle(0xffff33, 0.75)
+    g.fillCircle(tip.x, tip.y, 3)
+    g.fillStyle(0xff2222, 0.35)
+    g.fillCircle(tip.x, tip.y, 6)
+  }
 
-  private setupInput(W: number, H: number) {
+  // ─── HUD (D-pad + aim-stick) ──────────────────────────────────────────
+
+  private setupHUD(W: number, H: number) {
+    // ── D-pad in the bottom-left corner ─────────────────────────────────
+    const dpadCX = 68
+    const dpadCY = H - 76
+    const btnR   = 26
+    const spacing = 30
+
+    this.dpadGfx = this.add.graphics().setDepth(30)
+    this.dpadGfx.setScrollFactor(0)
+
+    const dpadZones: Array<[DpadDir, number, number]> = [
+      ['up',    dpadCX,           dpadCY - spacing],
+      ['down',  dpadCX,           dpadCY + spacing],
+      ['left',  dpadCX - spacing, dpadCY],
+      ['right', dpadCX + spacing, dpadCY],
+    ]
+    for (const [dir, x, y] of dpadZones) {
+      const z = this.add.zone(x, y, btnR * 2, btnR * 2)
+        .setInteractive({ useHandCursor: true }).setDepth(31)
+      z.on('pointerdown', () => { this.dpad[dir] = true })
+      z.on('pointerup',   () => { this.dpad[dir] = false })
+      z.on('pointerout',  () => { this.dpad[dir] = false })
+      z.on('pointerupoutside', () => { this.dpad[dir] = false })
+      this.hudInteractive.push(z)
+    }
+
+    // ── Aim-stick in the bottom-right corner ────────────────────────────
+    this.aimCX = W - 78
+    this.aimCY = H - 76
+    this.aimR  = 50
+
+    this.aimGfx = this.add.graphics().setDepth(30)
+    this.aimGfx.setScrollFactor(0)
+
+    const aimZone = this.add.zone(this.aimCX, this.aimCY, this.aimR * 2 + 30, this.aimR * 2 + 30)
+      .setInteractive({ useHandCursor: true }).setDepth(31)
+
+    // Track drag: pointerdown+move updates aim angle; pointerup at "gun tip"
+    // vicinity fires. To keep it simple: any pointerup inside the ring fires
+    // (angle is whatever we last dragged to). Very short taps also fire.
+    let dragging = false
+    aimZone.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      dragging = true
+      this.updateAimFromPointer(p.x, p.y)
+    })
+    aimZone.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (dragging) this.updateAimFromPointer(p.x, p.y)
+    })
+    aimZone.on('pointerup', (p: Phaser.Input.Pointer) => {
+      if (dragging) this.updateAimFromPointer(p.x, p.y)
+      dragging = false
+      this.emitShootAlongAim()
+    })
+    aimZone.on('pointerupoutside', () => { dragging = false })
+    this.hudInteractive.push(aimZone)
+  }
+
+  private updateAimFromPointer(px: number, py: number) {
+    const dx = px - this.aimCX
+    const dy = py - this.aimCY
+    if (dx === 0 && dy === 0) return
+    this.aimAngle = Math.atan2(dy, dx)
+  }
+
+  private drawHUD() {
+    // ── D-pad ───────────────────────────────────────────────────────────
+    const g = this.dpadGfx
+    g.clear()
+    const dpadCX = 68
+    const dpadCY = this.H - 76
+    const btnR   = 26
+    const spacing = 30
+
+    const draw = (cx: number, cy: number, active: boolean, glyph: 'up'|'down'|'left'|'right') => {
+      g.fillStyle(active ? 0x00e5ff : 0x0a1929, active ? 0.35 : 0.55)
+      g.fillCircle(cx, cy, btnR)
+      g.lineStyle(1.5, 0x00e5ff, active ? 0.9 : 0.4)
+      g.strokeCircle(cx, cy, btnR)
+      // Arrow glyph
+      g.fillStyle(0x00e5ff, active ? 1 : 0.7)
+      g.beginPath()
+      const t = 10
+      switch (glyph) {
+        case 'up':    g.moveTo(cx, cy - t);      g.lineTo(cx - t, cy + t/2); g.lineTo(cx + t, cy + t/2); break
+        case 'down':  g.moveTo(cx, cy + t);      g.lineTo(cx - t, cy - t/2); g.lineTo(cx + t, cy - t/2); break
+        case 'left':  g.moveTo(cx - t, cy);      g.lineTo(cx + t/2, cy - t); g.lineTo(cx + t/2, cy + t); break
+        case 'right': g.moveTo(cx + t, cy);      g.lineTo(cx - t/2, cy - t); g.lineTo(cx - t/2, cy + t); break
+      }
+      g.closePath()
+      g.fillPath()
+    }
+    draw(dpadCX,           dpadCY - spacing, this.dpad.up,    'up')
+    draw(dpadCX,           dpadCY + spacing, this.dpad.down,  'down')
+    draw(dpadCX - spacing, dpadCY,           this.dpad.left,  'left')
+    draw(dpadCX + spacing, dpadCY,           this.dpad.right, 'right')
+
+    // ── Aim-stick with a small red gun ──────────────────────────────────
+    const a = this.aimGfx
+    a.clear()
+    // Ring
+    a.fillStyle(0x1a0a0a, 0.5); a.fillCircle(this.aimCX, this.aimCY, this.aimR)
+    a.lineStyle(2, 0xff4444, 0.6); a.strokeCircle(this.aimCX, this.aimCY, this.aimR)
+    // Inner tick marks
+    for (let i = 0; i < 12; i++) {
+      const th = (i / 12) * Math.PI * 2
+      const r0 = this.aimR - 8, r1 = this.aimR - 2
+      a.lineStyle(1, 0xff4444, 0.4)
+      a.lineBetween(
+        this.aimCX + Math.cos(th) * r0, this.aimCY + Math.sin(th) * r0,
+        this.aimCX + Math.cos(th) * r1, this.aimCY + Math.sin(th) * r1,
+      )
+    }
+    // Red gun in aim direction
+    const cos = Math.cos(this.aimAngle), sin = Math.sin(this.aimAngle)
+    const len = this.aimR - 10
+    const w = 6
+    const tip = { x: this.aimCX + cos * len, y: this.aimCY + sin * len }
+    const base = { x: this.aimCX + cos * 4,  y: this.aimCY + sin * 4 }
+    const nl  = { x: -sin * (w / 2),         y:  cos * (w / 2) }
+    a.fillStyle(0xff2222, 0.95)
+    a.beginPath()
+    a.moveTo(base.x - nl.x, base.y - nl.y)
+    a.lineTo(base.x + nl.x, base.y + nl.y)
+    a.lineTo(tip.x  + nl.x, tip.y  + nl.y)
+    a.lineTo(tip.x  - nl.x, tip.y  - nl.y)
+    a.closePath()
+    a.fillPath()
+    // Muzzle spark
+    a.fillStyle(0xffff33, 0.8); a.fillCircle(tip.x, tip.y, 3)
+    a.fillStyle(0xff2222, 0.35); a.fillCircle(tip.x, tip.y, 6)
+    // Central pivot
+    a.fillStyle(0xff4444, 0.9); a.fillCircle(this.aimCX, this.aimCY, 3)
+  }
+
+  // ─── Input setup ───────────────────────────────────────────────────────
+
+  private setupInput() {
     const canvas = this.sys.canvas
 
-    this.docMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect()
-      const x = Phaser.Math.Clamp(e.clientX - rect.left, 4, W - 4)
-      const y = Phaser.Math.Clamp(e.clientY - rect.top,  4, H - 4)
-      this.targetNX = x / this.W
-      this.targetNY = y / this.H
+    // Keyboard support: arrow keys + WASD move, Space shoots.
+    const keys = this.input.keyboard
+    if (keys) {
+      const bind = (codes: string[], dir: DpadDir) => {
+        for (const c of codes) {
+          keys.on('keydown-' + c, () => { this.dpad[dir] = true })
+          keys.on('keyup-' + c,   () => { this.dpad[dir] = false })
+        }
+      }
+      bind(['UP','W'],    'up')
+      bind(['DOWN','S'],  'down')
+      bind(['LEFT','A'],  'left')
+      bind(['RIGHT','D'], 'right')
+      keys.on('keydown-SPACE', () => this.emitShootAlongAim())
     }
-    document.addEventListener('mousemove', this.docMouseMove)
-
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (p.isDown) {
-        const x = Phaser.Math.Clamp(p.x, 4, W - 4)
-        const y = Phaser.Math.Clamp(p.y, 4, H - 4)
-        this.targetNX = x / this.W
-        this.targetNY = y / this.H
-      }
-    })
-
-    this.input.on('pointerup', (p: Phaser.Input.Pointer) => {
-      if (p.rightButtonDown()) return
-      const dx = p.x - p.downX
-      const dy = p.y - p.downY
-      if (Math.sqrt(dx * dx + dy * dy) < 15) {
-        this.emitShoot(p.x / this.W, p.y / this.H)
-      }
-    })
-
-    // ── Server-driven WS events ──────────────────────────────────────────
 
     this.onDuelStartState = (e: Event) => {
       const p = (e as CustomEvent<DuelStartStatePayload>).detail
-      // If I'm the defender, everything the server sends is in "challenger
-      // view" coords — flip so I still see myself bottom-left.
       this.flipped = p.defender_id === this.cfg.myUserId
       const me  = p.players.find((pl) => pl.user_id === this.cfg.myUserId)
       const opp = p.players.find((pl) => pl.user_id !== this.cfg.myUserId)
       if (me)  {
         this.myHP = me.hp; this.myMaxHP = me.max_hp
-        this.myServerX = this.worldToScreenX(me.x)
-        this.myServerY = this.worldToScreenY(me.y)
+        this.myServerX = this.worldToScreenX(me.x); this.myServerY = this.worldToScreenY(me.y)
       }
       if (opp) {
         this.oppHP = opp.hp; this.oppMaxHP = opp.max_hp
-        this.oppTargetX = this.worldToScreenX(opp.x)
-        this.oppTargetY = this.worldToScreenY(opp.y)
+        this.oppTargetX = this.worldToScreenX(opp.x); this.oppTargetY = this.worldToScreenY(opp.y)
       }
+      // Default aim points toward opponent so the barrel isn't facing self.
+      this.aimAngle = Math.atan2(this.oppTargetY - this.myServerY, this.oppTargetX - this.myServerX)
       this.emitHp()
     }
     canvas.addEventListener('duel-start-state', this.onDuelStartState)
@@ -284,7 +439,6 @@ export class DuelScene extends Phaser.Scene {
       const p = (e as CustomEvent<DuelShotPayload>).detail
       const mine = p.from === this.cfg.myUserId
       const color = mine ? 0x00e5ff : 0xff4444
-      // Position + velocity live in world space — rotate for defender view.
       const sx  = this.worldToScreenX(p.x)
       const sy  = this.worldToScreenY(p.y)
       const svx = this.flipped ? -p.vx : p.vx
@@ -322,7 +476,6 @@ export class DuelScene extends Phaser.Scene {
     canvas.addEventListener('duel-force-end', this.onForceEnd)
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      document.removeEventListener('mousemove', this.docMouseMove)
       canvas.removeEventListener('duel-start-state', this.onDuelStartState)
       canvas.removeEventListener('duel-state',       this.onDuelState)
       canvas.removeEventListener('duel-shot-fired',  this.onDuelShotFired)
@@ -335,33 +488,62 @@ export class DuelScene extends Phaser.Scene {
 
   // ─── Input emission ────────────────────────────────────────────────────
 
+  /** Send the current move target to the server, computed from dpad state. */
   private emitMoveTick() {
-    // Throttle to 50ms — matches the server tick rate. Sub-tick input rate
-    // buys nothing; extra frames just get coalesced by the session queue.
     const now = this.time.now
     if (now - this.lastMoveEmit < 50) return
     this.lastMoveEmit = now
-    // targetNX/NY live in screen-space; server expects world-space.
-    const wx = this.screenToWorldX(this.targetNX)
-    const wy = this.screenToWorldY(this.targetNY)
+
+    // Direction vector from D-pad. Neutral (nothing pressed) → stand still by
+    // targeting the current server-side position.
+    let dx = 0, dy = 0
+    if (this.dpad.left)  dx -= 1
+    if (this.dpad.right) dx += 1
+    if (this.dpad.up)    dy -= 1
+    if (this.dpad.down)  dy += 1
+
+    let targetScreenX: number, targetScreenY: number
+    if (dx === 0 && dy === 0) {
+      // Standing: keep the target where we currently are so server doesn't drift.
+      targetScreenX = this.playerSprite.x / this.W
+      targetScreenY = this.playerSprite.y / this.H
+    } else {
+      // Aim the target far in the pressed direction; the server clamps by speed.
+      const len = Math.hypot(dx, dy) || 1
+      dx /= len; dy /= len
+      targetScreenX = clamp01(this.playerSprite.x / this.W + dx * 0.5)
+      targetScreenY = clamp01(this.playerSprite.y / this.H + dy * 0.5)
+    }
+
+    const worldX = this.screenToWorldX(targetScreenX)
+    const worldY = this.screenToWorldY(targetScreenY)
     this.sys.canvas.dispatchEvent(new CustomEvent('duel-move', {
-      detail: { nx: +wx.toFixed(4), ny: +wy.toFixed(4) },
+      detail: { nx: +worldX.toFixed(4), ny: +worldY.toFixed(4) },
     }))
   }
 
-  private emitShoot(ntx: number, nty: number) {
-    // Client rate-limit; the server cooldown is authoritative.
+  private emitShootAlongAim() {
     const now = this.time.now
     if (now - this.lastShootEmit < 100) return
     this.lastShootEmit = now
-    const wtx = this.screenToWorldX(ntx)
-    const wty = this.screenToWorldY(nty)
+
+    // Aim direction is in screen-space (unaffected by flip since it's a vector
+    // rendered on-screen). Compute the target point along that ray so the
+    // server can spawn a bullet flying that way.
+    const cos = Math.cos(this.aimAngle), sin = Math.sin(this.aimAngle)
+    const originScreenX = this.playerSprite.x / this.W
+    const originScreenY = this.playerSprite.y / this.H
+    const targetScreenX = clamp01(originScreenX + cos * 1.2)
+    const targetScreenY = clamp01(originScreenY + sin * 1.2)
+
+    const ntx = this.screenToWorldX(targetScreenX)
+    const nty = this.screenToWorldY(targetScreenY)
     this.sys.canvas.dispatchEvent(new CustomEvent('duel-shoot', {
-      detail: { ntx: +wtx.toFixed(4), nty: +wty.toFixed(4) },
+      detail: { ntx: +ntx.toFixed(4), nty: +nty.toFixed(4) },
     }))
   }
 
-  // ─── Rendering: bullets, hit FX, dodge FX ──────────────────────────────
+  // ─── Bullets / FX ──────────────────────────────────────────────────────
 
   private spawnBullet(nx: number, ny: number, vnx: number, vny: number, color: number) {
     const gfx = this.add.graphics().setDepth(12)
@@ -388,9 +570,6 @@ export class DuelScene extends Phaser.Scene {
       b.trail.lineStyle(1, 0xffffff, 0.15)
       b.trail.lineBetween(px, py, b.gfx.x, b.gfx.y)
 
-      // Bullets vanish off-arena; hit detection lives on the server, so we
-      // don't check collisions here. The server-driven duel-hit event
-      // shows sparks at exactly the moment damage lands.
       if (b.gfx.x < -20 || b.gfx.x > this.W + 20 || b.gfx.y < -20 || b.gfx.y > this.H + 20) {
         b.gfx.destroy(); b.trail.destroy(); return false
       }
@@ -435,8 +614,6 @@ export class DuelScene extends Phaser.Scene {
     })
   }
 
-  // ─── HP surface event (React consumes this) ────────────────────────────
-
   private emitHp() {
     this.sys.canvas.dispatchEvent(new CustomEvent('duel-hp', {
       detail: {
@@ -447,8 +624,6 @@ export class DuelScene extends Phaser.Scene {
       },
     }))
   }
-
-  // ─── End sequence ──────────────────────────────────────────────────────
 
   private endDuel(won: boolean) {
     if (this.ended) return
@@ -490,8 +665,6 @@ export class DuelScene extends Phaser.Scene {
     })
   }
 
-  // ─── Textures ──────────────────────────────────────────────────────────
-
   private generateTextures() {
     for (const t of [1, 2, 3] as const) {
       const key = `duel_drone_${t}`
@@ -502,39 +675,37 @@ export class DuelScene extends Phaser.Scene {
     }
   }
 
-  // ─── Update loop ───────────────────────────────────────────────────────
-
   update(_time: number, delta: number) {
     if (this.ended) return
 
-    // 1. Send our latest cursor as the move target (server clamps by speed).
     this.emitMoveTick()
 
-    // 2. Reconcile local sprite positions toward the last server snapshot.
-    //    Server updates arrive at 20Hz — we lerp between them at 60fps for
-    //    a smooth render. Reconciliation strength: full snap on big drift,
-    //    proportional catch-up otherwise.
+    // Reconcile local sprites toward server snapshot (20Hz updates, 60fps render).
     const lerp = 0.30
     const px = this.myServerX * this.W
     const py = this.myServerY * this.H
     this.playerSprite.x += (px - this.playerSprite.x) * lerp
-    // Y hover tween handles vertical bob — only snap Y if the drift is huge.
-    if (Math.abs(py - this.playerSprite.y) > 40) {
-      this.playerSprite.y = py
-    }
+    if (Math.abs(py - this.playerSprite.y) > 40) this.playerSprite.y = py
 
     const ox = this.oppTargetX * this.W
     const oy = this.oppTargetY * this.H
     this.opponentSprite.x += (ox - this.opponentSprite.x) * lerp
-    if (Math.abs(oy - this.opponentSprite.y) > 40) {
-      this.opponentSprite.y = oy
-    }
+    if (Math.abs(oy - this.opponentSprite.y) > 40) this.opponentSprite.y = oy
 
-    // 3. Move rendered bullets forward.
     this.advanceBullets(delta)
 
-    // 4. Redraw upgrade + HP glow around each drone every frame.
+    // Effects + gun barrels
     this.drawDroneEffects(this.playerGfx,   this.playerSprite,   this.cfg.playerUpgrades,   this.myHP,  this.myMaxHP)
     this.drawDroneEffects(this.opponentGfx, this.opponentSprite, this.cfg.opponentUpgrades, this.oppHP, this.oppMaxHP)
+    this.drawGunBarrel(this.playerGunGfx,   this.playerSprite,   this.aimAngle)
+    // Opponent barrel: point roughly toward us. We don't get their aim over WS
+    // (yet), so approximate by direction to my sprite — plausible & readable.
+    const oppAim = Math.atan2(this.playerSprite.y - this.opponentSprite.y, this.playerSprite.x - this.opponentSprite.x)
+    this.drawGunBarrel(this.opponentGunGfx, this.opponentSprite, oppAim)
+
+    // HUD
+    this.drawHUD()
   }
 }
+
+function clamp01(v: number): number { return v < 0 ? 0 : v > 1 ? 1 : v }
