@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { fmtGold } from '../utils/format'
-import { getMarket, reserveListing, buyListing, getWalletRate, buyListingWithStars, getMarketFees } from '../api'
+import { getMarket, reserveListing, buyListing, getWalletRate, buyListingWithStars, getMarketFees, getMarketLimit } from '../api'
 import type { ApiMarketListing } from '../api/types'
 import { DroneIcon, TurretIcon, UnitCircle } from '../components/UnitIcons'
 import { MarketDetailsModal } from '../components/MarketDetailsModal'
@@ -256,11 +256,19 @@ export function MarketScreen() {
   const [detailsItem,         setDetailsItem]         = useState<ApiMarketListing | null>(null)
   const [starsPerTon,     setStarsPerTon]     = useState(0)
   const [sellerRate,      setSellerRate]      = useState<number | undefined>(undefined)
+  // Daily P2P purchase quota — {remaining, limit, reset_at}. Refreshed on
+  // mount and after every successful buy.
+  const [buyLimit, setBuyLimit] = useState<{ remaining: number; limit: number; reset_at: number } | null>(null)
+  const refreshBuyLimit = () =>
+    getMarketLimit()
+      .then((r) => setBuyLimit({ remaining: r.remaining, limit: r.limit, reset_at: r.reset_at }))
+      .catch(() => {/* ignore — UI just hides the chip */})
 
-  // Fetch Stars/TON rate and market fees once
+  // Fetch Stars/TON rate, market fees, and daily buy-limit once on mount.
   useEffect(() => {
     getWalletRate().then(r => setStarsPerTon(r.stars_per_ton ?? 0)).catch(() => {})
     getMarketFees().then(f => setSellerRate(f.seller_rate)).catch(() => {})
+    refreshBuyLimit()
   }, [])
 
   // Load listings from real API
@@ -318,10 +326,15 @@ export function MarketScreen() {
         setBoughtIds((s) => new Set(s).add(item.id))
         showToast('◈ ' + t('market.bought'))
         loadGameState()
+        refreshBuyLimit()
         useGameStore.getState().triggerConfetti()
       } catch (e: any) {
         if (e?.status === 409) showToast(t('market.reserved'))
         else if (e?.status === 402) setInsufficientTonItem(item)
+        else if (e?.status === 429) {
+          showToast(t('market.dailyLimitReached', { limit: buyLimit?.limit ?? 10 }))
+          refreshBuyLimit()
+        }
         else showToast(t('market.purchaseFailed'))
       }
       return
@@ -343,12 +356,16 @@ export function MarketScreen() {
         : t(TURRET_COLORS[item.turret?.level ?? item.turret?.turret_level ?? 1]?.key ?? 'turret.light')
       showToast(`${name} — ${t('market.bought')}`)
       loadGameState()
+      refreshBuyLimit()
       useGameStore.getState().triggerConfetti()
     } catch (e: any) {
       if (e?.status === 409) {
         showToast(t('market.reserved'))
       } else if (e?.status === 402) {
         setInsufficientItem(item)
+      } else if (e?.status === 429) {
+        showToast(t('market.dailyLimitReached', { limit: buyLimit?.limit ?? 10 }))
+        refreshBuyLimit()
       } else {
         showToast(t('market.purchaseFailed'))
       }
@@ -588,6 +605,14 @@ export function MarketScreen() {
 
       <div className={styles.statsBar}>
         <span>{filtered.length} {t('market.filterAll').toLowerCase()}</span>
+        {buyLimit && (
+          <span
+            className={buyLimit.remaining <= 0 ? styles.limitBadgeOut : styles.limitBadge}
+            title={t('market.dailyLimitHint', { limit: buyLimit.limit })}
+          >
+            {t('market.dailyLimit', { remaining: buyLimit.remaining })}
+          </span>
+        )}
       </div>
 
       {/* Listings */}

@@ -162,7 +162,7 @@ function dispatch(msg: WsMessage) {
       // other never confirmed (verdict_timeout). Escrow was refunded to both
       // players — surface a toast with the refund amount and refresh balances
       // so the returned bet is visible immediately.
-      const canvas = document.querySelector('canvas[data-duel]')
+      const canvas = document.querySelector('[data-duel]')
       if (canvas) {
         // If battle scene is active, force-end it as a draw so the "победа/
         // поражение" overlay doesn't stick.
@@ -195,34 +195,39 @@ function dispatch(msg: WsMessage) {
     case 'duel.start_state': {
       // Server-authoritative initial state: both players, stats, MaxHP.
       // Emitted once at the very start of a session.
-      const canvas = document.querySelector('canvas[data-duel]')
+      //
+      // Race: start_state can arrive BEFORE the duel screen has mounted
+      // (challenger transitions to it after seeing duel.start). Buffer the
+      // last payload on `window` so DuelBattleScreen can drain it on mount.
+      ;(window as any).__lastDuelStartState = msg.payload
+      const canvas = document.querySelector('[data-duel]')
       canvas?.dispatchEvent(new CustomEvent('duel-start-state', { detail: msg.payload }))
       break
     }
 
     case 'duel.state': {
       // 20Hz tick from server: authoritative positions + HP.
-      const canvas = document.querySelector('canvas[data-duel]')
+      const canvas = document.querySelector('[data-duel]')
       canvas?.dispatchEvent(new CustomEvent('duel-state', { detail: msg.payload }))
       break
     }
 
     case 'duel.shot_fired': {
       // Server spawned a projectile — client only renders, doesn't simulate.
-      const canvas = document.querySelector('canvas[data-duel]')
+      const canvas = document.querySelector('[data-duel]')
       canvas?.dispatchEvent(new CustomEvent('duel-shot-fired', { detail: msg.payload }))
       break
     }
 
     case 'duel.hit': {
       // Bullet connected on the server — show sparks + shake if we're the target.
-      const canvas = document.querySelector('canvas[data-duel]')
+      const canvas = document.querySelector('[data-duel]')
       canvas?.dispatchEvent(new CustomEvent('duel-hit', { detail: msg.payload }))
       break
     }
 
     case 'duel.dodge': {
-      const canvas = document.querySelector('canvas[data-duel]')
+      const canvas = document.querySelector('[data-duel]')
       canvas?.dispatchEvent(new CustomEvent('duel-dodge', { detail: msg.payload }))
       break
     }
@@ -290,7 +295,7 @@ function dispatch(msg: WsMessage) {
       // Battle ended (other player submitted result) — force-end this client's scene
       const myId = useGameStore.getState().userId
       const won  = Number(msg.payload.winner_id) === myId
-      const canvas3 = document.querySelector('canvas[data-duel]')
+      const canvas3 = document.querySelector('[data-duel]')
       if (canvas3) {
         canvas3.dispatchEvent(new CustomEvent('duel-force-end', { detail: { won } }))
       } else {

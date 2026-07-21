@@ -39,26 +39,62 @@ export const soundManager = {
     const c = ac()
     const t = c.currentTime
 
+    // Short, snappy blaster "pew". Trimmed the whole envelope to ~130 ms so
+    // rapid-fire feels tight — the previous 300 ms tail overlapped and made
+    // burst-fire sound like a hum. Same three layers as before:
+    //
+    //   1. Square-wave sweep 2400→220 Hz through resonant bandpass (100 ms)
+    //   2. High-pass noise crack (18 ms)   — barrel spark
+    //   3. Sine sub-thump 70→30 Hz (100 ms) — weight on speakers
+
+    // Layer 1 — sweep tone
     const osc = c.createOscillator()
-    const filter = c.createBiquadFilter()
-    const gain = c.createGain()
-    osc.connect(filter)
-    filter.connect(gain)
-    gain.connect(c.destination)
+    const bandpass = c.createBiquadFilter()
+    const shape = c.createGain()
+    const master = c.createGain()
+    osc.connect(bandpass); bandpass.connect(shape); shape.connect(master); master.connect(c.destination)
 
-    osc.type = 'sawtooth'
-    osc.frequency.setValueAtTime(1200, t)
-    osc.frequency.exponentialRampToValueAtTime(280, t + 0.32)
+    osc.type = 'square'
+    osc.frequency.setValueAtTime(2400, t)
+    osc.frequency.exponentialRampToValueAtTime(220, t + 0.10)
 
-    filter.type = 'bandpass'
-    filter.frequency.value = 900
-    filter.Q.value = 2
+    bandpass.type = 'bandpass'
+    bandpass.frequency.setValueAtTime(1800, t)
+    bandpass.frequency.exponentialRampToValueAtTime(400, t + 0.10)
+    bandpass.Q.value = 6
 
-    gain.gain.setValueAtTime(0.1, t)
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32)
+    shape.gain.setValueAtTime(0.0001, t)
+    shape.gain.exponentialRampToValueAtTime(0.24, t + 0.005)
+    shape.gain.exponentialRampToValueAtTime(0.001, t + 0.12)
 
-    osc.start(t)
-    osc.stop(t + 0.32)
+    master.gain.setValueAtTime(0.9, t)
+    osc.start(t); osc.stop(t + 0.13)
+
+    // Layer 2 — noise crack
+    const nBufSize = Math.ceil(c.sampleRate * 0.02)
+    const nBuf = c.createBuffer(1, nBufSize, c.sampleRate)
+    const nData = nBuf.getChannelData(0)
+    for (let i = 0; i < nBufSize; i++) nData[i] = (Math.random() * 2 - 1) * (1 - i / nBufSize)
+    const noise = c.createBufferSource()
+    noise.buffer = nBuf
+    const nHp = c.createBiquadFilter()
+    nHp.type = 'highpass'; nHp.frequency.value = 1800
+    const nGain = c.createGain()
+    nGain.gain.setValueAtTime(0.20, t)
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.025)
+    noise.connect(nHp); nHp.connect(nGain); nGain.connect(c.destination)
+    noise.start(t); noise.stop(t + 0.03)
+
+    // Layer 3 — sub thump
+    const sub = c.createOscillator()
+    const subGain = c.createGain()
+    sub.type = 'sine'
+    sub.frequency.setValueAtTime(70, t)
+    sub.frequency.exponentialRampToValueAtTime(30, t + 0.09)
+    subGain.gain.setValueAtTime(0.16, t)
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.10)
+    sub.connect(subGain); subGain.connect(c.destination)
+    sub.start(t); sub.stop(t + 0.11)
   },
 
   explosion() {

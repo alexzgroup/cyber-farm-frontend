@@ -1,701 +1,442 @@
 import Phaser from 'phaser'
-import { paintDrone } from '../utils/droneGraphics'
+import { DuelDroneSprite } from '../utils/duelDroneSprite'
 import { soundManager } from '../utils/soundManager'
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// ─── Public API ───────────────────────────────────────────────────────────
 
 export interface DuelSceneConfig {
-  duelId:           number
-  myUserId:         number
-  playerDroneType:  1 | 2 | 3
-  playerUpgrades:   Record<string, number>
-  opponentUserId:   number
-  opponentName:     string
-  opponentType:     1 | 2 | 3
-  opponentUpgrades: Record<string, number>
-  onEnd: (won: boolean) => void
+  duelId:   number
+  myUserId: number
+  onEnd:    (won: boolean) => void
 }
 
-interface DuelStartStatePayload {
-  duel_id: number
-  challenger_id: number
-  defender_id: number
-  tick_rate: number
-  bullet_speed: number
-  players: Array<{
-    user_id: number
-    drone_code: number
-    upgrades: Record<string, number>
-    max_hp: number
-    hp: number
-    x: number
-    y: number
-    stats: { damage: number; fire_rate: number; speed: number; dodge: number; hitbox: number }
-  }>
+// WS payload shapes (mirror server) ────────────────────────────────────────
+interface DuelStartState {
+  duel_id: number; challenger_id: number; defender_id: number
+  players: Array<{ user_id: number; max_hp: number; hp: number; x: number; y: number }>
 }
-
-interface DuelStatePayload {
-  duel_id: number
-  t: number
-  players: Array<{ user_id: number; x: number; y: number; hp: number }>
-}
-
-interface DuelShotPayload  { bullet_id: number; from: number; x: number; y: number; vx: number; vy: number }
-interface DuelHitPayload   { shooter: number; target: number; x: number; y: number; damage: number; remaining: number }
-interface DuelDodgePayload { target: number; x: number; y: number }
+interface DuelState { players: Array<{ user_id: number; x: number; y: number; hp: number }> }
+interface DuelShot  { from: number; x: number; y: number; vx: number; vy: number }
+interface DuelHit   { shooter: number; target: number; x: number; y: number; damage: number }
+interface DuelDodge { target: number; x: number; y: number }
 
 interface Bullet {
-  gfx: Phaser.GameObjects.Graphics
-  trail: Phaser.GameObjects.Graphics
-  vx: number
-  vy: number
+  gfx:  Phaser.GameObjects.Graphics
+  vx: number; vy: number
   color: number
 }
 
-type DpadDir = 'up' | 'down' | 'left' | 'right'
-
-// ─── Scene ────────────────────────────────────────────────────────────────
-
+/**
+ * Duel arena — Phaser side. Owns two drones (DuelDroneSprite), their turret
+ * barrels, in-flight bullets, muzzle-flash + hit + dodge FX, and the death
+ * explosion. HUD (D-pad, aim-dial, HP bars, music toggle, overlays) is
+ * drawn by DuelBattleScreen in React on top of this canvas.
+ *
+ * Communication is via DOM CustomEvents on `sys.canvas` (marked with
+ * `data-duel`):
+ *
+ *   React → Phaser
+ *     duel-start-state {duel_id, challenger_id, defender_id, players[…]}
+ *     duel-state       {players[…]}
+ *     duel-shot-fired  {from, x, y, vx, vy}
+ *     duel-hit         {shooter, target, x, y, damage}
+ *     duel-dodge       {target, x, y}
+ *     duel-force-end   {won}
+ *     duel-aim         {angleRad}           // player's aim rotation
+ *
+ *   Phaser → React    (nothing — React reads WS itself for HUD state)
+ */
 export class DuelScene extends Phaser.Scene {
   private cfg!: DuelSceneConfig
 
-  // Sprites
-  private playerSprite!:   Phaser.GameObjects.Image
-  private opponentSprite!: Phaser.GameObjects.Image
-  private playerGfx!:      Phaser.GameObjects.Graphics
-  private opponentGfx!:    Phaser.GameObjects.Graphics
-  private playerGunGfx!:   Phaser.GameObjects.Graphics
-  private opponentGunGfx!: Phaser.GameObjects.Graphics
+  // Drones (DuelDroneSprite = container of body sprite + 4 rotor sprites).
+  private me!: DuelDroneSprite
+  private foe!: DuelDroneSprite
+  private myGunGfx!:  Phaser.GameObjects.Graphics
+  private foeGunGfx!: Phaser.GameObjects.Graphics
 
-  // Server-authoritative snapshot
-  private myHP = 100
-  private myMaxHP = 100
-  private oppHP = 100
-  private oppMaxHP = 100
-  private oppTargetX = 0.75
-  private oppTargetY = 0.25
-  private myServerX  = 0.25
-  private myServerY  = 0.75
+  // Authoritative snapshot (normalised 0..1)
+  private myServerX = 0.25; private myServerY = 0.5
+  private foeServerX = 0.75; private foeServerY = 0.5
+  private myHP = 100; private myMaxHP = 100
+  private foeHP = 100; private foeMaxHP = 100
+  private started = false
 
-  // Bullets
+  // Turret aim (radians)
+  private myAim  = 0
+  private foeAim = Math.PI
+
+  // Recoil offsets, decay to 0
+  private myRecoil = 0
+  private foeRecoil = 0
+
   private bullets: Bullet[] = []
-
-  // Input state — D-pad and aim
-  private dpad: Record<DpadDir, boolean> = { up: false, down: false, left: false, right: false }
-  private aimAngle = -Math.PI / 4 // radians, 0=right, points toward opponent by default (up-right)
-  private lastMoveEmit = 0
-  private lastShootEmit = 0
-
-  // HUD graphics
-  private dpadGfx!:      Phaser.GameObjects.Graphics
-  private aimGfx!:       Phaser.GameObjects.Graphics
-  private hudInteractive: Array<Phaser.GameObjects.Zone> = []
-
-  // Aim-stick center in screen px + radius
-  private aimCX = 0
-  private aimCY = 0
-  private aimR  = 50
-
-  // Arena is shared server-space, no client-side rotation. Challenger spawns
-  // bottom-left (0.25, 0.75), defender spawns top-right (0.75, 0.25). Both
-  // players watch the same layout — each spawns in their own quadrant.
-
-  // WS listeners
-  private onDuelStartState!:  (e: Event) => void
-  private onDuelState!:       (e: Event) => void
-  private onDuelShotFired!:   (e: Event) => void
-  private onDuelHit!:         (e: Event) => void
-  private onDuelDodge!:       (e: Event) => void
-  private onForceEnd!:        (e: Event) => void
-
   private ended = false
+
+  // Canvas dims
   private W = 0
   private H = 0
+
+  // Listeners
+  private onStart!:     (e: Event) => void
+  private onState!:     (e: Event) => void
+  private onShot!:      (e: Event) => void
+  private onHit!:       (e: Event) => void
+  private onDodge!:     (e: Event) => void
+  private onAim!:       (e: Event) => void
+  private onForceEnd!:  (e: Event) => void
 
   constructor() { super({ key: 'DuelScene' }) }
 
   setConfig(cfg: DuelSceneConfig) { this.cfg = cfg }
 
+  // ─── Lifecycle ─────────────────────────────────────────────────────────
   create() {
-    const { width: W, height: H } = this.scale
-    this.W = W; this.H = H
+    const { width, height } = this.scale
+    this.W = width; this.H = height
 
-    this.generateTextures()
-    this.drawArena(W, H)
-    this.spawnDrones(W, H)
-    this.setupHUD(W, H)
-    this.setupInput()
+    this.drawArena(width, height)
 
-    this.emitHp()
-    this.sys.canvas.setAttribute('data-duel', '1')
+    // Drones: player = cyan (type 1), opponent = red (type 2).
+    this.me  = new DuelDroneSprite(this, width * this.myServerX,  height * this.myServerY,  1, { scale: 0.9 })
+    this.foe = new DuelDroneSprite(this, width * this.foeServerX, height * this.foeServerY, 2, { scale: 0.9 })
+    this.me.setDepth(10); this.foe.setDepth(10)
+
+    // Gun-barrel overlays sit ABOVE the drone body but below the halo of FX.
+    this.myGunGfx  = this.add.graphics().setDepth(11)
+    this.foeGunGfx = this.add.graphics().setDepth(11)
+
+    this.wireEvents()
+
+    // Mark the canvas so the websocket layer can dispatch events onto it,
+    // and drain any start_state that was buffered before we mounted.
+    const canvas = this.sys.canvas
+    canvas.setAttribute('data-duel', '1')
+    const anyWin = window as any
+    if (anyWin.__lastDuelStartState) {
+      canvas.dispatchEvent(new CustomEvent('duel-start-state', { detail: anyWin.__lastDuelStartState }))
+      anyWin.__lastDuelStartState = null
+    }
   }
 
-  // ─── Arena ─────────────────────────────────────────────────────────────
-
+  // ─── Arena backdrop (stars + centre line + faint glow) ─────────────────
   private drawArena(W: number, H: number) {
     const bg = this.add.graphics().setDepth(0)
-    bg.fillStyle(0x050a12, 1); bg.fillRect(0, 0, W, H)
-
-    for (let i = 0; i < 200; i++) {
-      const a = Math.random() * 0.8 + 0.1
+    bg.fillStyle(0x02060e, 1); bg.fillRect(0, 0, W, H)
+    // Stars
+    for (let i = 0; i < 220; i++) {
+      const a = Math.random() * 0.85 + 0.1
       bg.fillStyle(0xffffff, a)
       bg.fillCircle(Math.random() * W, Math.random() * H, Math.random() * 1.4 + 0.2)
     }
-    bg.fillStyle(0x0ea5e9, 0.04); bg.fillEllipse(W * 0.2, H * 0.3, 260, 120)
-    bg.fillStyle(0x8b5cf6, 0.05); bg.fillEllipse(W * 0.8, H * 0.7, 200, 100)
+    // Nebula glows
+    bg.fillStyle(0x0ea5e9, 0.05); bg.fillEllipse(W * 0.22, H * 0.32, 260, 120)
+    bg.fillStyle(0xff5e7a, 0.04); bg.fillEllipse(W * 0.78, H * 0.68, 220, 110)
 
-    const grid = this.add.graphics().setDepth(1)
-    grid.lineStyle(1, 0x00e5ff, 0.05)
-    for (let x = 0; x < W; x += 44) grid.lineBetween(x, 0, x, H)
-    for (let y = 0; y < H; y += 44) grid.lineBetween(0, y, W, y)
-
-    const div = this.add.graphics().setDepth(2)
-    div.fillStyle(0x00e5ff, 0.06); div.fillRect(W / 2 - 1, 0, 2, H)
-    div.lineStyle(1, 0x00e5ff, 0.35); div.lineBetween(W / 2, 0, W / 2, H)
-
-    // Quadrant markers: challenger always spawns bottom-left, defender top-right.
-    // Neutral labels so the same layout reads the same for both players.
-    this.add.text(W * 0.25, H - 42, 'CHALLENGER', {
-      fontSize: '9px', fontFamily: 'monospace', color: '#00e5ff',
-    }).setOrigin(0.5).setAlpha(0.35).setDepth(3)
-    this.add.text(W * 0.75, 42, 'DEFENDER', {
-      fontSize: '9px', fontFamily: 'monospace', color: '#ff4444',
-    }).setOrigin(0.5).setAlpha(0.35).setDepth(3)
+    // Centre divider
+    const div = this.add.graphics().setDepth(1)
+    div.fillStyle(0x28e0ff, 0.06); div.fillRect(W / 2 - 1, 0, 2, H)
+    div.lineStyle(1, 0x28e0ff, 0.28); div.lineBetween(W / 2, 0, W / 2, H)
   }
 
-  // ─── Drones ────────────────────────────────────────────────────────────
-
-  private spawnDrones(W: number, H: number) {
-    const pKey = `duel_drone_${this.cfg.playerDroneType}`
-    const oKey = `duel_drone_${this.cfg.opponentType}`
-
-    this.playerSprite = this.add.image(W * 0.25, H * 0.75, pKey)
-      .setScale(0.72).setDepth(10)
-    this.opponentSprite = this.add.image(W * 0.75, H * 0.25, oKey)
-      .setScale(0.72).setDepth(10).setFlipX(true)
-
-    this.playerGfx     = this.add.graphics().setDepth(9)
-    this.opponentGfx   = this.add.graphics().setDepth(9)
-    this.playerGunGfx  = this.add.graphics().setDepth(11)
-    this.opponentGunGfx = this.add.graphics().setDepth(11)
-
-    // No hover tween on Y — it fought with the server-authoritative Y and
-    // made the sprite slide down whenever the player tried to move up.
-  }
-
-  private drawDroneEffects(
-    g: Phaser.GameObjects.Graphics,
-    sprite: Phaser.GameObjects.Image,
-    upgrades: Record<string, number>,
-    hp: number,
-    maxHp: number,
-  ) {
-    g.clear()
-    const cx = sprite.x, cy = sprite.y
-    const pct = Math.max(0, hp / maxHp)
-    const glow = pct > 0.6 ? 0x00e5ff : pct > 0.3 ? 0xf59e0b : 0xff2222
-
-    g.fillStyle(glow, 0.09); g.fillCircle(cx, cy, 38)
-    g.lineStyle(2, glow, 0.55 * pct); g.strokeCircle(cx, cy, 36)
-
-    const armor = upgrades['armor'] ?? 0
-    if (armor > 0) {
-      const r = 44 + armor * 3
-      const pts = 6
-      for (let i = 0; i <= pts; i++) {
-        const a1 = (i / pts) * Math.PI * 2
-        const a2 = ((i + 1) / pts) * Math.PI * 2
-        g.lineStyle(1.5 + armor * 0.5, 0xfbbf24, 0.6)
-        g.lineBetween(cx + Math.cos(a1) * r, cy + Math.sin(a1) * r,
-                      cx + Math.cos(a2) * r, cy + Math.sin(a2) * r)
-      }
-    }
-
-    if (pct < 0.3) {
-      const flash = Math.sin(this.time.now / 120) * 0.5 + 0.5
-      g.fillStyle(0xff2222, flash * 0.15)
-      g.fillCircle(cx, cy, 42)
-    }
-  }
-
-  /** Small red barrel sticking out of a drone in the aim direction. */
-  private drawGunBarrel(g: Phaser.GameObjects.Graphics, sprite: Phaser.GameObjects.Image, angle: number) {
-    g.clear()
-    const cx = sprite.x, cy = sprite.y
-    const len = 22
-    const w = 5
-    // Rectangle rotated by `angle`, pivoting on the drone centre.
-    const cos = Math.cos(angle), sin = Math.sin(angle)
-    const tip = { x: cx + cos * len,        y: cy + sin * len }
-    const px  = { x: cx + cos * 6,          y: cy + sin * 6 } // barrel base 6px from centre
-    const nl  = { x: -sin * (w / 2),        y: cos * (w / 2) }
-    // Body
-    g.fillStyle(0xff2222, 0.95)
-    g.beginPath()
-    g.moveTo(px.x - nl.x, px.y - nl.y)
-    g.lineTo(px.x + nl.x, px.y + nl.y)
-    g.lineTo(tip.x + nl.x, tip.y + nl.y)
-    g.lineTo(tip.x - nl.x, tip.y - nl.y)
-    g.closePath()
-    g.fillPath()
-    // Muzzle glow
-    g.fillStyle(0xffff33, 0.75)
-    g.fillCircle(tip.x, tip.y, 3)
-    g.fillStyle(0xff2222, 0.35)
-    g.fillCircle(tip.x, tip.y, 6)
-  }
-
-  // ─── HUD (D-pad + aim-stick) ──────────────────────────────────────────
-
-  private setupHUD(W: number, H: number) {
-    // ── D-pad in the bottom-left corner ─────────────────────────────────
-    const dpadCX = 68
-    const dpadCY = H - 76
-    const btnR   = 26
-    const spacing = 30
-
-    this.dpadGfx = this.add.graphics().setDepth(30)
-    this.dpadGfx.setScrollFactor(0)
-
-    const dpadZones: Array<[DpadDir, number, number]> = [
-      ['up',    dpadCX,           dpadCY - spacing],
-      ['down',  dpadCX,           dpadCY + spacing],
-      ['left',  dpadCX - spacing, dpadCY],
-      ['right', dpadCX + spacing, dpadCY],
-    ]
-    for (const [dir, x, y] of dpadZones) {
-      const z = this.add.zone(x, y, btnR * 2, btnR * 2)
-        .setInteractive({ useHandCursor: true }).setDepth(31)
-      z.on('pointerdown', () => { this.dpad[dir] = true })
-      z.on('pointerup',   () => { this.dpad[dir] = false })
-      z.on('pointerout',  () => { this.dpad[dir] = false })
-      z.on('pointerupoutside', () => { this.dpad[dir] = false })
-      this.hudInteractive.push(z)
-    }
-
-    // ── Aim-stick in the bottom-right corner ────────────────────────────
-    this.aimCX = W - 78
-    this.aimCY = H - 76
-    this.aimR  = 50
-
-    this.aimGfx = this.add.graphics().setDepth(30)
-    this.aimGfx.setScrollFactor(0)
-
-    const aimZone = this.add.zone(this.aimCX, this.aimCY, this.aimR * 2 + 30, this.aimR * 2 + 30)
-      .setInteractive({ useHandCursor: true }).setDepth(31)
-
-    // Track drag: pointerdown+move updates aim angle; pointerup at "gun tip"
-    // vicinity fires. To keep it simple: any pointerup inside the ring fires
-    // (angle is whatever we last dragged to). Very short taps also fire.
-    let dragging = false
-    aimZone.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      dragging = true
-      this.updateAimFromPointer(p.x, p.y)
-    })
-    aimZone.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (dragging) this.updateAimFromPointer(p.x, p.y)
-    })
-    aimZone.on('pointerup', (p: Phaser.Input.Pointer) => {
-      if (dragging) this.updateAimFromPointer(p.x, p.y)
-      dragging = false
-      this.emitShootAlongAim()
-    })
-    aimZone.on('pointerupoutside', () => { dragging = false })
-    this.hudInteractive.push(aimZone)
-  }
-
-  private updateAimFromPointer(px: number, py: number) {
-    const dx = px - this.aimCX
-    const dy = py - this.aimCY
-    if (dx === 0 && dy === 0) return
-    this.aimAngle = Math.atan2(dy, dx)
-  }
-
-  private drawHUD() {
-    // ── D-pad ───────────────────────────────────────────────────────────
-    const g = this.dpadGfx
-    g.clear()
-    const dpadCX = 68
-    const dpadCY = this.H - 76
-    const btnR   = 26
-    const spacing = 30
-
-    const draw = (cx: number, cy: number, active: boolean, glyph: 'up'|'down'|'left'|'right') => {
-      g.fillStyle(active ? 0x00e5ff : 0x0a1929, active ? 0.35 : 0.55)
-      g.fillCircle(cx, cy, btnR)
-      g.lineStyle(1.5, 0x00e5ff, active ? 0.9 : 0.4)
-      g.strokeCircle(cx, cy, btnR)
-      // Arrow glyph
-      g.fillStyle(0x00e5ff, active ? 1 : 0.7)
-      g.beginPath()
-      const t = 10
-      switch (glyph) {
-        case 'up':    g.moveTo(cx, cy - t);      g.lineTo(cx - t, cy + t/2); g.lineTo(cx + t, cy + t/2); break
-        case 'down':  g.moveTo(cx, cy + t);      g.lineTo(cx - t, cy - t/2); g.lineTo(cx + t, cy - t/2); break
-        case 'left':  g.moveTo(cx - t, cy);      g.lineTo(cx + t/2, cy - t); g.lineTo(cx + t/2, cy + t); break
-        case 'right': g.moveTo(cx + t, cy);      g.lineTo(cx - t/2, cy - t); g.lineTo(cx - t/2, cy + t); break
-      }
-      g.closePath()
-      g.fillPath()
-    }
-    draw(dpadCX,           dpadCY - spacing, this.dpad.up,    'up')
-    draw(dpadCX,           dpadCY + spacing, this.dpad.down,  'down')
-    draw(dpadCX - spacing, dpadCY,           this.dpad.left,  'left')
-    draw(dpadCX + spacing, dpadCY,           this.dpad.right, 'right')
-
-    // ── Aim-stick with a small red gun ──────────────────────────────────
-    const a = this.aimGfx
-    a.clear()
-    // Ring
-    a.fillStyle(0x1a0a0a, 0.5); a.fillCircle(this.aimCX, this.aimCY, this.aimR)
-    a.lineStyle(2, 0xff4444, 0.6); a.strokeCircle(this.aimCX, this.aimCY, this.aimR)
-    // Inner tick marks
-    for (let i = 0; i < 12; i++) {
-      const th = (i / 12) * Math.PI * 2
-      const r0 = this.aimR - 8, r1 = this.aimR - 2
-      a.lineStyle(1, 0xff4444, 0.4)
-      a.lineBetween(
-        this.aimCX + Math.cos(th) * r0, this.aimCY + Math.sin(th) * r0,
-        this.aimCX + Math.cos(th) * r1, this.aimCY + Math.sin(th) * r1,
-      )
-    }
-    // Red gun in aim direction
-    const cos = Math.cos(this.aimAngle), sin = Math.sin(this.aimAngle)
-    const len = this.aimR - 10
-    const w = 6
-    const tip = { x: this.aimCX + cos * len, y: this.aimCY + sin * len }
-    const base = { x: this.aimCX + cos * 4,  y: this.aimCY + sin * 4 }
-    const nl  = { x: -sin * (w / 2),         y:  cos * (w / 2) }
-    a.fillStyle(0xff2222, 0.95)
-    a.beginPath()
-    a.moveTo(base.x - nl.x, base.y - nl.y)
-    a.lineTo(base.x + nl.x, base.y + nl.y)
-    a.lineTo(tip.x  + nl.x, tip.y  + nl.y)
-    a.lineTo(tip.x  - nl.x, tip.y  - nl.y)
-    a.closePath()
-    a.fillPath()
-    // Muzzle spark
-    a.fillStyle(0xffff33, 0.8); a.fillCircle(tip.x, tip.y, 3)
-    a.fillStyle(0xff2222, 0.35); a.fillCircle(tip.x, tip.y, 6)
-    // Central pivot
-    a.fillStyle(0xff4444, 0.9); a.fillCircle(this.aimCX, this.aimCY, 3)
-  }
-
-  // ─── Input setup ───────────────────────────────────────────────────────
-
-  private setupInput() {
+  // ─── React → Phaser event wiring ───────────────────────────────────────
+  private wireEvents() {
     const canvas = this.sys.canvas
 
-    // Keyboard support: arrow keys + WASD move, Space shoots.
-    const keys = this.input.keyboard
-    if (keys) {
-      const bind = (codes: string[], dir: DpadDir) => {
-        for (const c of codes) {
-          keys.on('keydown-' + c, () => { this.dpad[dir] = true })
-          keys.on('keyup-' + c,   () => { this.dpad[dir] = false })
-        }
-      }
-      bind(['UP','W'],    'up')
-      bind(['DOWN','S'],  'down')
-      bind(['LEFT','A'],  'left')
-      bind(['RIGHT','D'], 'right')
-      keys.on('keydown-SPACE', () => this.emitShootAlongAim())
-    }
-
-    this.onDuelStartState = (e: Event) => {
-      const p = (e as CustomEvent<DuelStartStatePayload>).detail
+    this.onStart = (e) => {
+      const p = (e as CustomEvent<DuelStartState>).detail
       const me  = p.players.find((pl) => pl.user_id === this.cfg.myUserId)
-      const opp = p.players.find((pl) => pl.user_id !== this.cfg.myUserId)
+      const foe = p.players.find((pl) => pl.user_id !== this.cfg.myUserId)
       if (me)  {
         this.myHP = me.hp; this.myMaxHP = me.max_hp
         this.myServerX = me.x; this.myServerY = me.y
-        // Snap sprite to server position immediately so we don't fly across
-        // the arena from the placeholder spawn on the first frame.
-        this.playerSprite.x = this.myServerX * this.W
-        this.playerSprite.y = this.myServerY * this.H
+        this.me.setPosition(this.W * me.x, this.H * me.y)
       }
-      if (opp) {
-        this.oppHP = opp.hp; this.oppMaxHP = opp.max_hp
-        this.oppTargetX = opp.x; this.oppTargetY = opp.y
-        this.opponentSprite.x = this.oppTargetX * this.W
-        this.opponentSprite.y = this.oppTargetY * this.H
+      if (foe) {
+        this.foeHP = foe.hp; this.foeMaxHP = foe.max_hp
+        this.foeServerX = foe.x; this.foeServerY = foe.y
+        this.foe.setPosition(this.W * foe.x, this.H * foe.y)
       }
-      // Default aim points toward opponent so the barrel isn't facing self.
-      this.aimAngle = Math.atan2(this.oppTargetY - this.myServerY, this.oppTargetX - this.myServerX)
-      this.emitHp()
+      this.started = true
     }
-    canvas.addEventListener('duel-start-state', this.onDuelStartState)
+    canvas.addEventListener('duel-start-state', this.onStart)
 
-    this.onDuelState = (e: Event) => {
-      const p = (e as CustomEvent<DuelStatePayload>).detail
+    this.onState = (e) => {
+      const p = (e as CustomEvent<DuelState>).detail
       const me  = p.players.find((pl) => pl.user_id === this.cfg.myUserId)
-      const opp = p.players.find((pl) => pl.user_id !== this.cfg.myUserId)
-      if (me)  { this.myHP  = me.hp;  this.myServerX  = me.x;  this.myServerY = me.y }
-      if (opp) { this.oppHP = opp.hp; this.oppTargetX = opp.x; this.oppTargetY = opp.y }
-      this.emitHp()
+      const foe = p.players.find((pl) => pl.user_id !== this.cfg.myUserId)
+      if (me)  { this.myHP  = me.hp;  this.myServerX = me.x;  this.myServerY = me.y }
+      if (foe) { this.foeHP = foe.hp; this.foeServerX = foe.x; this.foeServerY = foe.y }
     }
-    canvas.addEventListener('duel-state', this.onDuelState)
+    canvas.addEventListener('duel-state', this.onState)
 
-    this.onDuelShotFired = (e: Event) => {
-      const p = (e as CustomEvent<DuelShotPayload>).detail
+    this.onShot = (e) => {
+      const p = (e as CustomEvent<DuelShot>).detail
       const mine = p.from === this.cfg.myUserId
-      const color = mine ? 0x00e5ff : 0xff4444
-      this.spawnBullet(p.x, p.y, p.vx, p.vy, color)
+      this.spawnBullet(p.x, p.y, p.vx, p.vy, mine ? 0x28e0ff : 0xff5e7a)
+      this.spawnMuzzleFlash(p.x * this.W, p.y * this.H, Math.atan2(p.vy, p.vx), mine ? 0x28e0ff : 0xff5e7a)
+      if (mine) this.myRecoil = 6
+      else {
+        this.foeRecoil = 6
+        // Rotate opponent's turret to aim at us (server doesn't send their aim).
+        this.foeAim = Math.atan2(this.myServerY - this.foeServerY, this.myServerX - this.foeServerX)
+      }
       soundManager.laser()
     }
-    canvas.addEventListener('duel-shot-fired', this.onDuelShotFired)
+    canvas.addEventListener('duel-shot-fired', this.onShot)
 
-    this.onDuelHit = (e: Event) => {
-      const p = (e as CustomEvent<DuelHitPayload>).detail
+    this.onHit = (e) => {
+      const p = (e as CustomEvent<DuelHit>).detail
       const targetIsMe = p.target === this.cfg.myUserId
-      this.spawnHitFX(p.x * this.W, p.y * this.H, targetIsMe ? 0xff4444 : 0x00e5ff)
+      this.spawnHitFX(p.x * this.W, p.y * this.H, targetIsMe ? 0xff5e7a : 0x28e0ff)
       if (targetIsMe) {
-        const intensity = 0.008 + (p.damage / Math.max(1, this.myMaxHP)) * 0.025
-        this.cameras.main.shake(140, intensity)
+        this.cameras.main.shake(140, 0.008 + (p.damage / Math.max(1, this.myMaxHP)) * 0.025)
       }
     }
-    canvas.addEventListener('duel-hit', this.onDuelHit)
+    canvas.addEventListener('duel-hit', this.onHit)
 
-    this.onDuelDodge = (e: Event) => {
-      const p = (e as CustomEvent<DuelDodgePayload>).detail
+    this.onDodge = (e) => {
+      const p = (e as CustomEvent<DuelDodge>).detail
       this.spawnDodgeFX(p.x * this.W, p.y * this.H)
     }
-    canvas.addEventListener('duel-dodge', this.onDuelDodge)
+    canvas.addEventListener('duel-dodge', this.onDodge)
 
-    this.onForceEnd = (e: Event) => {
+    this.onAim = (e) => {
+      const { angleRad } = (e as CustomEvent<{ angleRad: number }>).detail
+      this.myAim = angleRad
+    }
+    canvas.addEventListener('duel-aim', this.onAim)
+
+    this.onForceEnd = (e) => {
       const { won } = (e as CustomEvent<{ won: boolean }>).detail
       this.endDuel(won)
     }
     canvas.addEventListener('duel-force-end', this.onForceEnd)
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      canvas.removeEventListener('duel-start-state', this.onDuelStartState)
-      canvas.removeEventListener('duel-state',       this.onDuelState)
-      canvas.removeEventListener('duel-shot-fired',  this.onDuelShotFired)
-      canvas.removeEventListener('duel-hit',         this.onDuelHit)
-      canvas.removeEventListener('duel-dodge',       this.onDuelDodge)
+      canvas.removeEventListener('duel-start-state', this.onStart)
+      canvas.removeEventListener('duel-state',       this.onState)
+      canvas.removeEventListener('duel-shot-fired',  this.onShot)
+      canvas.removeEventListener('duel-hit',         this.onHit)
+      canvas.removeEventListener('duel-dodge',       this.onDodge)
+      canvas.removeEventListener('duel-aim',         this.onAim)
       canvas.removeEventListener('duel-force-end',   this.onForceEnd)
       canvas.removeAttribute('data-duel')
     })
   }
 
-  // ─── Input emission ────────────────────────────────────────────────────
+  // ─── Turret barrel (twin-tube blaster) ─────────────────────────────────
+  private drawGun(g: Phaser.GameObjects.Graphics, drone: DuelDroneSprite, angle: number, mine: boolean, recoil: number) {
+    g.clear()
+    const cx = drone.x, cy = drone.y
+    const barrel = mine ? 0x7ff0ff : 0xff8a5a
+    const body   = mine ? 0x08161f : 0x1a0810
+    const edge   = mine ? 0x28e0ff : 0xff5e7a
 
-  /** Send the current move target to the server, computed from dpad state. */
-  private emitMoveTick() {
-    const now = this.time.now
-    if (now - this.lastMoveEmit < 50) return
-    this.lastMoveEmit = now
+    const cos = Math.cos(angle), sin = Math.sin(angle)
+    const nx = -sin, ny = cos
+    const pivotDist = 6 - recoil
+    const barrelLen = 30
+    const barrelGap = 3.2
+    const thick = 2.3
 
-    // Direction vector from D-pad. Neutral (nothing pressed) → stand still by
-    // targeting the current server-side position.
-    let dx = 0, dy = 0
-    if (this.dpad.left)  dx -= 1
-    if (this.dpad.right) dx += 1
-    if (this.dpad.up)    dy -= 1
-    if (this.dpad.down)  dy += 1
+    const px = cx + cos * pivotDist
+    const py = cy + sin * pivotDist
+    const tx = px + cos * barrelLen
+    const ty = py + sin * barrelLen
 
-    let targetX: number, targetY: number
-    if (dx === 0 && dy === 0) {
-      // Standing: keep the target where we currently are so server doesn't drift.
-      targetX = this.playerSprite.x / this.W
-      targetY = this.playerSprite.y / this.H
-    } else {
-      // Aim the target far in the pressed direction; the server clamps by speed.
-      const len = Math.hypot(dx, dy) || 1
-      dx /= len; dy /= len
-      targetX = clamp01(this.playerSprite.x / this.W + dx * 0.5)
-      targetY = clamp01(this.playerSprite.y / this.H + dy * 0.5)
+    for (const s of [-barrelGap, barrelGap]) {
+      const ox = nx * s, oy = ny * s
+      const p1x = px + ox, p1y = py + oy
+      const t1x = tx + ox, t1y = ty + oy
+      const hnx = nx * (thick / 2), hny = ny * (thick / 2)
+      g.fillStyle(body, 0.95)
+      g.beginPath()
+      g.moveTo(p1x - hnx, p1y - hny); g.lineTo(p1x + hnx, p1y + hny)
+      g.lineTo(t1x + hnx, t1y + hny); g.lineTo(t1x - hnx, t1y - hny)
+      g.closePath(); g.fillPath()
+      g.lineStyle(0.8, edge, 0.75); g.strokeCircle(t1x, t1y, 1.6)
+      g.fillStyle(barrel, 1); g.fillCircle(t1x, t1y, 1.6)
     }
-
-    this.sys.canvas.dispatchEvent(new CustomEvent('duel-move', {
-      detail: { nx: +targetX.toFixed(4), ny: +targetY.toFixed(4) },
-    }))
+    // Rear pivot cap
+    g.fillStyle(body, 0.95); g.fillCircle(cx + cos * 3, cy + sin * 3, 4.8)
+    g.lineStyle(1, edge, 0.85); g.strokeCircle(cx + cos * 3, cy + sin * 3, 4.8)
+    g.fillStyle(edge, 0.9); g.fillCircle(cx + cos * 3, cy + sin * 3, 2)
+    // Muzzle glow
+    g.fillStyle(barrel, 0.7); g.fillCircle(tx, ty, 3.5)
+    g.fillStyle(0xffffff, 0.6); g.fillCircle(tx, ty, 1.6)
   }
 
-  private emitShootAlongAim() {
-    const now = this.time.now
-    if (now - this.lastShootEmit < 100) return
-    this.lastShootEmit = now
-
-    // Aim direction is a screen-space vector. Point the target far along
-    // that ray so the server can spawn a bullet flying that way.
-    const cos = Math.cos(this.aimAngle), sin = Math.sin(this.aimAngle)
-    const originX = this.playerSprite.x / this.W
-    const originY = this.playerSprite.y / this.H
-    const ntx = clamp01(originX + cos * 1.2)
-    const nty = clamp01(originY + sin * 1.2)
-
-    this.sys.canvas.dispatchEvent(new CustomEvent('duel-shoot', {
-      detail: { ntx: +ntx.toFixed(4), nty: +nty.toFixed(4) },
-    }))
-  }
-
-  // ─── Bullets / FX ──────────────────────────────────────────────────────
-
+  // ─── Bullets, muzzle flash, hit FX, dodge FX ───────────────────────────
   private spawnBullet(nx: number, ny: number, vnx: number, vny: number, color: number) {
     const gfx = this.add.graphics().setDepth(12)
     gfx.x = nx * this.W
     gfx.y = ny * this.H
-    gfx.fillStyle(color, 1);       gfx.fillCircle(0, 0, 5)
-    gfx.fillStyle(0xffffff, 0.9);  gfx.fillCircle(0, 0, 2.5)
-    gfx.fillStyle(color, 0.25);    gfx.fillCircle(0, 0, 9)
-
-    const trail = this.add.graphics().setDepth(11)
-    this.bullets.push({ gfx, trail, vx: vnx, vy: vny, color })
+    gfx.rotation = Math.atan2(vny, vnx)
+    gfx.fillStyle(color, 0.35);   gfx.fillRoundedRect(-6, -6, 36, 12, 6)
+    gfx.fillStyle(color, 0.9);    gfx.fillRoundedRect(-2, -3, 30, 6, 3)
+    gfx.fillStyle(0xffffff, 0.95); gfx.fillRoundedRect(6, -1.5, 22, 3, 1.5)
+    gfx.fillStyle(0xffffff, 1);   gfx.fillCircle(26, 0, 2.5)
+    this.bullets.push({ gfx, vx: vnx, vy: vny, color })
   }
 
   private advanceBullets(delta: number) {
     const dt = delta / 1000
     this.bullets = this.bullets.filter((b) => {
-      const px = b.gfx.x, py = b.gfx.y
       b.gfx.x += b.vx * this.W * dt
       b.gfx.y += b.vy * this.H * dt
-
-      b.trail.clear()
-      b.trail.lineStyle(2, b.color, 0.35)
-      b.trail.lineBetween(px, py, b.gfx.x, b.gfx.y)
-      b.trail.lineStyle(1, 0xffffff, 0.15)
-      b.trail.lineBetween(px, py, b.gfx.x, b.gfx.y)
-
-      if (b.gfx.x < -20 || b.gfx.x > this.W + 20 || b.gfx.y < -20 || b.gfx.y > this.H + 20) {
-        b.gfx.destroy(); b.trail.destroy(); return false
+      if (b.gfx.x < -30 || b.gfx.x > this.W + 30 || b.gfx.y < -30 || b.gfx.y > this.H + 30) {
+        b.gfx.destroy(); return false
       }
       return true
     })
   }
 
+  private spawnMuzzleFlash(x: number, y: number, angle: number, color: number) {
+    const f = this.add.graphics().setDepth(13)
+    f.x = x; f.y = y; f.rotation = angle
+    f.fillStyle(0xffffff, 0.95); f.fillCircle(0, 0, 7)
+    f.fillStyle(color, 0.7);     f.fillCircle(0, 0, 12)
+    f.fillStyle(0xffffff, 0.55); f.fillRect(0, -1.5, 18, 3)
+    f.fillStyle(color, 0.35);    f.fillRect(0, -3, 26, 6)
+    this.tweens.add({
+      targets: f, alpha: 0, scaleX: 1.6, scaleY: 1.6,
+      duration: 180, ease: 'Power2.Out',
+      onComplete: () => f.destroy(),
+    })
+  }
+
   private spawnHitFX(x: number, y: number, color: number) {
     soundManager.explosion()
-    const sparks = 10
-    for (let i = 0; i < sparks; i++) {
-      const angle = (i / sparks) * Math.PI * 2 + Math.random() * 0.3
-      const dist  = 14 + Math.random() * 22
-      const spark = this.add.graphics().setDepth(15)
-      spark.fillStyle(i % 3 === 0 ? 0xffffff : color, 1)
-      spark.fillCircle(x, y, 2 + Math.random() * 2.5)
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.3
+      const dist = 14 + Math.random() * 22
+      const sp = this.add.graphics().setDepth(15)
+      sp.fillStyle(i % 3 === 0 ? 0xffffff : color, 1)
+      sp.fillCircle(x, y, 2 + Math.random() * 2.5)
       this.tweens.add({
-        targets: spark,
-        x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist,
+        targets: sp, x: x + Math.cos(angle) * dist, y: y + Math.sin(angle) * dist,
         alpha: 0, scaleX: 0.1, scaleY: 0.1,
         duration: 280 + Math.random() * 180, ease: 'Power2.Out',
-        onComplete: () => spark.destroy(),
+        onComplete: () => sp.destroy(),
       })
     }
     const ring = this.add.graphics().setDepth(14)
     ring.lineStyle(3, color, 1); ring.strokeCircle(x, y, 6)
-    this.tweens.add({
-      targets: ring, scaleX: 3.5, scaleY: 3.5, alpha: 0,
-      duration: 220, ease: 'Power2.Out',
-      onComplete: () => ring.destroy(),
-    })
+    this.tweens.add({ targets: ring, scaleX: 3.5, scaleY: 3.5, alpha: 0, duration: 220, ease: 'Power2.Out',
+      onComplete: () => ring.destroy() })
   }
 
   private spawnDodgeFX(x: number, y: number) {
-    const txt = this.add.text(x, y - 24, 'DODGE', {
+    const t = this.add.text(x, y - 24, 'DODGE', {
       fontSize: '10px', fontFamily: 'monospace', fontStyle: 'bold',
       color: '#a78bfa', stroke: '#000', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(16)
-    this.tweens.add({
-      targets: txt, y: y - 52, alpha: 0, duration: 700, ease: 'Power2.Out',
-      onComplete: () => txt.destroy(),
-    })
+    this.tweens.add({ targets: t, y: y - 52, alpha: 0, duration: 700, ease: 'Power2.Out',
+      onComplete: () => t.destroy() })
   }
 
-  private emitHp() {
-    this.sys.canvas.dispatchEvent(new CustomEvent('duel-hp', {
-      detail: {
-        playerHp:      Math.max(0, this.myHP),
-        playerMaxHp:   this.myMaxHP,
-        opponentHp:    Math.max(0, this.oppHP),
-        opponentMaxHp: this.oppMaxHP,
-      },
-    }))
+  // ─── Death sequence: shockwave, sparks, debris, big shake ──────────────
+  private deathExplode(sprite: DuelDroneSprite, mine: boolean) {
+    const cx = sprite.x, cy = sprite.y
+    const tint = mine ? 0x28e0ff : 0xff5e7a
+
+    // Fade drone
+    this.tweens.add({ targets: sprite, alpha: 0, scaleX: 0.15, scaleY: 0.15, angle: 320,
+      duration: 600, ease: 'Power2.In' })
+
+    // Core flash
+    const core = this.add.graphics().setDepth(20)
+    core.fillStyle(0xffffff, 1); core.fillCircle(cx, cy, 30)
+    core.fillStyle(tint, 0.65); core.fillCircle(cx, cy, 50)
+    this.tweens.add({ targets: core, scaleX: 3, scaleY: 3, alpha: 0, duration: 500, ease: 'Cubic.Out',
+      onComplete: () => core.destroy() })
+
+    // Shockwave ring
+    const ring = this.add.graphics().setDepth(19)
+    ring.lineStyle(4, tint, 1); ring.strokeCircle(cx, cy, 40)
+    this.tweens.add({ targets: ring, scaleX: 3.5, scaleY: 3.5, alpha: 0, duration: 700, ease: 'Cubic.Out',
+      onComplete: () => ring.destroy() })
+
+    // 30 sparks radiate outward
+    for (let i = 0; i < 30; i++) {
+      const angle = (i / 30) * Math.PI * 2 + Math.random() * 0.3
+      const dist = 60 + Math.random() * 60
+      const sp = this.add.graphics().setDepth(18)
+      sp.fillStyle(i % 3 === 0 ? 0xffffff : tint, 1)
+      sp.fillCircle(cx, cy, 2 + Math.random() * 2)
+      this.tweens.add({ targets: sp,
+        x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist,
+        alpha: 0, scaleX: 0.1, scaleY: 0.1,
+        duration: 500 + Math.random() * 300, ease: 'Cubic.Out',
+        onComplete: () => sp.destroy() })
+    }
+    // 6 debris chunks fly further
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.5
+      const dist = 100 + Math.random() * 70
+      const d = this.add.graphics().setDepth(18)
+      d.fillStyle(tint, 1); d.fillRect(-4, -1.5, 8, 3)
+      d.x = cx; d.y = cy
+      this.tweens.add({ targets: d,
+        x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist,
+        rotation: Math.random() * Math.PI * 4, alpha: 0,
+        duration: 600 + Math.random() * 200, ease: 'Cubic.Out',
+        onComplete: () => d.destroy() })
+    }
+
+    this.cameras.main.shake(500, 0.02)
+    soundManager.explosion()
   }
 
   private endDuel(won: boolean) {
     if (this.ended) return
     this.ended = true
-
-    const loser = won ? this.opponentSprite : this.playerSprite
-    this.tweens.killTweensOf(loser)
-    this.cameras.main.shake(600, 0.028)
-
-    for (let i = 0; i < 6; i++) {
-      this.time.delayedCall(i * 100, () => {
-        this.spawnHitFX(
-          loser.x + (Math.random() - 0.5) * 50,
-          loser.y + (Math.random() - 0.5) * 50,
-          won ? 0xff4444 : 0x00e5ff,
-        )
-      })
-    }
-
-    this.tweens.add({
-      targets: loser, alpha: 0, scaleX: 0.08, scaleY: 0.08, angle: 380,
-      duration: 700, delay: 250, ease: 'Power2.In',
-      onComplete: () => {
-        const W = this.W, H = this.H
-        const overlay = this.add.graphics().setDepth(20)
-        overlay.fillStyle(won ? 0x003300 : 0x330000, 0); overlay.fillRect(0, 0, W, H)
-        this.tweens.add({ targets: overlay, alpha: 0.55, duration: 400 })
-
-        const msg = won ? '⚡ ПОБЕДА' : '✗ ПОРАЖЕНИЕ'
-        const col = won ? '#39ff14' : '#ff4444'
-        const txt = this.add.text(W / 2, H / 2, msg, {
-          fontSize: '34px', fontFamily: 'monospace', fontStyle: 'bold',
-          color: col, stroke: '#000', strokeThickness: 6,
-        }).setOrigin(0.5).setDepth(21).setScale(0.25).setAlpha(0)
-        this.tweens.add({ targets: txt, alpha: 1, scaleX: 1, scaleY: 1, duration: 420, ease: 'Back.Out' })
-
-        this.time.delayedCall(1500, () => this.cfg.onEnd(won))
-      },
-    })
+    this.deathExplode(won ? this.foe : this.me, !won)
+    this.time.delayedCall(850, () => this.cfg.onEnd(won))
   }
 
-  private generateTextures() {
-    for (const t of [1, 2, 3] as const) {
-      const key = `duel_drone_${t}`
-      if (!this.textures.exists(key)) {
-        const g = this.make.graphics({ x: 0, y: 0 }, false)
-        paintDrone(g, false, t); g.generateTexture(key, 128, 128); g.destroy()
-      }
-    }
-  }
-
-  update(_time: number, delta: number) {
+  // ─── Frame loop ────────────────────────────────────────────────────────
+  update(_t: number, delta: number) {
     if (this.ended) return
+    // Spin rotors
+    this.me.spin(delta)
+    this.foe.spin(delta)
 
-    this.emitMoveTick()
-
-    // Reconcile local sprites toward server snapshot (20Hz updates, 60fps render).
-    // Lerp Y with the same coefficient as X so vertical movement is smooth
-    // and the sprite doesn't jitter when the server keeps sending fresh Y.
+    // Reconcile positions toward server snapshot (20Hz updates, 60fps render).
     const lerp = 0.30
-    const px = this.myServerX * this.W
-    const py = this.myServerY * this.H
-    this.playerSprite.x += (px - this.playerSprite.x) * lerp
-    this.playerSprite.y += (py - this.playerSprite.y) * lerp
+    const mx = this.myServerX * this.W, my = this.myServerY * this.H
+    const fx = this.foeServerX * this.W, fy = this.foeServerY * this.H
+    this.me.x  += (mx - this.me.x)  * lerp
+    this.me.y  += (my - this.me.y)  * lerp
+    this.foe.x += (fx - this.foe.x) * lerp
+    this.foe.y += (fy - this.foe.y) * lerp
 
-    const ox = this.oppTargetX * this.W
-    const oy = this.oppTargetY * this.H
-    this.opponentSprite.x += (ox - this.opponentSprite.x) * lerp
-    this.opponentSprite.y += (oy - this.opponentSprite.y) * lerp
+    // Decay recoil (~180ms half-life)
+    const decay = Math.pow(0.5, delta / 90)
+    this.myRecoil  *= decay
+    this.foeRecoil *= decay
 
+    // Turrets
+    this.drawGun(this.myGunGfx,  this.me,  this.myAim,  true,  this.myRecoil)
+    this.drawGun(this.foeGunGfx, this.foe, this.foeAim, false, this.foeRecoil)
+
+    // Bullets
     this.advanceBullets(delta)
 
-    // Effects + gun barrels
-    this.drawDroneEffects(this.playerGfx,   this.playerSprite,   this.cfg.playerUpgrades,   this.myHP,  this.myMaxHP)
-    this.drawDroneEffects(this.opponentGfx, this.opponentSprite, this.cfg.opponentUpgrades, this.oppHP, this.oppMaxHP)
-    this.drawGunBarrel(this.playerGunGfx,   this.playerSprite,   this.aimAngle)
-    // Opponent barrel: point roughly toward us. We don't get their aim over WS
-    // (yet), so approximate by direction to my sprite — plausible & readable.
-    const oppAim = Math.atan2(this.playerSprite.y - this.opponentSprite.y, this.playerSprite.x - this.opponentSprite.x)
-    this.drawGunBarrel(this.opponentGunGfx, this.opponentSprite, oppAim)
+    // Low-HP blink (mine + opp) — 25 % threshold, ramps as HP drops.
+    this.applyLowHp(this.me,  this.myHP,  this.myMaxHP)
+    this.applyLowHp(this.foe, this.foeHP, this.foeMaxHP)
+  }
 
-    // HUD
-    this.drawHUD()
+  private applyLowHp(sprite: DuelDroneSprite, hp: number, maxHp: number) {
+    if (maxHp <= 0) { sprite.alpha = 1; return }
+    const pct = hp / maxHp
+    if (pct >= 0.25 || hp <= 0) { sprite.alpha = 1; return }
+    const period = Math.max(70, 400 * (pct / 0.25))
+    // triangle wave 0..1 based on time
+    const t = (this.time.now % period) / period
+    const wave = t < 0.5 ? t * 2 : (1 - t) * 2
+    sprite.alpha = 0.35 + wave * 0.65
   }
 }
-
-function clamp01(v: number): number { return v < 0 ? 0 : v > 1 ? 1 : v }

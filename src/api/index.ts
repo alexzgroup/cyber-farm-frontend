@@ -328,6 +328,19 @@ export function getMarketFees(): Promise<MarketFees> {
   return apiFetch('/api/market/fees')
 }
 
+// Daily P2P purchase quota — see MarketHandler.Limit on the backend.
+// `remaining` starts at `limit` (10) and drops with each buy; `reset_at`
+// is the unix time when the oldest purchase in the 24h window drops off.
+export interface MarketLimit {
+  limit:     number
+  used:      number
+  remaining: number
+  reset_at:  number
+}
+export function getMarketLimit(): Promise<MarketLimit> {
+  return apiFetch('/api/market/limit')
+}
+
 // ── Market ─────────────────────────────────────────────────────────────────
 
 export interface MarketQueryParams {

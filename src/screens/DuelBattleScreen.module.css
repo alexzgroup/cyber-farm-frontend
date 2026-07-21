@@ -1,0 +1,134 @@
+/* Duel HUD styles. Arena visuals (drones, guns, bullets, effects) are
+   rendered by Phaser inside `.arena` — this file only holds the HUD chrome
+   around it: top HP bar, vertical side bars, D-pad, aim dial, overlays. */
+
+.screen{
+  position:relative;width:100%;height:100%;background:#05070d;
+  overflow:hidden;display:flex;flex-direction:column;
+  font-family:'Manrope',system-ui,sans-serif;color:#eaf3ff;
+  --cyan:#28e0ff;--cyan-2:#1aa9ff;--violet:#a855f7;--red:#ff5e7a;--faint:#5d6b86;
+}
+.mono{font-family:'Share Tech Mono',monospace;}
+
+/* ===== top HP header ===== */
+.top{
+  position:relative;z-index:6;display:flex;align-items:center;gap:8px;
+  padding:11px 12px 9px;background:linear-gradient(#080d17,#070b13);
+  border-bottom:1px solid rgba(130,200,255,.08);
+}
+.side{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.sideFoe{flex-direction:row-reverse;text-align:right;}
+.tag{font-size:12px;letter-spacing:.06em;font-weight:700;white-space:nowrap;color:var(--cyan);}
+.tagFoe{color:var(--red);}
+.bar{
+  position:relative;height:9px;flex:1;border-radius:6px;background:#0d1626;
+  overflow:hidden;box-shadow:inset 0 0 0 1px rgba(130,200,255,.12);
+}
+.fill{position:absolute;inset:0;border-radius:6px;transition:width .35s ease;}
+.fillMe{background:linear-gradient(90deg,#1aa9ff,#28e0ff);box-shadow:0 0 12px rgba(40,224,255,.6);}
+.fillFoe{left:auto;right:0;background:linear-gradient(270deg,#ff2d55,#ff5e7a);box-shadow:0 0 12px rgba(255,94,122,.55);}
+.hpn{font-size:14px;font-weight:800;min-width:30px;text-align:center;}
+.vs{font-size:10px;letter-spacing:.1em;color:var(--faint);font-weight:800;padding:0 2px;}
+.ava{width:20px;height:20px;display:grid;place-items:center;color:var(--red);flex:none;}
+.bolt{color:var(--cyan);flex:none;display:grid;place-items:center;}
+.musicBtn{
+  background:transparent;border:none;padding:2px;color:var(--faint);cursor:pointer;
+  display:grid;place-items:center;transition:color .15s ease;
+}
+
+/* ===== arena — Phaser canvas mounts inside ===== */
+.arena{
+  position:relative;flex:1;overflow:hidden;background:#04070e;
+  touch-action:none;
+}
+/* Phaser canvas fills the arena; keep it beneath the HUD overlays. */
+.arena canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;}
+
+.laneLbl{
+  position:absolute;top:9px;font-family:'Share Tech Mono',monospace;
+  font-size:11px;letter-spacing:.12em;opacity:.85;z-index:5;pointer-events:none;
+}
+.lblYou{left:10px;color:var(--cyan);}
+.lblFoe2{right:10px;color:var(--red);}
+
+/* vertical energy bars along arena edges */
+.vbar{
+  position:absolute;top:44px;bottom:150px;width:4px;border-radius:4px;
+  background:#0c1424;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(130,200,255,.1);
+  z-index:5;pointer-events:none;
+}
+.vbarMe{left:8px;} .vbarFoe{right:8px;}
+.vfill{position:absolute;left:0;right:0;bottom:0;border-radius:4px;transition:height .35s ease;}
+.vfillMe{background:linear-gradient(0deg,#1aa9ff,#28e0ff);box-shadow:0 0 12px rgba(40,224,255,.7);}
+.vfillFoe{background:linear-gradient(0deg,#ff2d55,#ff5e7a);box-shadow:0 0 12px rgba(255,94,122,.6);}
+
+.hint{
+  position:absolute;left:0;right:0;bottom:14px;text-align:center;
+  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.03em;
+  color:var(--faint);pointer-events:none;z-index:5;
+}
+
+/* ===== controls (D-pad + aim dial) ===== */
+.controls{
+  position:absolute;left:0;right:0;bottom:8px;height:150px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 26px;z-index:6;
+}
+
+.dpad{position:relative;width:132px;height:132px;}
+.dpad button{
+  position:absolute;width:44px;height:44px;border:none;
+  background:rgba(20,40,66,.55);color:var(--cyan);display:grid;place-items:center;cursor:pointer;
+  box-shadow:inset 0 0 0 1px rgba(70,180,255,.35),0 0 14px rgba(20,120,200,.18);transition:.1s;
+}
+.dpad button:active{
+  background:rgba(40,224,255,.22);color:#dffaff;
+  box-shadow:inset 0 0 0 1px rgba(120,235,255,.9),0 0 18px rgba(40,224,255,.55);
+}
+.dpad button svg{width:20px;height:20px;}
+.du{left:44px;top:0;border-radius:11px 11px 3px 3px;}
+.dd{left:44px;top:88px;border-radius:3px 3px 11px 11px;}
+.dl{left:0;top:44px;border-radius:11px 3px 3px 11px;}
+.dr{left:88px;top:44px;border-radius:3px 11px 11px 3px;}
+
+.aim{
+  position:relative;width:132px;height:132px;border-radius:50%;
+  cursor:grab;touch-action:none;
+  background:radial-gradient(circle at 50% 45%,#2a0810,#14060c 70%);
+  box-shadow:inset 0 0 0 2px rgba(255,80,110,.4),inset 0 0 26px rgba(255,40,70,.25),0 0 24px rgba(255,40,70,.22);
+}
+.aim:active{cursor:grabbing;}
+.ticks{position:absolute;inset:0;}
+.core{
+  position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;
+  border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffd0da,#ff2d55);
+  box-shadow:0 0 14px rgba(255,60,90,.9);z-index:3;
+}
+.needle{position:absolute;left:50%;top:50%;width:0;height:0;z-index:2;transition:transform .06s linear;}
+.stick{
+  position:absolute;left:0;top:-3px;width:52px;height:6px;border-radius:6px;
+  background:linear-gradient(90deg,#ff2d55,#ff8aa0);box-shadow:0 0 12px rgba(255,60,90,.85);
+  transform-origin:0 50%;
+}
+.tip{
+  position:absolute;left:48px;top:-6px;width:12px;height:12px;border-radius:50%;
+  background:#fff;box-shadow:0 0 12px #ff5e7a;
+}
+.ringPulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(255,80,110,.8);opacity:0;pointer-events:none;}
+.aimFire .ringPulse{animation:ping .4s ease-out;}
+@keyframes ping{0%{transform:scale(.85);opacity:.9;}100%{transform:scale(1.35);opacity:0;}}
+
+/* ===== overlays ===== */
+.resultOverlay{
+  position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.80);
+}
+.resultCard{
+  border-radius:16px;padding:24px 20px;border:2px solid;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  font-family:monospace;min-width:220px;
+}
+.resultBtn{
+  margin-top:6px;padding:10px 24px;border-radius:8px;
+  background:#06b6d4;border:none;color:#fff;
+  font-size:14px;font-weight:700;cursor:pointer;
+}

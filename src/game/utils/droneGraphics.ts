@@ -173,6 +173,206 @@ function paintProp(
   g.fillStyle(0xffffff, 0.75 * alpha); g.fillCircle(x, y, R * 0.18)
 }
 
+// ─── Duel drone painter (top-down quadcopter, mock-based) ────────────────────
+//
+// Distinct from paintDrone (which is the farm/side-view drone). This is the
+// blast-view we use inside DuelScene: 4 arms in an X, 4 rotor rings with
+// spinning blades, central rounded body, cockpit sphere. Style comes from
+// assets/new-dpad-duel-screen/index.html.
+//
+// `type`: 1 = cyan (challenger / friendly), 2 = red (opponent), 3 = violet.
+
+interface DuelDronePalette {
+  hue: number         // radial halo colour
+  arm1: number; arm2: number     // linear gradient across the arms
+  body1: number; body2: number; body3: number   // linear across central body
+  ring: number        // rotor ring outline
+  rotor: number       // rotor blade colour
+  cockpit1: number; cockpit2: number  // cockpit sphere gradient
+  strut: number       // dark stroke on central body
+}
+
+const DUEL_PALETTES: Record<1 | 2 | 3, DuelDronePalette> = {
+  1: {
+    hue: 0x28e0ff,
+    arm1: 0x2ec8ff, arm2: 0x7b6bff,
+    body1: 0x3df0ff, body2: 0x1aa9ff, body3: 0xa855f7,
+    ring: 0x5fe0ff, rotor: 0xbdf4ff,
+    cockpit1: 0x8fd6ff, cockpit2: 0x0f86d6,
+    strut: 0x0c1830,
+  },
+  2: {
+    hue: 0xff5e7a,
+    arm1: 0xff7a3a, arm2: 0xff5e7a,
+    body1: 0xff6a2a, body2: 0xff5e7a, body3: 0xff8a5a,
+    ring: 0xff9a8a, rotor: 0xffd6c8,
+    cockpit1: 0xffb0b8, cockpit2: 0xa61030,
+    strut: 0x2a0810,
+  },
+  3: {
+    hue: 0xcc00ff,
+    arm1: 0xcc44ff, arm2: 0x8844ff,
+    body1: 0xcc00ff, body2: 0x8800cc, body3: 0x330066,
+    ring: 0xdd88ff, rotor: 0xf0d0ff,
+    cockpit1: 0xd0a0ff, cockpit2: 0x4a0080,
+    strut: 0x180030,
+  },
+}
+
+// Rotor anchor offsets from the drone centre — the X-pattern (TL, TR, BL, BR).
+// Exported so Phaser scenes can position their rotor sprites the same way.
+export const DUEL_DRONE_ROTOR_OFFSETS: ReadonlyArray<[number, number]> = [
+  [-36, -36], [ 36, -36], [-36,  36], [ 36,  36],
+]
+
+/**
+ * Body-only painter for the duel drone (128×128, centre 64,64). Draws the
+ * halo, arms, ring outlines, rotor hubs, cockpit, and the central rounded
+ * body — but NOT the spinning blades. Use this for the static body texture;
+ * pair with `paintDuelDroneRotor` sprites that spin on top of the hubs.
+ */
+export function paintDuelDroneBody(g: Phaser.GameObjects.Graphics, type: 1 | 2 | 3 = 1) {
+  const c = DUEL_PALETTES[type]
+  const CX = 64, CY = 64
+  const rotors = DUEL_DRONE_ROTOR_OFFSETS.map(([dx, dy]) => [CX + dx, CY + dy] as const)
+
+  g.fillStyle(c.hue, 0.16); g.fillCircle(CX, CY, 52)
+  g.fillStyle(c.hue, 0.08); g.fillCircle(CX, CY, 66)
+
+  g.lineStyle(6, c.arm1, 1)
+  for (const [rx, ry] of rotors) g.lineBetween(CX, CY, rx, ry)
+  g.lineStyle(3, c.arm2, 0.9)
+  for (const [rx, ry] of rotors) g.lineBetween(CX, CY, rx, ry)
+
+  g.fillStyle(c.body1, 1);    g.fillRoundedRect(CX - 18, CY - 18, 36, 36, 10)
+  g.fillStyle(c.body2, 0.85); g.fillRoundedRect(CX - 15, CY - 15, 30, 30, 8)
+  g.fillStyle(c.body3, 0.35); g.fillRoundedRect(CX - 10, CY - 10, 20, 20, 6)
+  g.lineStyle(2, c.strut, 0.7)
+  g.lineBetween(CX - 12, CY + 5,  CX - 6,  CY + 12)
+  g.lineBetween(CX + 12, CY + 5,  CX + 6,  CY + 12)
+  g.lineStyle(1, 0xffffff, 0.35); g.strokeRoundedRect(CX - 18, CY - 18, 36, 36, 10)
+
+  // Rotor rings + hubs (STATIC; blades painted separately by paintDuelDroneRotor)
+  for (const [rx, ry] of rotors) {
+    g.lineStyle(1.5, c.ring, 0.65); g.strokeCircle(rx, ry, 16)
+    g.fillStyle(c.hue, 0.05);        g.fillCircle(rx, ry, 16)
+    g.fillStyle(c.body2, 1);         g.fillCircle(rx, ry, 4)
+    g.lineStyle(1, 0xffffff, 0.4);   g.strokeCircle(rx, ry, 4)
+  }
+
+  // Cockpit
+  g.fillStyle(c.cockpit2, 1);    g.fillCircle(CX, CY, 13)
+  g.fillStyle(c.cockpit1, 0.85); g.fillCircle(CX, CY, 10)
+  g.fillStyle(0xffffff, 0.7);    g.fillCircle(CX - 3, CY - 3, 4)
+  g.fillStyle(0xffffff, 0.35);   g.fillCircle(CX - 4, CY - 4, 2)
+  g.lineStyle(1, 0xbfe9ff, 0.85); g.strokeCircle(CX, CY, 13)
+}
+
+/**
+ * Spinning rotor blades — 32×32 texture centred on (16, 16). Three
+ * long semi-transparent ellipses arranged as a Y (0° / 120° / 240°).
+ * Rotate the whole sprite with `rotor.rotation += dt * speed` to
+ * animate. Because there are 3 blades, the blade pattern is
+ * rotationally-symmetric every 120° — so any rotation looks correct.
+ */
+export function paintDuelDroneRotor(g: Phaser.GameObjects.Graphics, type: 1 | 2 | 3 = 1) {
+  const c = DUEL_PALETTES[type]
+  const CX = 16, CY = 16
+  const halfW = 14, halfH = 3
+  g.fillStyle(c.rotor, 0.28)
+  for (let a = 0; a < 3; a++) {
+    const th = (a * 120) * Math.PI / 180
+    const cos = Math.cos(th), sin = Math.sin(th)
+    // Approximate a rotated ellipse by stepping along its major axis
+    // and painting dots — cheap on WebGL and reads as a soft motion blur.
+    for (let s = -halfW; s <= halfW; s += 1.2) {
+      g.fillCircle(CX + cos * s, CY + sin * s, halfH)
+    }
+  }
+  // Tiny bright centre so the hub reads as spinning fast
+  g.fillStyle(0xffffff, 0.55); g.fillCircle(CX, CY, 1.5)
+}
+
+/**
+ * Legacy full-drone painter (body + baked-in static blades).
+ * Kept for backward compatibility (BootScene / existing textures);
+ * new duel code should use paintDuelDroneBody + paintDuelDroneRotor.
+ */
+export function paintDuelDrone(g: Phaser.GameObjects.Graphics, type: 1 | 2 | 3 = 1) {
+  const c = DUEL_PALETTES[type]
+  // Canvas centre. Drone body occupies ~104×104 inside the 128×128 quad, so
+  // rotors sit at ±36 from centre.
+  const CX = 64, CY = 64
+  const RD = 36 // rotor distance from centre
+
+  // Rotor anchor points (X-pattern: TL, TR, BL, BR).
+  const rotors: Array<[number, number]> = [
+    [CX - RD, CY - RD],
+    [CX + RD, CY - RD],
+    [CX - RD, CY + RD],
+    [CX + RD, CY + RD],
+  ]
+
+  // ── Radial halo behind everything ─────────────────────────────────────────
+  g.fillStyle(c.hue, 0.16); g.fillCircle(CX, CY, 52)
+  g.fillStyle(c.hue, 0.08); g.fillCircle(CX, CY, 66)
+
+  // ── Arms: two gradient-blended strokes per arm for a cheap "linear-grad"
+  //    look. Outer stroke uses arm1, inner overlay uses arm2 — placed at
+  //    depth 0 so rotors sit on top.
+  g.lineStyle(6, c.arm1, 1)
+  for (const [rx, ry] of rotors) g.lineBetween(CX, CY, rx, ry)
+  g.lineStyle(3, c.arm2, 0.9)
+  for (const [rx, ry] of rotors) g.lineBetween(CX, CY, rx, ry)
+
+  // ── Central body: rounded square with two overlapping fills to fake
+  //    the diagonal gradient of the SVG.
+  g.fillStyle(c.body1, 1); g.fillRoundedRect(CX - 18, CY - 18, 36, 36, 10)
+  g.fillStyle(c.body2, 0.85); g.fillRoundedRect(CX - 15, CY - 15, 30, 30, 8)
+  g.fillStyle(c.body3, 0.35); g.fillRoundedRect(CX - 10, CY - 10, 20, 20, 6)
+  // Dark struts across the belly for detail
+  g.lineStyle(2, c.strut, 0.7)
+  g.lineBetween(CX - 12, CY + 5,  CX - 6,  CY + 12)
+  g.lineBetween(CX + 12, CY + 5,  CX + 6,  CY + 12)
+  // Body outline
+  g.lineStyle(1, 0xffffff, 0.35); g.strokeRoundedRect(CX - 18, CY - 18, 36, 36, 10)
+
+  // ── Rotor rings + blades ──────────────────────────────────────────────────
+  for (const [rx, ry] of rotors) {
+    // Blade halo — three overlapping ellipses at 0°/60°/120° for a
+    // frozen-motion look. Alpha low so it reads as "spinning".
+    g.fillStyle(c.rotor, 0.22)
+    for (let a = 0; a < 3; a++) {
+      const th = (a * 60) * Math.PI / 180
+      const cos = Math.cos(th), sin = Math.sin(th)
+      // Approximate rotated ellipse: fill a series of short strokes.
+      const halfW = 15, halfH = 3.2
+      for (let s = -halfW; s <= halfW; s += 1.5) {
+        const x = rx + cos * s
+        const y = ry + sin * s
+        g.fillCircle(x, y, halfH)
+      }
+    }
+    // Ring outline
+    g.lineStyle(1.5, c.ring, 0.65); g.strokeCircle(rx, ry, 16)
+    g.fillStyle(c.hue, 0.05); g.fillCircle(rx, ry, 16)
+    // Rotor hub
+    g.fillStyle(c.body2, 1); g.fillCircle(rx, ry, 4)
+    g.lineStyle(1, 0xffffff, 0.4); g.strokeCircle(rx, ry, 4)
+  }
+
+  // ── Cockpit — radial-gradient sphere in the middle ────────────────────────
+  // Outer glow
+  g.fillStyle(c.cockpit2, 1); g.fillCircle(CX, CY, 13)
+  // Mid tone
+  g.fillStyle(c.cockpit1, 0.85); g.fillCircle(CX, CY, 10)
+  // Bright highlight (top-left)
+  g.fillStyle(0xffffff, 0.7); g.fillCircle(CX - 3, CY - 3, 4)
+  g.fillStyle(0xffffff, 0.35); g.fillCircle(CX - 4, CY - 4, 2)
+  // Cockpit rim
+  g.lineStyle(1, 0xbfe9ff, 0.85); g.strokeCircle(CX, CY, 13)
+}
+
 // ─── Farm turret painter ──────────────────────────────────────────────────────
 const TURRET_COLORS: Record<1 | 2 | 3, { accent: number, body: number, dark: number }> = {
   1: { accent: 0x00cc44, body: 0x2a3a2a, dark: 0x1a241a },

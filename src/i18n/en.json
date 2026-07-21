@@ -76,7 +76,7 @@
       },
       "p2p": {
         "title": "P2P market & GRAM withdrawals",
-        "body": "The P2P market lets players trade drones and turrets for gold, GRAM or Stars.\n\n📌 P2P revenue counts toward withdrawal after 21 days.\nWhen you sell a unit for GRAM or Stars, the amount immediately shows up in your total balance but only becomes available for withdrawal 21 days after the sale. Until then those funds are 'on hold' — you can freely spend them in-game (buy units, place duel bets, upgrade), but you can't withdraw them to your GRAM wallet.\n\n💎 What's withdrawable right away: GRAM earned via referrals, duels, the weekly contest and direct deposits — no delay.\n\nThe 'Withdraw GRAM' screen shows three lines: total balance, available for withdrawal, and (if any) on hold. Withdrawals are capped at the 'available' figure."
+        "body": "The P2P market lets players trade drones and turrets for gold, GRAM or Stars.\n\n🛒 Daily purchase limit — max 10 P2P buys per 24 hours.\nAnti-cheat measure. The Market screen shows 'Available today: N' — how many buys you have left in the current rolling 24-hour window. The limit resets on a per-purchase basis (the oldest of your recent 10 falls off).\n\n📌 P2P revenue counts toward withdrawal after 21 days.\nWhen you sell a unit for GRAM or Stars, the amount immediately shows up in your total balance but only becomes available for withdrawal 21 days after the sale. Until then those funds are 'on hold' — you can freely spend them in-game (buy units, place duel bets, upgrade), but you can't withdraw them to your GRAM wallet.\n\n💎 What's withdrawable right away: GRAM earned via referrals, duels, the weekly contest and direct deposits — no delay.\n\nThe 'Withdraw GRAM' screen shows three lines: total balance, available for withdrawal, and (if any) on hold. Withdrawals are capped at the 'available' figure."
       },
       "referrals": {
         "title": "Referral program",
@@ -202,6 +202,9 @@
     "buyTon": "Buy with GRAM",
     "reserved": "Lot is reserved, try again shortly",
     "purchaseFailed": "Purchase failed",
+    "dailyLimit": "Available today: {{remaining}}",
+    "dailyLimitHint": "You can buy up to {{limit}} P2P items per 24 hours — anti-cheat rule",
+    "dailyLimitReached": "You've hit the {{limit}}-per-day P2P purchase limit. Try again later.",
     "insufficientTitle": "Not enough coins",
     "insufficientDesc": "Need ⬡{{need}}, you have ⬡{{have}}. Missing ⬡{{diff}}.",
     "buyGold": "Top up Gold",
