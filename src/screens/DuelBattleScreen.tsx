@@ -17,7 +17,7 @@ import { DuelCountdownOverlay } from '../components/DuelCountdownOverlay'
 import { BanOverlay } from '../components/BanOverlay'
 import { sendWsEvent } from '../api/websocket'
 import { DuelScene } from '../game/scenes/DuelScene'
-import { startDuelMusic, stopDuelMusic, isDuelMusicPlaying } from '../game/utils/duelMusic'
+import { startDuelMusic, stopDuelMusic } from '../game/utils/duelMusic'
 import s from './DuelBattleScreen.module.css'
 
 export function DuelBattleScreen() {
@@ -46,9 +46,8 @@ export function DuelBattleScreen() {
   const [meHp,   setMeHp]   = useState({ hp: 100, max: 100 })
   const [foeHp,  setFoeHp]  = useState({ hp: 100, max: 100 })
   const [aimAngle, setAimAngle] = useState(0) // degrees; 0 = right
-  // Music is ON by default when a duel starts. If the browser blocks
-  // autoplay (Safari/mobile), we retry on the first user gesture below.
-  const [musicOn, setMusicOn] = useState(true)
+  // Music is OFF by default. User opts in via the 🔊 toggle in the top HUD.
+  const [musicOn, setMusicOn] = useState(false)
 
   // Aim-dial pointer drag
   const aimRef = useRef<HTMLDivElement>(null)
@@ -314,35 +313,12 @@ export function DuelBattleScreen() {
     }
   }, [])
 
-  // ── Music: auto-start on mount, retry on first user gesture if the
-  //    browser blocks autoplay. Stops on unmount.
+  // ── Music: opt-in via the 🔊 toggle. Nothing plays until the user taps.
   const toggleMusic = () => {
     if (musicOn) { stopDuelMusic(); setMusicOn(false) }
-    else         { startDuelMusic().then(() => setMusicOn(true)).catch(() => {/* still blocked */}) }
+    else         { startDuelMusic().then(() => setMusicOn(true)).catch(() => {/* autoplay blocked */}) }
   }
-  useEffect(() => {
-    if (!duelConfig) return
-    // Optimistic first attempt — works on desktop where mount often
-    // follows a click (the "Accept" / "Challenge" button that got us here).
-    let cancelled = false
-    startDuelMusic()
-      .then(() => { if (!cancelled && !isDuelMusicPlaying()) setMusicOn(false) })
-      .catch(() => {
-        // Autoplay blocked; retry once on the next real gesture.
-        const retry = () => {
-          startDuelMusic().then(() => setMusicOn(true)).catch(() => {})
-          window.removeEventListener('pointerdown', retry)
-          window.removeEventListener('keydown',     retry)
-        }
-        window.addEventListener('pointerdown', retry, { once: true })
-        window.addEventListener('keydown',     retry, { once: true })
-      })
-    return () => {
-      cancelled = true
-      stopDuelMusic()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [duelConfig?.duelId])
+  useEffect(() => () => { stopDuelMusic() }, [])
 
   // ── Leave-on-unmount forfeit ─────────────────────────────────────────
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
