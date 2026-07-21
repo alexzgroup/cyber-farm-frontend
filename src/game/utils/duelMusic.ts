@@ -6,7 +6,7 @@
 
 import trackUrl from '../sounds/rpg-game-combat-sound.mp3?url'
 
-const VOLUME = 0.15
+const VOLUME = 0.30 // 30 % — background but audible, doesn't fight blaster SFX
 
 let audio: HTMLAudioElement | null = null
 

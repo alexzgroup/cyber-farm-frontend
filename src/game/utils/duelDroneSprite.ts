@@ -69,12 +69,12 @@ export class DuelDroneSprite extends Phaser.GameObjects.Container {
     }
 
     this.setScale(scale)
-    // Register with the scene's display list. `scene.add.existing` has an
-    // overload signature that doesn't include Container in some Phaser
-    // typings — call the underlying display-list add directly to sidestep
-    // that mismatch.
-    scene.sys.displayList.add(this)
-    scene.sys.updateList.add(this)
+    // Register with the scene the normal way — display list, update list,
+    // scene event hooks. The @types/phaser overload for `add.existing`
+    // narrowly types the arg to GameObject | Group | Layer and TS can't
+    // prove our Container subclass fits, so we cast to sidestep the check
+    // (the runtime call is 100% correct — Container extends GameObject).
+    scene.add.existing(this as unknown as Phaser.GameObjects.GameObject)
   }
 
   /** Advance the rotor rotation. Call from scene.update(_, delta). */
