@@ -35,7 +35,10 @@ export function ensureDuelDroneTextures(scene: Phaser.Scene, type: 1 | 2 | 3) {
  *  (call `spin(delta)` from your scene.update).
  */
 export class DuelDroneSprite extends Phaser.GameObjects.Container {
-  private body: Phaser.GameObjects.Image
+  // Renamed away from `body` — Phaser.GameObjects.Container has a
+  // (physics) `body` property in its type defs, so subclassing with a
+  // different-typed `body` field fails TS structural-compatibility.
+  private bodySprite: Phaser.GameObjects.Image
   private rotors: Phaser.GameObjects.Image[] = []
   private rotorSpeed: number // rad/ms
 
@@ -52,8 +55,8 @@ export class DuelDroneSprite extends Phaser.GameObjects.Container {
     this.rotorSpeed = opts.rotorSpeed ?? 0.05 // rad/ms → ~8 revs/sec
 
     // Body — depth 0 inside the container (rotors sit on top).
-    this.body = scene.add.image(0, 0, BODY_KEY(type))
-    this.add(this.body)
+    this.bodySprite = scene.add.image(0, 0, BODY_KEY(type))
+    this.add(this.bodySprite)
 
     // 4 rotor sprites at the X-pattern offsets. Because the body texture
     // is 128×128 with centre 64,64 and the offsets are unscaled px, the
@@ -66,7 +69,12 @@ export class DuelDroneSprite extends Phaser.GameObjects.Container {
     }
 
     this.setScale(scale)
-    scene.add.existing(this)
+    // Register with the scene's display list. `scene.add.existing` has an
+    // overload signature that doesn't include Container in some Phaser
+    // typings — call the underlying display-list add directly to sidestep
+    // that mismatch.
+    scene.sys.displayList.add(this)
+    scene.sys.updateList.add(this)
   }
 
   /** Advance the rotor rotation. Call from scene.update(_, delta). */
